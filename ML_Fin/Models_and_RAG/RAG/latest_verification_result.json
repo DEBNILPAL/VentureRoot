@@ -1,0 +1,37 @@
+{
+  "verdict": "FLAG_WARNING",
+  "compliance_score": 40,
+  "verification_report": "**VERDICT: FLAG_WARNING**\n\n**Compliance Score: 40/100**\n\n---\n\n### ✅ Verified Findings\n*   N/A - The provided RAG does not contain specific scheme eligibility criteria or financial caps to definitively verify the ML model's financial predictions (PMEGP, Subsidy, Loan Amount).\n\n### ⚠️ Warnings & Flags\n*   **Market Potential Interpretation Caveat**: The ML model's \"Market Potential Score\" and \"Opportunity Level\" should be interpreted with caution, as overall viability requires checking the business's ability",
+  "citations": [
+    {
+      "rank": 1,
+      "relevance_score": 0.6483,
+      "relevance_percent": 64.8,
+      "document": "VentureRoot_RAG_Business_Research_Encyclopedia_500plus_pages",
+      "section": "VENTUREROOT",
+      "excerpt": "lower input price may be unattractive if quality is unreliable or payment is required in advance. A\nbuyer offering high volume may be risky if margins are weak and payment is delayed.\nVentureRoot can highlight where negotiation terms materially affect feasibility, particularly in\nsupplier-heavy and ...",
+      "source_type": "business_regulation"
+    },
+    {
+      "rank": 2,
+      "relevance_score": 0.6423,
+      "relevance_percent": 64.2,
+      "document": "VentureRoot_RAG_Business_Research_Encyclopedia_500plus_pages",
+      "section": "VENTUREROOT",
+      "excerpt": "staffing. Food businesses may face hygiene and safety requirements; manufacturing may involve\nenvironmental or local permissions; professional services may require qualifications; transport or\nstorage may involve sector rules. Failure to comply can create fines, closure risk, reputational\ndamage, or...",
+      "source_type": "business_regulation"
+    },
+    {
+      "rank": 3,
+      "relevance_score": 0.6385,
+      "relevance_percent": 63.8,
+      "document": "VentureRoot_RAG_Business_Research_Encyclopedia_500plus_pages",
+      "section": "VENTUREROOT",
+      "excerpt": "For VentureRoot, supply-chain factors are especially important in agriculture, food processing, retail,\nand local manufacturing. Market-potential scores should not be interpreted as overall viability\nwithout checking whether the business can reliably source and deliver the required inputs.\nVentureRo...",
+      "source_type": "business_regulation"
+    }
+  ],
+  "retrieved_chunks_count": 3,
+  "model_used": "gemini-2.5-flash",
+  "report_id": null
+}

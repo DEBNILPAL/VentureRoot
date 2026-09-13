@@ -7,12 +7,13 @@ import {
   ArrowLeft, Download, Printer, Loader2, AlertTriangle,
   CheckCircle, Info, FileText, Target, MapPin,
   Shield, Landmark, TrendingUp, HandCoins,
-  Briefcase, AlertOctagon, XCircle
+  Briefcase, AlertOctagon, XCircle, ShieldCheck
 } from "lucide-react";
 
 import { reportApi } from "../api/reportApi";
 import businessesData from "@/data/businesses.json";
 import { getAuthoritativeCensusDensity } from "@/utils/feasibility.mapper";
+import { RagVerificationPanel } from "./RagVerificationPanel";
 
 interface ReportDetailViewProps {
   report: Report;
@@ -127,6 +128,7 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
     { id: 3, title: "SWOT & Key Risks", icon: Shield },
     { id: 4, title: "Financial Outlook", icon: Landmark },
     { id: 5, title: "Action Plan & Verdict", icon: Target },
+    { id: 6, title: "AI Compliance Audit", icon: ShieldCheck },
   ];
 
   return (
@@ -491,6 +493,28 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
                 </div>
               </div>
             </div>
+          </section>
+
+          <hr className="hidden print:block border-t border-gray-100" />
+
+          {/* 6. AI COMPLIANCE AUDIT — RAG + Gemini Verification */}
+          <section id="section-6" className={`scroll-mt-6 ${activeSection === 6 ? "block" : "hidden print:block"}`}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-[#ebcb2f]/10 flex items-center justify-center text-[#ebcb2f]">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="font-heading text-[24px] font-bold text-gray-900">6. AI Compliance Audit</h2>
+                <p className="font-sans text-[13px] text-gray-500 mt-0.5">
+                  Powered by RAG · BAAI/bge-large-en-v1.5 · Gemini Agent · 3,994 Regulation Chunks
+                </p>
+              </div>
+            </div>
+
+            <RagVerificationPanel
+              reportId={report.id}
+              businessName={(report as any).businessName || (report as any).business?.name || report.title}
+            />
           </section>
 
         </div>

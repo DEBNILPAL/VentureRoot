@@ -139,6 +139,59 @@ export async function getCurrentUser(accessToken) {
   return data.user;
 }
 
+export async function syncOAuthUser(user) {
+  if (!user || !user.id) {
+    throw new UnauthorizedError("User information missing for OAuth sync");
+  }
+
+  const meta = user.user_metadata || {};
+  const rawFullName =
+    meta.full_name ||
+    meta.name ||
+    meta.user_name ||
+    (user.email
+      ? user.email
+          .split("@")[0]
+          .replace(/[._-]/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase())
+      : "Entrepreneur");
+
+  const parts = (rawFullName || "Entrepreneur").trim().split(/\s+/);
+  const firstName = parts[0] || "Entrepreneur";
+  const lastName = parts.slice(1).join(" ") || null;
+
+  let profile = null;
+  try {
+    profile = await prisma.profile.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!profile) {
+      profile = await prisma.profile.create({
+        data: {
+          userId: user.id,
+          firstName,
+          lastName,
+          role: "ENTREPRENEUR",
+          availableCapital: 100000,
+          income: 25000,
+          businessExperience: "1-3 years",
+          skills: ["Business Operations", "Market Intelligence"],
+          education: "Graduate / Vocational",
+        },
+      });
+    }
+  } catch (err) {
+    console.warn("[auth.service] OAuth profile sync warning:", err.message);
+  }
+
+  return {
+    user,
+    profile,
+    fullName: rawFullName,
+  };
+}
+
 export async function refreshUserSession(
   refreshToken
 ) {
@@ -153,6 +206,3 @@ export async function refreshUserSession(
 
   return data;
 }
-
-
-

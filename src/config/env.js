@@ -19,6 +19,10 @@ const envSchema = z.object({
   SUPABASE_URL: z.string().url(),
   SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
 
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+
   DIRECT_URL: z.string().min(1),
 });
 

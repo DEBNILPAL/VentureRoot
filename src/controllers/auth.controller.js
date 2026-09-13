@@ -2,8 +2,9 @@ import { registerUser } from "@/services/auth.service";
 import {loginUser} from "@/services/auth.service";
 import { getCurrentUser } from "@/services/auth.service";
 
-import {refreshUserSession} from "@/services/auth.service";
+import { refreshUserSession } from "@/services/auth.service";
 import { logoutUser } from "@/services/auth.service";
+import { syncOAuthUser } from "@/services/auth.service";
 
 export async function register(data) {
   const result = await registerUser(data);
@@ -50,3 +51,11 @@ export async function logout(user) {
     },
   };
 }
+
+export async function syncOAuth(user) {
+  const result = await syncOAuthUser(user);
+  return {
+    message: "OAuth user synced successfully",
+    data: result,
+  };
+}

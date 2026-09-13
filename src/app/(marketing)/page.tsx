@@ -112,7 +112,7 @@ function USPCarousel() {
     setDirection(1);
     setActive(i => (i + 1) % total);
   };
-  
+
   const prev = () => {
     setDirection(-1);
     setActive(i => (i - 1 + total) % total);
@@ -135,84 +135,84 @@ function USPCarousel() {
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center px-4 lg:px-8">
-      
+
       {/* Card Stack Container */}
       <div className="relative w-full z-10 h-[520px] sm:h-[480px] lg:h-[440px]">
         <AnimatePresence mode="popLayout" custom={direction}>
           {USP_ITEMS.map((item, index) => {
-             // Calculate relative position (0 is active top card, 1 is behind it, 2 is behind that)
-             let offset = index - active;
-             if (offset < 0) offset += total;
-             
-             // Only render the top 3 cards in the stack to keep DOM light and visual clean
-             if (offset > 2) return null;
+            // Calculate relative position (0 is active top card, 1 is behind it, 2 is behind that)
+            let offset = index - active;
+            if (offset < 0) offset += total;
 
-             return (
-               <motion.div
-                 key={item.id}
-                 layoutId={`card-${item.id}`}
-                 initial={
-                   direction === -1 && offset === 0
-                     ? { x: -300, y: -100, rotate: -15, opacity: 0, scale: 0.9 } // Entering from top-left
-                     : { x: 0, opacity: 0, scale: 0.8, y: 60 } // Entering from bottom/back
-                 }
-                 animate={{
-                   x: 0,
-                   y: offset * 14, // Push down
-                   scale: 1 - offset * 0.04, // Shrink
-                   opacity: 1 - offset * 0.1, // Fade slightly
-                   rotate: offset === 0 ? 0 : offset === 1 ? -2 : 2, // Fan out
-                   zIndex: total - offset
-                 }}
-                 exit={
-                   direction === 1
-                     ? { x: -300, y: -100, rotate: -15, opacity: 0, scale: 0.9 } // Top-left pop!
-                     : { x: 0, y: 60, opacity: 0, scale: 0.8, rotate: 0 } // Drop down to back
-                 }
-                 transition={{
-                   type: "spring",
-                   stiffness: 250,
-                   damping: 24,
-                   mass: 1
-                 }}
-                 className="absolute top-0 left-0 w-full bg-white rounded-3xl border border-[#1E6702]/20 shadow-[0_8px_30px_rgba(30,103,2,0.12)] overflow-hidden"
-               >
-                  <div className="grid grid-cols-1 lg:grid-cols-[55fr_45fr]">
-                    {/* Left: text */}
-                    <div className="px-5 py-5 sm:px-8 sm:py-8 lg:py-10 flex flex-col justify-center lg:border-r border-b lg:border-b-0 border-black/5 bg-white">
-                      <div className="inline-flex items-center gap-2 mb-2 sm:mb-4 self-start">
-                        <div className="w-5 h-5 rounded-md bg-[#f4fce8] border border-[#1E6702]/20 flex items-center justify-center">
-                          {React.createElement(item.icon, { className: "w-3 h-3 text-[#1E6702]" })}
-                        </div>
-                        <span className="text-[10px] font-bold text-[#1E6702] uppercase tracking-widest">{item.category}</span>
+            // Only render the top 3 cards in the stack to keep DOM light and visual clean
+            if (offset > 2) return null;
+
+            return (
+              <motion.div
+                key={item.id}
+                layoutId={`card-${item.id}`}
+                initial={
+                  direction === -1 && offset === 0
+                    ? { x: -300, y: -100, rotate: -15, opacity: 0, scale: 0.9 } // Entering from top-left
+                    : { x: 0, opacity: 0, scale: 0.8, y: 60 } // Entering from bottom/back
+                }
+                animate={{
+                  x: 0,
+                  y: offset * 14, // Push down
+                  scale: 1 - offset * 0.04, // Shrink
+                  opacity: 1 - offset * 0.1, // Fade slightly
+                  rotate: offset === 0 ? 0 : offset === 1 ? -2 : 2, // Fan out
+                  zIndex: total - offset
+                }}
+                exit={
+                  direction === 1
+                    ? { x: -300, y: -100, rotate: -15, opacity: 0, scale: 0.9 } // Top-left pop!
+                    : { x: 0, y: 60, opacity: 0, scale: 0.8, rotate: 0 } // Drop down to back
+                }
+                transition={{
+                  type: "spring",
+                  stiffness: 250,
+                  damping: 24,
+                  mass: 1
+                }}
+                className="absolute top-0 left-0 w-full bg-white rounded-3xl border border-[#1E6702]/20 shadow-[0_8px_30px_rgba(30,103,2,0.12)] overflow-hidden"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-[55fr_45fr]">
+                  {/* Left: text */}
+                  <div className="px-5 py-5 sm:px-8 sm:py-8 lg:py-10 flex flex-col justify-center lg:border-r border-b lg:border-b-0 border-black/5 bg-white">
+                    <div className="inline-flex items-center gap-2 mb-2 sm:mb-4 self-start">
+                      <div className="w-5 h-5 rounded-md bg-[#f4fce8] border border-[#1E6702]/20 flex items-center justify-center">
+                        {React.createElement(item.icon, { className: "w-3 h-3 text-[#1E6702]" })}
                       </div>
-                      <h3 className="text-lg sm:text-2xl md:text-3xl font-sans font-bold text-[#200813] leading-tight mb-2 sm:mb-3">
-                        {item.title}
-                      </h3>
-                      <p className="text-xs sm:text-sm md:text-[15px] text-[#200813]/65 leading-relaxed mb-3 sm:mb-5 max-w-md">
-                        {item.description}
-                      </p>
-                      <ul className="flex flex-col gap-1.5 sm:gap-2">
-                        {item.points.map(pt => (
-                          <li key={pt} className="flex items-center gap-2 text-xs sm:text-sm text-[#200813]/75 font-medium">
-                            <CheckCircle2 className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-[#1E6702] shrink-0" />
-                            {pt}
-                          </li>
-                        ))}
-                      </ul>
+                      <span className="text-[10px] font-bold text-[#1E6702] uppercase tracking-widest">{item.category}</span>
                     </div>
-
-                    {/* Right: image */}
-                    <div className="bg-[#fafdf6] flex items-center justify-center overflow-hidden h-[150px] sm:h-[190px] lg:h-full min-h-[140px] sm:min-h-[190px] lg:min-h-[360px]">
-                      <img
-                        src={item.image!}
-                        alt={item.title}
-                        className="w-full h-full object-contain p-3 sm:p-5 pointer-events-none select-none"
-                      />
-                    </div>
+                    <h3 className="text-lg sm:text-2xl md:text-3xl font-sans font-bold text-[#200813] leading-tight mb-2 sm:mb-3">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm md:text-[15px] text-[#200813]/65 leading-relaxed mb-3 sm:mb-5 max-w-md">
+                      {item.description}
+                    </p>
+                    <ul className="flex flex-col gap-1.5 sm:gap-2">
+                      {item.points.map(pt => (
+                        <li key={pt} className="flex items-center gap-2 text-xs sm:text-sm text-[#200813]/75 font-medium">
+                          <CheckCircle2 className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-[#1E6702] shrink-0" />
+                          {pt}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-               </motion.div>
-             );
+
+                  {/* Right: image */}
+                  <div className="bg-[#fafdf6] flex items-center justify-center overflow-hidden h-[150px] sm:h-[190px] lg:h-full min-h-[140px] sm:min-h-[190px] lg:min-h-[360px]">
+                    <img
+                      src={item.image!}
+                      alt={item.title}
+                      className="w-full h-full object-contain p-3 sm:p-5 pointer-events-none select-none"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            );
           })}
         </AnimatePresence>
       </div>
@@ -227,22 +227,21 @@ function USPCarousel() {
           >
             <ChevronRight className="w-4 h-4 text-[#1E6702] rotate-180" />
           </button>
-  
+
           <div className="flex items-center gap-2 px-2">
             {USP_ITEMS.map((_, i) => (
               <button
                 key={i}
                 onClick={() => goTo(i)}
                 aria-label={`Go to feature ${i + 1}`}
-                className={`rounded-full transition-all focus-visible:ring-2 focus-visible:ring-[#1E6702] ${
-                  i === active
+                className={`rounded-full transition-all focus-visible:ring-2 focus-visible:ring-[#1E6702] ${i === active
                     ? "w-6 h-2 bg-[#1E6702]"
                     : "w-2 h-2 bg-[#1E6702]/20 hover:bg-[#1E6702]/40"
-                }`}
+                  }`}
               />
             ))}
           </div>
-  
+
           <button
             onClick={next}
             aria-label="Next feature"
@@ -475,16 +474,14 @@ function HowItWorksSelector() {
                 aria-selected={isActive}
                 aria-controls={`panel-${feature.id}`}
                 onClick={() => setActive(feature.id as FeatureId)}
-                className={`group flex items-center gap-2.5 px-4 py-3 rounded-2xl border-2 text-left shrink-0 transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[#1E6702] cursor-pointer select-none ${
-                  isActive
+                className={`group flex items-center gap-2.5 px-4 py-3 rounded-2xl border-2 text-left shrink-0 transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[#1E6702] cursor-pointer select-none ${isActive
                     ? "bg-white border-[#1E6702] shadow-[0_4px_18px_-2px_rgba(30,103,2,0.18)] text-[#200813]"
                     : "bg-white/70 border-stone-800/12 text-[#200813]/65 hover:border-[#aed455] hover:bg-white hover:text-[#200813] hover:shadow-[0_4px_14px_-2px_rgba(174,212,85,0.25)]"
-                }`}
+                  }`}
               >
                 <div
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                    isActive ? "bg-[#aed455]/25 border border-[#aed455]/50" : "bg-stone-100 group-hover:bg-[#aed455]/15"
-                  }`}
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${isActive ? "bg-[#aed455]/25 border border-[#aed455]/50" : "bg-stone-100 group-hover:bg-[#aed455]/15"
+                    }`}
                 >
                   <Icon className={`w-3.5 h-3.5 transition-colors ${isActive ? "text-[#1E6702]" : "text-stone-400 group-hover:text-[#1E6702]"}`} />
                 </div>
