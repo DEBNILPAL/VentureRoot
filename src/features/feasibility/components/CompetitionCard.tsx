@@ -5,7 +5,8 @@ import {
   Crosshair, MapPin, Tag, ShieldCheck, Filter, Sparkles,
   Building2, Landmark, Users, Wifi, Globe, Phone, Clock,
   TrendingUp, AlertTriangle, Target, ChevronDown, ChevronUp,
-  Radio, Navigation, BarChart3, Layers, CheckCircle2
+  Radio, Navigation, BarChart3, Layers, CheckCircle2,
+  Award, ShieldAlert, Zap, ArrowUpRight, Scale
 } from "lucide-react";
 import { CompetitionAnalysis } from "../types";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
@@ -33,6 +34,11 @@ interface Competitor {
   openingHours?: string | null;
   aiEnriched?: boolean;
   tags?: Record<string, string | null>;
+  rank?: number;
+  strengthScore?: number;
+  threatLevel?: "Critical Threat" | "Major Threat" | "Moderate Challenger" | "Peripheral Competitor" | string;
+  whyMajorCompetitor?: string;
+  strategicCountermeasure?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -224,6 +230,255 @@ const CompetitorCard = ({ comp, index }: { comp: Competitor; index: number }) =>
   );
 };
 
+// ─── Client-side Top Competitors Scoring Helper ────────────────────────────────
+
+export const computeClientSideTopCompetitors = (all: Competitor[], category: string): Competitor[] => {
+  const isHealthcare =
+    category.toLowerCase().includes("health") ||
+    category.toLowerCase().includes("hospital") ||
+    category.toLowerCase().includes("clinic");
+
+  const scored = all.map((c) => {
+    const dist = c.distanceKm || 5;
+    const isGovt = isCompetitorGovt(c);
+    const isDirect = !c.type?.toLowerCase().includes("indirect");
+
+    // 1. Proximity score (max 35 pts)
+    const proximityScore = Math.max(8, Math.round(35 - Math.min(dist, 16) * 1.75));
+
+    // 2. Scale & capacity score (max 25 pts)
+    let scaleScore = 15;
+    const fac = (c.facilityType || c.name || "").toLowerCase();
+    if (isHealthcare) {
+      if (fac.includes("civil hospital") || fac.includes("medical college") || fac.includes("super-specialty")) scaleScore = 25;
+      else if (fac.includes("multi-specialty") || fac.includes("hospital")) scaleScore = 21;
+      else if (fac.includes("nursing") || fac.includes("chc")) scaleScore = 17;
+      else scaleScore = 12;
+    } else {
+      if (fac.includes("mandi") || fac.includes("mega") || fac.includes("apex") || fac.includes("corporate")) scaleScore = 25;
+      else if (fac.includes("cooperative") || fac.includes("processing") || fac.includes("cluster")) scaleScore = 20;
+      else if (fac.includes("enterprise") || fac.includes("wholesale")) scaleScore = 16;
+      else scaleScore = 11;
+    }
+
+    // 3. Sector authority & moat (max 22 pts)
+    const sectorScore = isGovt ? 22 : (isDirect ? 18 : 14);
+
+    // 4. Infrastructure & verification (max 18 pts)
+    let infraScore = 10;
+    if (c.contact) infraScore += 3;
+    if (c.openingHours) infraScore += 2;
+    if (c.source?.includes("OpenStreetMap")) infraScore += 3;
+
+    const strengthScore = Math.min(99, Math.max(45, proximityScore + scaleScore + sectorScore + infraScore));
+    return { ...c, strengthScore };
+  }).sort((a, b) => (b.strengthScore || 0) - (a.strengthScore || 0));
+
+  return scored.slice(0, 6).map((c, idx) => {
+    const rank = idx + 1;
+    const isGovt = isCompetitorGovt(c);
+    const isDirect = !c.type?.toLowerCase().includes("indirect");
+    const distStr = `${Number(c.distanceKm || 0).toFixed(1)} km`;
+
+    let threatLevel: "Critical Threat" | "Major Threat" | "Moderate Challenger" | "Peripheral Competitor" = "Moderate Challenger";
+    if ((c.strengthScore || 0) >= 88) threatLevel = "Critical Threat";
+    else if ((c.strengthScore || 0) >= 78) threatLevel = "Major Threat";
+
+    let whyMajor = c.whyMajorCompetitor || "";
+    let countermeasure = c.strategicCountermeasure || "";
+
+    if (!whyMajor) {
+      if (isHealthcare) {
+        if (isGovt) {
+          whyMajor = `Regional statutory healthcare anchor located ${distStr} away. With ${c.pricing || "Free OPD & PM-JAY 100% cashless coverage"}, they absorb the vast volume of rural patient footfall, setting an unbreakable statutory price floor for basic consultations and maternity procedures.`;
+          countermeasure = `Avoid competing on price: deliver premium private single-bed rooms, zero wait times, proactive bedside care, and 24x7 resident doctors that overburdened public facilities cannot match.`;
+        } else if (isDirect) {
+          whyMajor = `Direct private multi-specialty rival situated ${distStr} away. Operating with modern OT setups and private insurance empanelments, they aggressively contend for middle-class and insured patient admissions.`;
+          countermeasure = `Counter with 100% transparent, all-inclusive package pricing with zero hidden consumable charges, and run weekly diagnostic health camps in local panchayats.`;
+        } else {
+          whyMajor = `Primary healthcare referral node located ${distStr} away. They command established neighborhood trust and intercept early outpatient footfall across the regional transit route.`;
+          countermeasure = `Coordinate structured emergency referrals for complex surgical cases while providing faster diagnostics and specialized OPD clinics.`;
+        }
+      } else {
+        if (isGovt || c.ownership?.toLowerCase().includes("cooperative")) {
+          whyMajor = `Dominant district procurement center located ${distStr} away with cooperative federation backing. They manage massive daily commodity volumes, benefit from statutory procurement rates, and control village aggregation routes.`;
+          countermeasure = `Outperform them by eliminating delayed payout cycles: offer immediate same-day digital payouts to producers and deliver certified farm-fresh goods directly to local consumers.`;
+        } else if (isDirect) {
+          whyMajor = `Direct commercial competitor located within ${distStr}. They compete directly for local consumer wallet share with dedicated distribution vans, branded packaging, and established retail shopkeeper relationships.`;
+          countermeasure = `Differentiate on hyper-local freshness, certified hygiene, transparent batch tracing, and guaranteed next-morning shelf replenishment for local retailers.`;
+        } else {
+          whyMajor = `Major wholesale trading terminal and clearing yard situated ${distStr} away. They dictate regional wholesale prices and control commodity liquidity across the trade corridor.`;
+          countermeasure = `Utilize this terminal for bulk clearance of seasonal inventory surplus while retaining the 20–30% premium margin through direct retail consumer sales.`;
+        }
+      }
+    }
+
+    return {
+      ...c,
+      rank,
+      threatLevel,
+      whyMajorCompetitor: whyMajor,
+      strategicCountermeasure: countermeasure,
+    };
+  });
+};
+
+// ─── Top Ranked Competitor Card ───────────────────────────────────────────────
+
+const TopRankedCompetitorCard = ({ comp }: { comp: Competitor }) => {
+  const isGovt = isCompetitorGovt(comp);
+  const isDirect = !comp.type?.toLowerCase().includes("indirect");
+
+  const rankBadgeConfig = useMemo(() => {
+    switch (comp.rank) {
+      case 1:
+        return {
+          badge: "bg-gradient-to-r from-amber-500 to-yellow-600 text-white shadow-amber-200",
+          label: "👑 #1 Dominant Market Anchor",
+          ring: "border-amber-300 ring-2 ring-amber-100",
+        };
+      case 2:
+        return {
+          badge: "bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-slate-200",
+          label: "⚡ #2 Direct Challenger",
+          ring: "border-slate-300 ring-2 ring-slate-100",
+        };
+      case 3:
+        return {
+          badge: "bg-gradient-to-r from-amber-700 to-orange-800 text-white shadow-orange-200",
+          label: "🎯 #3 Strategic Rival",
+          ring: "border-orange-200 ring-2 ring-orange-50",
+        };
+      default:
+        return {
+          badge: "bg-gradient-to-r from-indigo-600 to-blue-700 text-white shadow-indigo-200",
+          label: `💎 #${comp.rank || 4} High-Impact Competitor`,
+          ring: "border-indigo-200 ring-2 ring-indigo-50",
+        };
+    }
+  }, [comp.rank]);
+
+  const threatColor = useMemo(() => {
+    switch (comp.threatLevel) {
+      case "Critical Threat":
+        return "bg-rose-50 text-rose-700 border-rose-200";
+      case "Major Threat":
+        return "bg-orange-50 text-orange-700 border-orange-200";
+      case "High Threat":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      default:
+        return "bg-sky-50 text-sky-700 border-sky-200";
+    }
+  }, [comp.threatLevel]);
+
+  return (
+    <div className={`bg-white rounded-2xl border-2 transition-all duration-200 ${rankBadgeConfig.ring} shadow-sm hover:shadow-md p-5 flex flex-col justify-between gap-4`}>
+      {/* Top Bar: Rank & Threat Level */}
+      <div>
+        <div className="flex items-center justify-between gap-2 flex-wrap mb-2.5">
+          <span className={`px-3 py-1 rounded-full text-xs font-black tracking-wide shadow-sm flex items-center gap-1.5 ${rankBadgeConfig.badge}`}>
+            {rankBadgeConfig.label}
+          </span>
+          <div className="flex items-center gap-2">
+            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1 ${threatColor}`}>
+              <ShieldAlert className="w-3 h-3" />
+              {comp.threatLevel || "High Threat"}
+            </span>
+            <div className="flex items-center gap-1 bg-slate-900 text-white px-2.5 py-0.5 rounded-full text-[11px] font-black">
+              <span>{comp.strengthScore || 85}</span>
+              <span className="text-[9px] text-slate-400 font-normal">/100</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Competitor Name & Meta */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h4 className="font-bold text-base text-gray-900 leading-snug">{comp.name}</h4>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-slate-600">
+              <span className="flex items-center gap-1 font-semibold text-emerald-700">
+                <Navigation className="w-3 h-3 text-emerald-600 shrink-0" />
+                {Number(comp.distanceKm).toFixed(1)} km away
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                isGovt ? "bg-sky-50 text-sky-700 border-sky-200" : "bg-purple-50 text-purple-700 border-purple-200"
+              }`}>
+                {isGovt ? "🏛️ Govt" : "🏥 Private"}
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                isDirect ? "bg-red-50 text-red-700 border-red-200" : "bg-amber-50 text-amber-700 border-amber-200"
+              }`}>
+                {isDirect ? "Direct Rival" : "Indirect Feeder"}
+              </span>
+              {comp.facilityType && (
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[10px]">
+                  {comp.facilityType}
+                </span>
+              )}
+              {comp.source?.includes("OpenStreetMap") && (
+                <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold text-[10px] border border-blue-200 flex items-center gap-1">
+                  <Globe className="w-2.5 h-2.5" /> Live OSM
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Pricing Box */}
+          <div className="shrink-0 text-right p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <div className="text-[10px] uppercase font-bold text-slate-500 flex items-center justify-end gap-1">
+              <Tag className="w-2.5 h-2.5" /> Pricing
+            </div>
+            <div className="text-xs font-black text-emerald-800 mt-0.5 max-w-[140px] truncate">
+              {comp.pricing || "Market Parity"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* WHY THIS IS A MAJOR COMPETITOR (Web-Scraped Evidence Callout) */}
+      <div className="p-3.5 rounded-xl bg-gradient-to-br from-amber-50/90 to-orange-50/70 border border-amber-200/90 shadow-sm">
+        <div className="flex items-center gap-1.5 text-xs font-black text-amber-900 uppercase tracking-wider mb-1.5">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+          <span>Why This Is a Major Competitor (Web-Scraped Analysis)</span>
+        </div>
+        <p className="text-[12px] text-amber-950 font-medium leading-relaxed">
+          {comp.whyMajorCompetitor}
+        </p>
+      </div>
+
+      {/* RECOMMENDED STRATEGIC COUNTERMEASURE */}
+      <div className="p-3.5 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm">
+        <div className="flex items-center gap-1.5 text-xs font-black text-emerald-900 uppercase tracking-wider mb-1.5">
+          <Zap className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+          <span>Recommended Strategic Playbook & Countermeasure</span>
+        </div>
+        <p className="text-[12px] text-emerald-950 font-medium leading-relaxed">
+          {comp.strategicCountermeasure}
+        </p>
+      </div>
+
+      {/* Strengths & Weaknesses Quick Row */}
+      {(comp.strengths?.length || comp.weaknesses?.length) ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100 text-[11px]">
+          {comp.strengths?.length ? (
+            <div className="flex items-start gap-1.5 text-teal-800">
+              <span className="font-bold shrink-0">Key Strength:</span>
+              <span className="line-clamp-1">{comp.strengths[0]}</span>
+            </div>
+          ) : null}
+          {comp.weaknesses?.length ? (
+            <div className="flex items-start gap-1.5 text-rose-800">
+              <span className="font-bold shrink-0">Vulnerability:</span>
+              <span className="line-clamp-1">{comp.weaknesses[0]}</span>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 // ─── Radius Band Section ──────────────────────────────────────────────────────
 
 const RadiusBand = ({
@@ -329,7 +584,7 @@ const RadiusBand = ({
 
 export const CompetitionCard = ({
   data,
-  centerCoords = [20.5937, 78.9629],
+  centerCoords,
   businessName = "Your Venture",
   category = "Enterprise",
   locationName = "Target Location",
@@ -343,6 +598,7 @@ export const CompetitionCard = ({
   competitorRadar?: {
     within10km?: Competitor[];
     within20km?: Competitor[];
+    topCompetitors?: Competitor[];
     total?: number;
     source?: string;
     aiEnriched?: string;
@@ -351,6 +607,7 @@ export const CompetitionCard = ({
 }) => {
   const { t } = useTranslation();
   const [filterType, setFilterType] = useState<"all" | "direct" | "indirect" | "govt" | "private">("all");
+  const [topFilter, setTopFilter] = useState<"all" | "direct" | "govt" | "private">("all");
 
   const isHealthcare =
     category.toLowerCase().includes("health") ||
@@ -371,8 +628,8 @@ export const CompetitionCard = ({
       if (fromModel.length > 0) return fromModel;
     }
 
-    const lat = centerCoords[0];
-    const lon = centerCoords[1];
+    const lat = centerCoords ? centerCoords[0] : 0;
+    const lon = centerCoords ? centerCoords[1] : 0;
 
     if (isHealthcare) {
       return [
@@ -551,8 +808,8 @@ export const CompetitionCard = ({
       if (fromModel.length > 0) return fromModel;
     }
 
-    const lat = centerCoords[0];
-    const lon = centerCoords[1];
+    const lat = centerCoords ? centerCoords[0] : 0;
+    const lon = centerCoords ? centerCoords[1] : 0;
 
     if (isHealthcare) {
       return [
@@ -679,6 +936,21 @@ export const CompetitionCard = ({
   const isLiveData = !!competitorRadar?.within10km?.length || !!competitorRadar?.within20km?.length;
   const isGeminiEnriched = competitorRadar?.aiEnriched === "gemini-enriched";
 
+  // ── Top 5–6 High-Strength Competitors Radar & Deep Analysis ──
+  const topRankedCompetitors = useMemo(() => {
+    if (competitorRadar?.topCompetitors && competitorRadar.topCompetitors.length > 0) {
+      return competitorRadar.topCompetitors;
+    }
+    return computeClientSideTopCompetitors(allCompetitors, category);
+  }, [competitorRadar?.topCompetitors, allCompetitors, category]);
+
+  const filteredTopCompetitors = useMemo(() => {
+    if (topFilter === "direct") return topRankedCompetitors.filter((c) => !c.type?.toLowerCase().includes("indirect"));
+    if (topFilter === "govt") return topRankedCompetitors.filter(isCompetitorGovt);
+    if (topFilter === "private") return topRankedCompetitors.filter((c) => !isCompetitorGovt(c));
+    return topRankedCompetitors;
+  }, [topRankedCompetitors, topFilter]);
+
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-6 h-full">
 
@@ -776,6 +1048,65 @@ export const CompetitionCard = ({
             ~{populationReach.km20.toLocaleString("en-IN")} pop. reach • 1,257 km²
           </div>
         </div>
+      </div>
+
+      {/* ── Top 5–6 High-Strength Competitors Radar & Deep Analysis ── */}
+      <div className="rounded-3xl border-2 border-amber-200/90 bg-gradient-to-br from-amber-50/40 via-white to-orange-50/30 p-5 md:p-6 shadow-sm flex flex-col gap-4">
+        {/* Section Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-100 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-sm shadow-amber-200 shrink-0">
+              <Award className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="font-sans text-[17px] font-black text-gray-900">
+                  Top 5–6 Dominant Competitors & Threat Rankings
+                </h4>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                  ⚡ High-Strength Threat Radar
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 font-medium mt-0.5">
+                Algorithmic multi-factor evaluation based on web-scraped facility capacity, statutory price floor, proximity friction, and verified commercial reach.
+              </p>
+            </div>
+          </div>
+
+          {/* Sub-filter for top competitors */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {[
+              { id: "all", label: `Top ${topRankedCompetitors.length}` },
+              { id: "direct", label: "Direct Only" },
+              { id: "govt", label: "Govt Anchors" },
+              { id: "private", label: "Private Scale" },
+            ].map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTopFilter(id as typeof topFilter)}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  topFilter === id
+                    ? "bg-amber-600 text-white shadow-sm"
+                    : "bg-white text-slate-600 hover:bg-amber-50 border border-slate-200"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Competitor Grid */}
+        {filteredTopCompetitors.length === 0 ? (
+          <p className="text-center text-xs text-slate-400 font-medium py-4">No top-ranked competitors match this sub-filter.</p>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {filteredTopCompetitors.map((comp) => (
+              <TopRankedCompetitorCard key={comp.id || comp.rank} comp={comp} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Global filter pills ── */}

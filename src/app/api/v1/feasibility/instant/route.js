@@ -88,8 +88,8 @@ export async function POST(request) {
     }
 
     if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
-      latitude = 22.5645;
-      longitude = 72.9289;
+      latitude = null;
+      longitude = null;
     }
 
     const businessObj = {

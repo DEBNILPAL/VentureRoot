@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { MapContainer, TileLayer, Circle, Marker, Popup, Tooltip, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { AlertTriangle, MapPin as MapPinIcon } from "lucide-react";
 
 // Custom SVG DivIcon for User Location Pin with radar wave pulse
 const createUserPinIcon = (label: string = "Your Venture") => {
@@ -149,7 +150,7 @@ export interface MapMarker {
 }
 
 interface RadiusMapProps {
-  center: [number, number]; // [lat, lng]
+  center?: [number, number]; // [lat, lng]
   radiusInKm?: number;
   businessName?: string;
   locationLabel?: string;
@@ -174,11 +175,29 @@ export const RadiusMap: React.FC<RadiusMapProps> = ({
     setIsMounted(true);
   }, []);
 
-  // Validate center coordinates; fallback to India center if invalid
-  const safeCenter: [number, number] =
-    Array.isArray(center) && !isNaN(center[0]) && !isNaN(center[1]) && center[0] !== 0
-      ? center
-      : [20.5937, 78.9629];
+  // Strict check: User must enter a real business location, no arbitrary default coordinates
+  const isCoordinatesGiven =
+    Array.isArray(center) &&
+    typeof center[0] === "number" &&
+    typeof center[1] === "number" &&
+    !isNaN(center[0]) &&
+    !isNaN(center[1]) &&
+    center[0] !== 0 &&
+    center[1] !== 0;
+
+  // Reject generic India center fallback (20.5937, 78.9629) as an invalid default
+  const isGenericDefault =
+    isCoordinatesGiven &&
+    Math.abs(center[0] - 20.5937) < 0.01 &&
+    Math.abs(center[1] - 78.9629) < 0.01 &&
+    !locationLabel.toLowerCase().includes("nagpur") &&
+    !locationLabel.toLowerCase().includes("wardha");
+
+  const hasValidUserLocation = isCoordinatesGiven && !isGenericDefault;
+
+  const safeCenter: [number, number] = hasValidUserLocation
+    ? [center[0], center[1]]
+    : [20.5937, 78.9629];
 
   // Tile layer configuration utilizing user's OpenStreetMap key from .env:
   const osmApiKey = process.env.NEXT_PUBLIC_OPENSTREETMAP_API_KEY || "";
@@ -187,9 +206,9 @@ export const RadiusMap: React.FC<RadiusMapProps> = ({
     : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
   const userPin = React.useMemo(() => {
-    if (!isMounted) return undefined;
+    if (!isMounted || !hasValidUserLocation) return undefined;
     return createUserPinIcon(businessName);
-  }, [businessName, isMounted]);
+  }, [businessName, isMounted, hasValidUserLocation]);
 
   // Marker counts for dynamic legend
   const counts = React.useMemo(() => {
@@ -234,13 +253,40 @@ export const RadiusMap: React.FC<RadiusMapProps> = ({
     return { direct, indirect, govt, pvt, market, transport, supply, population, total: markers.length };
   }, [markers]);
 
-  if (!isMounted || typeof window === "undefined" || !userPin) {
+  if (!isMounted || typeof window === "undefined") {
     return (
       <div className="w-full h-full min-h-[360px] bg-slate-100 rounded-2xl flex items-center justify-center border border-slate-200">
         <p className="text-xs font-semibold text-slate-500">Loading OpenStreetMap canvas...</p>
       </div>
     );
   }
+
+  // Hazy overlay if user has not provided a specific location for this business
+  if (!hasValidUserLocation) {
+    return (
+      <div className="w-full h-full min-h-[360px] relative rounded-2xl flex flex-col items-center justify-center border-2 border-dashed border-amber-300 p-6 text-center overflow-hidden bg-slate-100/90 backdrop-blur-md">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-200/40 via-amber-50/30 to-slate-200/50 backdrop-blur-md pointer-events-none" />
+        <div className="relative z-10 flex flex-col items-center gap-3 max-w-md">
+          <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shadow-sm">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <div>
+            <h4 className="font-heading text-[18px] font-bold text-slate-800">
+              Map Service Currently Unavailable
+            </h4>
+            <p className="text-xs text-slate-600 font-medium leading-relaxed mt-1">
+              Exact business location coordinates required. No default map is shown. Please register or select the exact location for <strong>{businessName}</strong> ({locationLabel}) to project the live radar canvas.
+            </p>
+          </div>
+          <span className="text-[11px] font-semibold text-amber-800 px-3 py-1 rounded-full bg-amber-100/80 border border-amber-200">
+            Awaiting Location Coordinates
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userPin) return null;
 
   const initialZoom = radiusInKm >= 20 ? 10 : radiusInKm >= 10 ? 11 : 12;
 

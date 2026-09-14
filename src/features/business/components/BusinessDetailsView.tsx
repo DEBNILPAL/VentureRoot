@@ -1,15 +1,19 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Map, Activity, ArrowRight, TrendingUp, ChevronRight, Check,
-  ShieldAlert, FileText, Compass, IndianRupee, Layers, BarChart2
+  ShieldAlert, FileText, Compass, IndianRupee, Layers, BarChart2,
+  Wrench, Building, Users, Zap, AlertTriangle, ShieldCheck
 } from "lucide-react";
-import { EditorialAreaChart, EditorialDonutChart } from "@/components/ui/charts";
+import { EditorialDonutChart, FinancialTrajectoryAreaChart } from "@/components/ui/charts";
 import { useBusinessDetails } from "@/lib/data/businesses";
 import { useParams } from "next/navigation";
 import { DashboardBackground } from "@/components/layout/DashboardBackground";
+import { useTranslation } from "@/features/i18n/hooks/useTranslation";
+import { getDynamicBusinessResources } from "@/services/business-resources.service";
+import { calculateFinancialTrajectory } from "@/services/financial-trajectory.service";
 
 export interface BusinessDetails {
   id: string;
@@ -33,10 +37,13 @@ const compactCurrencyFormatter = (value: any) => {
 };
 
 export const BusinessDetailsView = () => {
+  const { t } = useTranslation();
   const params = useParams();
   const id = params?.id as string || "";
   const { data: fetchedBusiness, isLoading } = useBusinessDetails(id);
   const [business, setBusiness] = useState<BusinessDetails | null>(null);
+  const [trajectoryScenario, setTrajectoryScenario] = useState<"base" | "conservative">("base");
+  const [resourceTab, setResourceTab] = useState<"land" | "equipments" | "growth">("land");
 
   useEffect(() => {
     if (fetchedBusiness) {
@@ -65,6 +72,28 @@ export const BusinessDetailsView = () => {
       setBusiness(normalized);
     }
   }, [fetchedBusiness]);
+
+  const dynamicResources = useMemo(() => {
+    if (!business) return null;
+    return getDynamicBusinessResources({
+      category: business.category,
+      businessName: business.name,
+      location: business.location,
+      availableMargin: business.capital.availableMargin,
+      expectedRevenue: business.operations.expectedRevenue,
+      existingResources: business.resources.existingResources,
+    });
+  }, [business]);
+
+  const financialTrajectory = useMemo(() => {
+    if (!business) return null;
+    return calculateFinancialTrajectory({
+      expectedMonthlyRevenue: business.operations.expectedRevenue,
+      availableMargin: business.capital.availableMargin,
+      category: business.category,
+      scenario: trajectoryScenario,
+    });
+  }, [business, trajectoryScenario]);
 
   if (isLoading) {
     return (
@@ -189,38 +218,108 @@ export const BusinessDetailsView = () => {
                       <span className="font-sans text-[12px] font-medium text-slate-500">Production volume</span>
                     </div>
                     <span className="font-sans text-[14px] font-bold text-slate-800">{business.operations.productionQuantity || "30"} units / day</span>
-                    <span className="font-sans text-[12px] text-slate-400 font-medium block mt-1">Buffalo milk (approx. 30 litres/day)</span>
+                    <span className="font-sans text-[12px] text-slate-400 font-medium block mt-1">
+                      {business.category} capacity for ₹{Number(business.operations.expectedRevenue || 50000).toLocaleString('en-IN')}/mo target
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Resources Card */}
+              {/* Resources Card - Dynamic Multi-Tab Module */}
               <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-5 flex flex-col relative overflow-hidden transition-all duration-300">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-blue-400"></div>
-                <div className="flex items-center justify-between mb-6 mt-1">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-600"></div>
+                <div className="flex items-center justify-between mb-4 mt-1">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-full bg-blue-50 text-blue-600"><Layers className="w-4 h-4" /></div>
-                    <span className="font-heading text-[20px] font-bold text-slate-800 tracking-tight">Resources</span>
+                    <div className="p-1.5 rounded-full bg-emerald-50 text-emerald-700"><Layers className="w-4 h-4" /></div>
+                    <span className="font-heading text-[18px] font-bold text-slate-800 tracking-tight">Resources & Assets</span>
                   </div>
-                  <span className="font-sans text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 tracking-wider">VERIFIED</span>
+                  <span className="font-sans text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 tracking-wider">
+                    {business.category} Model
+                  </span>
                 </div>
-                <div className="flex flex-col gap-6">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-sans text-[12px] font-medium text-slate-500">Land</span>
-                      <span className="font-sans text-[12px] font-bold text-teal-600">Freehold</span>
-                    </div>
-                    <span className="font-sans text-[14px] font-bold text-slate-900">{business.resources.land || "0.5 Acre owned"}</span>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-sans text-[12px] font-medium text-slate-500">Equipment</span>
-                      <span className="font-sans text-[12px] font-bold text-orange-500">Upgrade ready</span>
-                    </div>
-                    <span className="font-sans text-[14px] font-bold text-slate-800">{business.resources.equipment || "Basic shed exists"}</span>
-                    <span className="font-sans text-[12px] text-slate-400 font-medium block mt-1">Ready for milking equipment install</span>
-                  </div>
+
+                {/* Resource Category Tabs */}
+                <div className="flex items-center gap-1.5 mb-4 bg-slate-100/70 p-1 rounded-lg">
+                  {[
+                    { id: "land", label: t("biz.landFacility") || "Land & Facility" },
+                    { id: "equipments", label: t("biz.machinery") || "Machinery" },
+                    { id: "growth", label: t("biz.growthResources") || "Growth Resources" },
+                  ].map(({ id, label }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setResourceTab(id as typeof resourceTab)}
+                      className={`flex-1 py-1 px-1.5 rounded-md text-[11px] font-bold transition-all ${
+                        resourceTab === id
+                          ? "bg-white text-slate-900 shadow-xs"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
+
+                {/* Tab 1: Land & Facility */}
+                {resourceTab === "land" && (
+                  <div className="flex flex-col gap-3 text-xs animate-in fade-in duration-200">
+                    <div>
+                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Required Area</span>
+                      <span className="font-bold text-slate-900 text-[13px]">{dynamicResources?.land.requiredArea}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Estimated Land Valuation / Lease</span>
+                      <span className="font-bold text-emerald-700 text-[12.5px]">{dynamicResources?.land.valuation}</span>
+                    </div>
+                    <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Tenure & Regulatory Norm</span>
+                      <p className="text-[11px] text-slate-700 leading-relaxed font-medium">
+                        {dynamicResources?.land.tenureType} • {dynamicResources?.land.zoning}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab 2: Core Machinery & Equipment */}
+                {resourceTab === "equipments" && (
+                  <div className="flex flex-col gap-2 max-h-[170px] overflow-y-auto pr-1 text-xs animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between pb-1 mb-1 border-b border-slate-100">
+                      <span className="text-[10.5px] font-bold text-slate-500">Core Machinery</span>
+                      <span className="text-[11px] font-black text-slate-900">Total ₹{dynamicResources?.totalEquipmentCost.toLocaleString('en-IN')}</span>
+                    </div>
+                    {dynamicResources?.equipments.map((eq: any, i: number) => (
+                      <div key={i} className="p-2 bg-slate-50/80 rounded-lg border border-slate-100 flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-slate-800 text-[11px] block truncate">{eq.name}</span>
+                          <span className={`text-[9.5px] font-semibold px-1.5 py-0.2 rounded-full border inline-block ${
+                            eq.priority === "Essential" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-blue-50 text-blue-700 border-blue-200"
+                          }`}>
+                            {eq.priority}
+                          </span>
+                        </div>
+                        <span className="font-bold text-[11px] text-slate-900 shrink-0">₹{eq.estimatedCost.toLocaleString('en-IN')}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Tab 3: Growth & Scaling Resources */}
+                {resourceTab === "growth" && (
+                  <div className="flex flex-col gap-2.5 text-xs animate-in fade-in duration-200">
+                    <div>
+                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Human Capital Needed</span>
+                      <span className="text-slate-800 text-[11.5px] font-medium leading-relaxed">{dynamicResources?.growthResources.humanCapital}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">3-Phase Power & Utilities</span>
+                      <span className="text-slate-800 text-[11.5px] font-medium leading-relaxed">{dynamicResources?.growthResources.powerAndUtilities}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Working Capital Buffer</span>
+                      <span className="text-emerald-700 text-[11.5px] font-bold">{dynamicResources?.growthResources.workingCapitalReserve}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -230,7 +329,9 @@ export const BusinessDetailsView = () => {
             <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 flex flex-col h-full justify-between transition-all duration-300">
               <div className="flex justify-between items-start mb-6">
                 <span className="font-sans text-[11px] uppercase tracking-wider font-bold text-slate-500 block">Location <span className="text-slate-300 mx-1">•</span> Regional Cluster</span>
-                <span className="font-sans text-[11px] font-bold text-slate-600 bg-slate-200/50 px-2 py-1 rounded-md">Western Ghats Belt</span>
+                <span className="font-sans text-[11px] font-bold text-slate-700 bg-slate-200/50 px-2 py-1 rounded-md">
+                  {business.location.district || "Target District"} Cluster
+                </span>
               </div>
               <div className="flex flex-col gap-5">
                 <div className="flex items-center justify-between">
@@ -245,108 +346,141 @@ export const BusinessDetailsView = () => {
                 <div className="w-full h-px bg-slate-50"></div>
                 <div className="flex items-center justify-between">
                   <span className="font-sans text-[14px] text-slate-500 font-medium">Block</span>
-                  <span className="font-sans text-[14px] font-bold text-slate-900">{business.location.block || "Khed"}</span>
+                  <span className="font-sans text-[14px] font-bold text-slate-900">{business.location.block || "District Block"}</span>
                 </div>
                 <div className="w-full h-px bg-slate-50"></div>
                 <div className="flex items-center justify-between">
                   <span className="font-sans text-[14px] text-slate-500 font-medium">Village</span>
-                  <span className="font-sans text-[13px] font-bold text-orange-500 flex items-center gap-1 cursor-pointer hover:underline">{business.location.village || "Not provided"}</span>
+                  <span className="font-sans text-[13px] font-bold text-orange-500 flex items-center gap-1 cursor-pointer hover:underline">{business.location.village || "Target Village"}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ROW 2: FINANCIAL & NEXT STEPS */}
+        {/* ROW 2: FINANCIAL TRAJECTORY & NEXT STEPS */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch mt-4">
 
           {/* LEFT: FINANCIAL TRAJECTORY */}
           <div className="lg:col-span-2 flex flex-col gap-4">
             <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 md:p-8 flex flex-col h-full transition-all duration-300">
-              <span className="font-sans text-[11px] uppercase tracking-wider font-bold text-slate-500 mb-6 block">Financial Trajectory <span className="text-slate-300 mx-1">•</span> Revenue & Cost Modeling</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                <span className="font-sans text-[11px] uppercase tracking-wider font-bold text-slate-500 block">
+                  Financial Trajectory • Revenue, Costs & Operating Drag
+                </span>
+                {/* Scenario Toggle */}
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setTrajectoryScenario("base")}
+                    className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-bold transition-all ${
+                      trajectoryScenario === "base"
+                        ? "bg-white text-emerald-800 shadow-xs"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    {t("biz.baseScenario") || "Base Trajectory"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTrajectoryScenario("conservative")}
+                    className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-bold transition-all ${
+                      trajectoryScenario === "conservative"
+                        ? "bg-white text-rose-800 shadow-xs"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    {t("biz.conservativeScenario") || "High-Friction Loss Scenario"}
+                  </button>
+                </div>
+              </div>
+
               <div className="flex flex-col md:flex-row gap-8 h-full">
 
-              {/* Area Chart */}
-              <div className="flex flex-col flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-heading text-[20px] font-bold text-slate-900 tracking-tight">Projected revenue, 6 months</h3>
-                  <span className="font-sans text-[12px] font-bold text-[#402a03] bg-[#402a03]/10 px-2 py-0.5 rounded border border-[#402a03]/20">+300% growth</span>
-                </div>
-                <p className="font-sans text-[12px] text-slate-500 mb-6">Target trajectory from initial lactation to peak cooperative distribution.</p>
-                <div className="w-full h-[180px] flex-1">
-                  <EditorialAreaChart
-                    data={[
-                      { month: 'M1', revenue: 15000 },
-                      { month: 'M2', revenue: 18000 },
-                      { month: 'M3', revenue: 23000 },
-                      { month: 'M4', revenue: 35000 },
-                      { month: 'M5', revenue: 45000 },
-                      { month: 'M6', revenue: 60000 },
-                    ]}
-                    xKey="month"
-                    yKey="revenue"
-                    tickFormatter={compactCurrencyFormatter}
-                  />
-                </div>
-                <div className="flex justify-between items-center text-[12px] font-bold px-2 mt-4">
-                  <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#402a03]"></div> M1: ₹15,000 / mo</span>
-                  <span className="text-slate-600">M6: <span className="text-[#402a03]">₹60,000 / mo</span> <span className="font-normal">(Cooperative direct)</span></span>
-                </div>
-              </div>
+                {/* Area Chart */}
+                <div className="flex flex-col flex-1">
+                  <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+                    <h3 className="font-heading text-[19px] font-bold text-slate-900 tracking-tight">
+                      Projected Revenue & Operating Margin (6 Months)
+                    </h3>
+                    <span className="font-sans text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      +{financialTrajectory?.summary.growthPct || 100}% growth
+                    </span>
+                  </div>
 
-              <div className="w-px bg-slate-100 hidden md:block"></div>
+                  {/* Break-even & Loss indicator */}
+                  <div className="flex items-center gap-2 mb-4 flex-wrap text-xs">
+                    <span className="px-2 py-0.5 rounded-md font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] flex items-center gap-1">
+                      <Check className="w-3 h-3 text-emerald-600" />
+                      Break-even: {financialTrajectory?.breakEvenMonth}
+                    </span>
+                    {financialTrajectory?.summary.isInitialLossExpected && (
+                      <span className="px-2 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200 text-[11px]">
+                        ⚠️ M1 Launch Drag: -₹{financialTrajectory?.summary.m1Loss.toLocaleString('en-IN')}
+                      </span>
+                    )}
+                  </div>
 
-              {/* Cost breakdown */}
-              <div className="flex flex-col flex-1 md:max-w-[300px]">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-heading text-[20px] font-bold text-slate-900 tracking-tight">Cost breakdown</h3>
-                  <span className="font-sans text-[12px] font-bold text-slate-600">Total ₹8.00L</span>
-                </div>
-                <p className="font-sans text-[12px] text-slate-500 mb-6">Capital expenditure & launch reserves</p>
-
-                <div className="flex items-center gap-6">
-                  <div className="w-[120px] h-[120px] shrink-0 relative">
-                    <EditorialDonutChart
-                      data={[
-                        { name: 'Equipment', value: 450000, fill: '#402a03' },
-                        { name: 'Raw Material', value: 150000, fill: '#D97706' },
-                        { name: 'Labor', value: 100000, fill: '#3B82F6' },
-                        { name: 'Marketing', value: 50000, fill: '#9333EA' },
-                        { name: 'Contingency', value: 50000, fill: '#64748B' },
-                      ]}
-                      nameKey="name"
-                      valueKey="value"
-                      innerRadius={35}
-                      outerRadius={55}
+                  <div className="w-full h-[190px] flex-1">
+                    <FinancialTrajectoryAreaChart
+                      data={financialTrajectory?.trajectory || []}
+                      tickFormatter={compactCurrencyFormatter}
                     />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                      <span className="font-sans text-[10px] font-bold text-slate-400">CAPEX</span>
-                      <span className="font-sans text-[14px] font-bold text-slate-800">₹8.0L</span>
+                  </div>
+
+                  <div className="flex justify-between items-center text-[11.5px] font-bold px-2 mt-4 flex-wrap gap-2">
+                    <span className="flex items-center gap-1.5 text-slate-600">
+                      <div className="w-2 h-2 rounded-full bg-[#1E6702]"></div>
+                      M1: ₹{financialTrajectory?.summary.m1Revenue.toLocaleString('en-IN')}
+                      <span className={financialTrajectory?.trajectory[0]?.isLoss ? "text-rose-600 font-bold" : "text-emerald-700"}>
+                        ({financialTrajectory?.trajectory[0]?.isLoss ? `-₹${Math.abs(financialTrajectory?.trajectory[0]?.netProfit).toLocaleString('en-IN')}` : `+₹${financialTrajectory?.trajectory[0]?.netProfit.toLocaleString('en-IN')}`})
+                      </span>
+                    </span>
+                    <span className="text-slate-600">
+                      M6: <span className="text-[#1E6702]">₹{financialTrajectory?.summary.m6Revenue.toLocaleString('en-IN')}</span>
+                      <span className="text-emerald-700 font-bold ml-1">(Profit: +₹{financialTrajectory?.summary.m6Profit.toLocaleString('en-IN')})</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="w-px bg-slate-100 hidden md:block"></div>
+
+                {/* Cost breakdown */}
+                <div className="flex flex-col flex-1 md:max-w-[300px]">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <h3 className="font-heading text-[19px] font-bold text-slate-900 tracking-tight">Outlay Breakdown</h3>
+                    <span className="font-sans text-[12px] font-bold text-slate-700">Total {financialTrajectory?.totalCostLakhs}</span>
+                  </div>
+                  <p className="font-sans text-[11.5px] text-slate-500 mb-4">Capital expenditure & launch operating reserves</p>
+
+                  <div className="flex items-center gap-5">
+                    <div className="w-[115px] h-[115px] shrink-0 relative">
+                      <EditorialDonutChart
+                        data={financialTrajectory?.costBreakdown || []}
+                        nameKey="name"
+                        valueKey="value"
+                        innerRadius={35}
+                        outerRadius={52}
+                      />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                        <span className="font-sans text-[9.5px] font-bold text-slate-400">OUTLAY</span>
+                        <span className="font-sans text-[13px] font-bold text-slate-800">{financialTrajectory?.totalCostLakhs}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 flex-1">
+                      {(financialTrajectory?.costBreakdown || []).map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.fill }}></div>
+                            <span className="font-sans text-[11px] font-semibold text-slate-700 truncate">{item.name}</span>
+                          </div>
+                          <span className="font-sans text-[11px] font-bold text-slate-900 ml-1">{item.pct}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-
-                  <div className="flex flex-col gap-3 flex-1">
-                    {[
-                      { name: 'Equipment', color: '#402a03', value: 450000, pct: '56%' },
-                      { name: 'Raw material', color: '#D97706', value: 150000, pct: '19%' },
-                      { name: 'Labor', color: '#3B82F6', value: 100000, pct: '13%' },
-                      { name: 'Marketing', color: '#9333EA', value: 50000, pct: '6%' },
-                      { name: 'Contingency', color: '#64748B', value: 50000, pct: '6%' }
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
-                          <span className="font-sans text-[12px] font-bold text-slate-700 leading-none">{item.name}</span>
-                        </div>
-                        <div className="flex flex-col items-end leading-none">
-                          <span className="font-sans text-[13px] font-bold text-slate-900">{compactCurrencyFormatter(item.value)}</span>
-                          <span className="font-sans text-[10px] text-slate-400 font-medium">{item.pct}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
-              </div>
               </div>
 
             </div>
