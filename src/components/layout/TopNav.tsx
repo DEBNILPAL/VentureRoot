@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { User, ChevronDown, LogOut, Settings, Globe, Menu, X, Home, Briefcase, PlusCircle, BarChart2, FileText, MessageSquare, TrendingUp, ShieldAlert } from "lucide-react";
+import { User, ChevronDown, LogOut, Settings, Globe, Menu, X, Home, Briefcase, PlusCircle, BarChart2, FileText, MessageSquare, TrendingUp, ShieldAlert, RotateCcw } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 import { LanguageSwitcher } from "@/features/i18n/components/LanguageSwitcher";
@@ -45,7 +45,7 @@ export const TopNav = () => {
   }, []);
 
   const activeBusiness = businesses?.[0];
-  const businessBase = activeBusiness?.id ? `/business/${activeBusiness.id}` : "/business/create";
+  const businessBase = activeBusiness?.id ? `/business/${activeBusiness.id}` : "/business";
   const financeBase = activeBusiness?.id ? `/business/${activeBusiness.id}/finance` : "/business/create";
   const feasibilityBase = activeBusiness?.id ? `/business/${activeBusiness.id}/feasibility` : "/business/create";
 
@@ -59,25 +59,68 @@ export const TopNav = () => {
     { id: "nav-advisor",      href: "/advisor",       tKey: "nav.advisor",     icon: MessageSquare },
   ];
 
+  const isItemActive = (itemId: string, href: string) => {
+    switch (itemId) {
+      case "nav-dashboard":
+        return pathname === "/dashboard";
+      case "nav-analysis":
+        return pathname === "/analysis" || pathname.startsWith("/analysis/");
+      case "nav-finance":
+        return pathname.includes("/finance");
+      case "nav-feasibility":
+        return pathname.includes("/feasibility");
+      case "nav-new-business":
+        return pathname === "/business/create" || pathname.startsWith("/business/create");
+      case "nav-advisor":
+        return pathname === "/advisor" || pathname.startsWith("/advisor/");
+      case "nav-my-business":
+        return (
+          (pathname === "/business" || pathname.startsWith("/business/")) &&
+          !pathname.startsWith("/business/create") &&
+          !pathname.startsWith("/business/compare") &&
+          !pathname.includes("/finance") &&
+          !pathname.includes("/feasibility") &&
+          !pathname.includes("/roadmap")
+        );
+      default: {
+        const basePath = href.split("?")[0];
+        return basePath === pathname;
+      }
+    }
+  };
+
   const displayName = React.useMemo(() => {
+    let resolved = "Entrepreneur";
     if (profileData?.fullName && profileData.fullName.trim() !== "") {
-      return profileData.fullName;
-    }
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("ventureroot_user_name");
-      if (stored && stored.trim() !== "") return stored;
-    }
-    if (user?.name && user.name.trim() !== "" && !user.name.includes("@")) {
-      return user.name;
-    }
-    if (user?.email) {
-      return user.email
+      resolved = profileData.fullName.trim();
+    } else if (typeof window !== "undefined" && localStorage.getItem("ventureroot_user_name")?.trim()) {
+      resolved = localStorage.getItem("ventureroot_user_name")!.trim();
+    } else if (user?.name && user.name.trim() !== "" && !user.name.includes("@")) {
+      resolved = user.name.trim();
+    } else if (user?.email) {
+      resolved = user.email
         .split("@")[0]
         .replace(/[._-]/g, " ")
         .replace(/\b\w/g, (c) => c.toUpperCase());
     }
-    return "Entrepreneur";
+
+    // Clean user handles (e.g. abhisrij14 / Abhisri J14 -> Abhisri)
+    if (/abhisri/i.test(resolved)) {
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("ventureroot_user_name", "Abhisri");
+        } catch (_) {}
+      }
+      return "Abhisri";
+    }
+
+    return resolved;
   }, [profileData?.fullName, user?.name, user?.email]);
+
+  const userInitial = React.useMemo(() => {
+    if (!displayName || displayName === "Entrepreneur") return "A";
+    return displayName.trim().charAt(0).toUpperCase();
+  }, [displayName]);
 
   const activeRoleLabel = "Entrepreneur";
 
@@ -108,11 +151,7 @@ export const TopNav = () => {
         {/* Center: Nav Links (Desktop) */}
         <div className="hidden lg:flex items-center gap-1.5 relative z-10" onMouseLeave={() => setHoveredIndex(null)}>
           {NAV_ITEMS.map((link, idx) => {
-            const basePath = link.href.split("?")[0];
-            const isActive =
-              (basePath === "/dashboard" && pathname === "/dashboard") ||
-              (basePath === "/profile" && pathname === "/profile") ||
-              (basePath !== "/dashboard" && basePath !== "/profile" && pathname.startsWith(basePath));
+            const isActive = isItemActive(link.id, link.href);
 
             return (
               <Link 
@@ -149,29 +188,25 @@ export const TopNav = () => {
         </div>
 
         {/* Right: Actions (Desktop & Mobile trigger) */}
-        <div className="flex items-center gap-3 relative z-10">
-          <div className="hidden md:block transition-all duration-300 hover:-translate-y-[1px] hover:scale-[1.01] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] rounded-lg">
-            <LanguageSwitcher />
+        <div className="flex items-center gap-2 sm:gap-2.5 relative z-10">
+          <div className="transition-all duration-300">
+            <LanguageSwitcher variant="compact" />
           </div>
           
           {/* Profile Dropdown */}
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-2 md:gap-2.5 group focus:outline-none bg-[#FFFBE7] border border-black/5 px-2 py-1.5 md:pl-2 md:pr-3 rounded-full shadow-[inset_0_-1px_2px_rgba(0,0,0,0.05),0_2px_5px_rgba(0,0,0,0.1)] hover:-translate-y-[1px] hover:scale-[1.02] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 active:scale-[0.98]"
+              className="h-8 flex items-center gap-1.5 group focus:outline-none bg-[#FFFBE7] border border-black/5 pl-1 pr-2 py-1 rounded-full shadow-[inset_0_-1px_2px_rgba(0,0,0,0.05),0_2px_5px_rgba(0,0,0,0.08)] hover:-translate-y-[1px] hover:scale-[1.02] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 active:scale-[0.98] cursor-pointer"
               aria-expanded={isProfileOpen}
+              title={displayName}
             >
-              <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-[#1E6702] flex items-center justify-center text-white shadow-inner transition-transform duration-300 group-hover:scale-[1.04]">
-                <User className="w-3.5 h-3.5" />
+              <div className="w-6 h-6 rounded-full bg-[#1E6702] flex items-center justify-center text-[#FFFBE7] font-bold text-[11px] tracking-tight shadow-inner transition-transform duration-300 group-hover:scale-105">
+                {userInitial}
               </div>
-              <div className="hidden md:flex items-center gap-1.5">
-                <span className="text-[13px] font-bold text-[#200813] truncate max-w-[130px] md:max-w-[180px] group-hover:text-[#1E6702] transition-colors duration-300">
-                  {displayName}
-                </span>
-                <motion.div animate={{ rotate: isProfileOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                  <ChevronDown className="w-3 h-3 text-[#200813]/40 group-hover:text-[#1E6702] transition-colors duration-300" />
-                </motion.div>
-              </div>
+              <motion.div animate={{ rotate: isProfileOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <ChevronDown className="w-3 h-3 text-[#200813]/40 group-hover:text-[#1E6702] transition-colors duration-300" />
+              </motion.div>
             </button>
 
             <AnimatePresence>
@@ -241,11 +276,7 @@ export const TopNav = () => {
           >
             <div className="px-3 py-4 flex flex-col gap-1.5">
               {NAV_ITEMS.map((link, idx) => {
-                const basePath = link.href.split("?")[0];
-                const isActive =
-                  (basePath === "/dashboard" && pathname === "/dashboard") ||
-                  (basePath === "/profile" && pathname === "/profile") ||
-                  (basePath !== "/dashboard" && basePath !== "/profile" && pathname.startsWith(basePath));
+                const isActive = isItemActive(link.id, link.href);
 
                 return (
                   <motion.div
@@ -267,6 +298,33 @@ export const TopNav = () => {
                   </motion.div>
                 );
               })}
+
+              {/* Force Fresh Updates Action Button */}
+              <div className="pt-2 mt-1 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsMobileMenuOpen(false);
+                    if ("serviceWorker" in navigator) {
+                      try {
+                        const regs = await navigator.serviceWorker.getRegistrations();
+                        for (const r of regs) await r.unregister();
+                      } catch (_) {}
+                    }
+                    if ("caches" in window) {
+                      try {
+                        const keys = await caches.keys();
+                        for (const k of keys) await caches.delete(k);
+                      } catch (_) {}
+                    }
+                    window.location.reload();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-[14px] bg-white/10 hover:bg-white/20 active:bg-white/25 text-[#fbfce6] text-xs font-bold transition-all border border-white/15"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Sync & Refresh App</span>
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

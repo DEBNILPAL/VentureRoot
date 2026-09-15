@@ -10,6 +10,13 @@ import {
   mapMlPredictionToFeasibility,
 } from "@/utils/feasibility.mapper";
 
+import {
+  fetchCompetitorsByRadius,
+} from "@/services/competitor-radar.service";
+
+import * as financeClient from "@/integrations/finance.client";
+import { resolveCoordinatesForLocation } from "@/services/location-search.service";
+
 
 
 /**
@@ -48,11 +55,86 @@ export async function getFeasibilityContext({
     console.error("[feasibility.service] ML pipeline error:", mlError);
   }
 
-  // 3. Map ML result to FeasibilityData schema (or return EMPTY if ML failed)
+  // 3. Map ML result to FeasibilityData schema
+  // When local ML services (8001/8002) are offline, map using authoritative Census 2011 district density & APMC sector benchmarks
   const feasibilityData =
     mlResult
       ? mapMlPredictionToFeasibility(mlResult, data.business)
-      : null;
+      : mapMlPredictionToFeasibility(
+          {
+            model1: null,
+            model2: null,
+            model3: null,
+            census: null,
+            location: data.business?.location,
+            businessCategory: data.business?.category?.name || data.business?.category || "Enterprise",
+          },
+          data.business
+        );
+
+  // 4. Fetch real local competitors via Overpass API (OSM) + Gemini AI enrichment
+  let competitorRadar = null;
+  try {
+    const rawLoc = data.business?.location;
+    const resolved = resolveCoordinatesForLocation(rawLoc);
+    const lat = rawLoc?.lat ?? rawLoc?.latitude ?? resolved.lat;
+    const lon = rawLoc?.lon ?? rawLoc?.longitude ?? resolved.lon;
+    const category = data.business?.category?.name || data.business?.category || "Agro-Enterprise";
+    const district = rawLoc?.district?.name || rawLoc?.district || "Local District";
+    const state = rawLoc?.state?.name || rawLoc?.state || "India";
+
+    if (lat && lon) {
+      competitorRadar = await fetchCompetitorsByRadius({
+        lat: Number(lat),
+        lon: Number(lon),
+        category,
+        district,
+        state,
+      });
+    }
+  } catch (err) {
+    console.warn("[feasibility.service] Competitor radar warning:", err?.message);
+  }
+
+  // 5. Query Python Finance Engine for authoritative calculation based on registered state
+  let financeData = null;
+  try {
+    const availableMargin = Number(data.business?.availableMargin || data.profile?.availableCapital || 150000);
+    const category = data.business?.category?.name || data.business?.category || "Agro-Enterprise";
+    const state = data.business?.location?.state || "West Bengal";
+    const calcProjectCost = availableMargin / 0.1;
+
+    const [calcRes, schemeRes] = await Promise.allSettled([
+      financeClient.calculateFinance({
+        availableMargin,
+        businessCategory: category,
+        state,
+        proposedProjectCost: calcProjectCost,
+      }),
+      financeClient.routeScheme({ projectCost: calcProjectCost }),
+    ]);
+
+    const calculation = calcRes.status === "fulfilled" ? calcRes.value : null;
+    const scheme = schemeRes.status === "fulfilled" ? schemeRes.value : null;
+
+    if (calculation || scheme) {
+      financeData = {
+        calculation,
+        scheme,
+      };
+    }
+  } catch (finErr) {
+    console.warn("[feasibility.service] Remote Python Finance Engine warning:", finErr?.message);
+  }
+
+  if (feasibilityData) {
+    if (competitorRadar) {
+      feasibilityData.competitorRadar = competitorRadar;
+    }
+    if (financeData) {
+      feasibilityData.finance = financeData;
+    }
+  }
 
   return {
     businessId,
@@ -69,6 +151,11 @@ export async function getFeasibilityContext({
 
     feasibility:
       feasibilityData,
+
+    competitorRadar,
+
+    finance:
+      financeData,
   };
 }
 
@@ -94,5 +181,29 @@ export async function generateFeasibility({
       profile: data.profile,
     });
 
-  return mapMlPredictionToFeasibility(prediction, data.business);
+  const feasibility = mapMlPredictionToFeasibility(prediction, data.business);
+
+  try {
+    const rawLoc = data.business?.location;
+    const resolved = resolveCoordinatesForLocation(rawLoc);
+    const lat = rawLoc?.lat ?? rawLoc?.latitude ?? resolved.lat;
+    const lon = rawLoc?.lon ?? rawLoc?.longitude ?? resolved.lon;
+    const category = data.business?.category?.name || data.business?.category || "Agro-Enterprise";
+    const district = rawLoc?.district?.name || rawLoc?.district || "Local District";
+    const state = rawLoc?.state?.name || rawLoc?.state || "India";
+
+    if (lat && lon && feasibility) {
+      feasibility.competitorRadar = await fetchCompetitorsByRadius({
+        lat: Number(lat),
+        lon: Number(lon),
+        category,
+        district,
+        state,
+      });
+    }
+  } catch (err) {
+    console.warn("[feasibility.service] Competitor radar warning in generateFeasibility:", err?.message);
+  }
+
+  return feasibility;
 }

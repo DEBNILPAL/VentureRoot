@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { 
   Sparkles, 
@@ -501,6 +501,36 @@ export default function AnalysisPage() {
     }
   };
 
+  // Debounced auto-resolution when user manually types District / Taluka / Village
+  useEffect(() => {
+    if (!district && !subdistrict) return;
+    const isDefault =
+      Math.abs(centerCoords[0] - 20.5937) < 0.005 && Math.abs(centerCoords[1] - 78.9629) < 0.005;
+
+    const timer = setTimeout(async () => {
+      const parts = [village, subdistrict, district, state].filter(Boolean);
+      if (parts.length < 2) return;
+      try {
+        const res = await fetch(`/api/v1/locations/search?q=${encodeURIComponent(parts.join(", "))}`);
+        if (res.ok) {
+          const json = await res.json();
+          const items = json?.data?.locations || [];
+          if (items.length > 0) {
+            const first = items[0];
+            const rawLat = first.data?.latitude ?? first.latitude;
+            const rawLon = first.data?.longitude ?? first.longitude;
+            if (rawLat && rawLon && !isNaN(Number(rawLat)) && !isNaN(Number(rawLon))) {
+              setCenterCoords([Number(rawLat), Number(rawLon)]);
+              if (!locationLabel) setLocationLabel(first.label || parts.join(", "));
+            }
+          }
+        }
+      } catch (_) {}
+    }, 650);
+
+    return () => clearTimeout(timer);
+  }, [district, subdistrict, village, state]);
+
   const handleGenerateAnalysis = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsLoading(true);
@@ -512,6 +542,9 @@ export default function AnalysisPage() {
     }, 700);
 
     try {
+      const isDefault =
+        Math.abs(centerCoords[0] - 20.5937) < 0.005 && Math.abs(centerCoords[1] - 78.9629) < 0.005;
+
       const res = await fetch("/api/v1/feasibility/instant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -522,8 +555,8 @@ export default function AnalysisPage() {
           district: district.trim() || "Anand",
           subdistrict: subdistrict.trim() || district.trim() || "Anand",
           village: village?.trim() || null,
-          latitude: centerCoords[0],
-          longitude: centerCoords[1],
+          latitude: isDefault ? null : centerCoords[0],
+          longitude: isDefault ? null : centerCoords[1],
           availableMargin: numMargin || 150000,
           projectCost: numCost || ((numMargin || 150000) * 8),
           landType,
@@ -573,12 +606,35 @@ export default function AnalysisPage() {
   };
 
   const competitorMarkers: MapMarker[] = useMemo(() => {
-    if (reportData?.feasibility?.competition?.competitors?.length) {
-      return reportData.feasibility.competition.competitors.map((comp: any, idx: number) => {
+    const rawList: any[] = [];
+    const seenNames = new Set<string>();
+
+    const addComp = (c: any) => {
+      if (!c) return;
+      const key = (c.name || c.title || "").toLowerCase().trim();
+      if (!key || seenNames.has(key)) return;
+      seenNames.add(key);
+      rawList.push(c);
+    };
+
+    if (reportData?.competitorRadar?.within10km) {
+      reportData.competitorRadar.within10km.forEach(addComp);
+    }
+    if (reportData?.competitorRadar?.within20km) {
+      reportData.competitorRadar.within20km.forEach(addComp);
+    }
+    if (reportData?.feasibility?.competition?.competitors) {
+      reportData.feasibility.competition.competitors.forEach(addComp);
+    }
+
+    if (rawList.length > 0) {
+      return rawList.map((comp: any, idx: number) => {
         const rawPos = comp.position;
         const pos: [number, number] =
           Array.isArray(rawPos) && rawPos.length >= 2 && typeof rawPos[0] === "number" && typeof rawPos[1] === "number" && rawPos[0] !== 0
             ? [rawPos[0], rawPos[1]]
+            : comp.lat && comp.lon && !isNaN(Number(comp.lat)) && !isNaN(Number(comp.lon))
+            ? [Number(comp.lat), Number(comp.lon)]
             : [
                 centerCoords[0] + (idx % 2 === 0 ? 0.014 : -0.016) * (idx + 1),
                 centerCoords[1] + (idx % 2 === 0 ? 0.013 : -0.015) * (idx + 1),
@@ -623,26 +679,67 @@ export default function AnalysisPage() {
     return generateCompetitors(centerCoords[0], centerCoords[1], category || "Enterprise", subdistrict || district || "Local");
   }, [reportData, centerCoords, category, subdistrict, district, isHealthcare]);
 
+  // Accurate 10km and 10–20km competitor collections
+  const allAnalysis10kmCompetitors = useMemo(() => {
+    if (reportData?.competitorRadar?.within10km && reportData.competitorRadar.within10km.length > 0) {
+      return reportData.competitorRadar.within10km;
+    }
+    const fromFeas = (reportData?.feasibility?.competition?.competitors || []).filter(
+      (c: any) => (c.distanceKm || 0) <= 10 && (c.distanceKm || 0) > 0
+    );
+    if (fromFeas.length > 0) return fromFeas;
+    return competitorMarkers.filter((c: any) => (c.distanceKm || 0) <= 10 && (c.distanceKm || 0) > 0);
+  }, [reportData, competitorMarkers]);
+
+  const allAnalysis20kmCompetitors = useMemo(() => {
+    if (reportData?.competitorRadar?.within20km && reportData.competitorRadar.within20km.length > 0) {
+      return reportData.competitorRadar.within20km;
+    }
+    const fromFeas = (reportData?.feasibility?.competition?.competitors || []).filter(
+      (c: any) => (c.distanceKm || 0) > 10 && (c.distanceKm || 0) <= 20
+    );
+    if (fromFeas.length > 0) return fromFeas;
+    return competitorMarkers.filter((c: any) => (c.distanceKm || 0) > 10 && (c.distanceKm || 0) <= 20);
+  }, [reportData, competitorMarkers]);
+
+  const allAnalysisCompetitors = useMemo(() => {
+    return [...allAnalysis10kmCompetitors, ...allAnalysis20kmCompetitors];
+  }, [allAnalysis10kmCompetitors, allAnalysis20kmCompetitors]);
+
+  const activeReach10km = useMemo(() => {
+    const reach = reportData?.feasibility?.market?.reach;
+    if (reach && reach.radius10km) return reach.radius10km;
+    const density = getAuthoritativeCensusDensity({ district, state, subdistrict, name: locationLabel });
+    return Math.round(314.16 * density);
+  }, [reportData, district, state, subdistrict, locationLabel]);
+
+  const activeReach20km = useMemo(() => {
+    const reach = reportData?.feasibility?.market?.reach;
+    if (reach && reach.radius20km) return reach.radius20km;
+    const density = getAuthoritativeCensusDensity({ district, state, subdistrict, name: locationLabel });
+    return Math.round(1256.64 * density);
+  }, [reportData, district, state, subdistrict, locationLabel]);
+
   // Competitor markers within active catchment radius
   const radiusCompetitorMarkers = useMemo(() => {
     return competitorMarkers.filter((m) => (m.distanceKm || 0) <= analysisCatchmentRadius);
   }, [competitorMarkers, analysisCatchmentRadius]);
 
   const directCompCount = useMemo(() => {
-    return radiusCompetitorMarkers.filter((m) => m.type !== "indirect").length;
-  }, [radiusCompetitorMarkers]);
+    return allAnalysisCompetitors.filter((m: any) => !(m.type || "").toLowerCase().includes("indirect")).length;
+  }, [allAnalysisCompetitors]);
 
   const indirectCompCount = useMemo(() => {
-    return radiusCompetitorMarkers.filter((m) => m.type === "indirect").length;
-  }, [radiusCompetitorMarkers]);
+    return allAnalysisCompetitors.filter((m: any) => (m.type || "").toLowerCase().includes("indirect")).length;
+  }, [allAnalysisCompetitors]);
 
   const govtCompCount = useMemo(() => {
-    return radiusCompetitorMarkers.filter(isCompetitorGovt).length;
-  }, [radiusCompetitorMarkers]);
+    return allAnalysisCompetitors.filter(isCompetitorGovt).length;
+  }, [allAnalysisCompetitors]);
 
   const privateCompCount = useMemo(() => {
-    return radiusCompetitorMarkers.length - govtCompCount;
-  }, [radiusCompetitorMarkers, govtCompCount]);
+    return allAnalysisCompetitors.length - govtCompCount;
+  }, [allAnalysisCompetitors, govtCompCount]);
 
   const filteredCompetitorMarkers = useMemo(() => {
     if (analysisCompFilter === "direct") {
@@ -905,36 +1002,36 @@ export default function AnalysisPage() {
   }, [reportData, isHealthcare, district]);
 
   return (
-    <div className="w-full h-full p-4 md:p-6 lg:p-8 flex flex-col gap-8 max-w-7xl mx-auto">
+    <div className="w-full h-full p-3 sm:p-5 md:p-6 lg:p-8 flex flex-col gap-6 sm:gap-8 max-w-7xl mx-auto">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1E6702]/10 text-[#1E6702] text-xs font-bold mb-2">
             <Sparkles className="w-3.5 h-3.5" /> Comprehensive Enterprise Feasibility
           </div>
-          <h1 className="font-heading text-[30px] md:text-[36px] font-bold text-[#242424] tracking-tight leading-tight">
+          <h1 className="font-heading text-2xl sm:text-3xl md:text-[36px] font-bold text-[#242424] tracking-tight leading-tight break-words">
             Venture Intelligence & Business Analysis
           </h1>
-          <p className="text-slate-600 text-sm font-medium mt-1">
+          <p className="text-slate-600 text-xs sm:text-sm font-medium mt-1 leading-relaxed break-words whitespace-normal">
             Input your project specifications below to calculate real-world ML market potential, competitor density maps, conformal Mandi pricing, and government subsidy modeling.
           </p>
         </div>
       </div>
 
       {/* Main Configuration Card */}
-      <div className="bg-[#fffff5] border border-gray-900/8 rounded-3xl p-6 md:p-8 shadow-[0_4px_24px_rgb(0,0,0,0.05)]">
-        <form onSubmit={handleGenerateAnalysis} className="space-y-8">
+      <div className="bg-[#fffff5] border border-gray-900/8 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-[0_4px_24px_rgb(0,0,0,0.05)]">
+        <form onSubmit={handleGenerateAnalysis} className="space-y-6 sm:space-y-8">
           
           {/* SECTION 1: Target Project & Identity */}
           <div>
             <div className="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-slate-100">
               <Briefcase className="w-5 h-5 text-[#1E6702]" />
-              <h2 className="text-base font-bold text-slate-900 uppercase tracking-wide">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 uppercase tracking-wide">
                 1. Target Project & Business Identity
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Target Project Name <span className="text-red-500">*</span>
@@ -946,10 +1043,13 @@ export default function AnalysisPage() {
                     required
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="e.g. Sahyadri Agro Processing / Annapurna Dairy"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-sm font-medium outline-hidden transition-all bg-white"
+                    placeholder="Enter project name..."
+                    className="w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-xs sm:text-sm font-medium outline-hidden transition-all bg-white"
                   />
                 </div>
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
+                  e.g. Sahyadri Agro Processing / Annapurna Dairy
+                </p>
               </div>
 
               <div>
@@ -962,14 +1062,17 @@ export default function AnalysisPage() {
                     required
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-sm font-medium outline-hidden transition-all bg-white"
+                    className="w-full pl-10 pr-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-xs sm:text-sm font-medium outline-hidden transition-all bg-white text-ellipsis"
                   >
-                    <option value="" disabled>-- Select Sector / Business Category --</option>
+                    <option value="" disabled>-- Select Sector / Category --</option>
                     {CATEGORIES.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
+                  Primary sector: Food Processing, Dairy, Retail, Healthcare, etc.
+                </p>
               </div>
 
               <div>
@@ -979,19 +1082,22 @@ export default function AnalysisPage() {
                 <select
                   value={businessModel}
                   onChange={(e) => setBusinessModel(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-sm font-medium outline-hidden transition-all bg-white"
+                  className="w-full px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-xs sm:text-sm font-medium outline-hidden transition-all bg-white text-ellipsis"
                 >
-                  <option value="">-- Select Business Operating Model (Optional) --</option>
+                  <option value="">-- Select Business Model (Optional) --</option>
                   {(isHealthcare ? HEALTHCARE_MODELS : BUSINESS_MODELS).map((bm) => (
                     <option key={bm} value={bm}>{bm}</option>
                   ))}
                 </select>
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
+                  Select production, retail, B2B wholesale, or service model
+                </p>
               </div>
             </div>
 
             {/* Hospital & Clinical Setup Specific Parameters (Adaptive) */}
             {isHealthcare && (
-              <div className="mt-5 p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-3.5 animate-in fade-in duration-200">
+              <div className="mt-5 p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-3.5 animate-in fade-in duration-200">
                 <div className="flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-[#1E6702]" />
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-950">
@@ -1008,9 +1114,12 @@ export default function AnalysisPage() {
                       type="text"
                       value={bedCapacity}
                       onChange={(e) => setBedCapacity(e.target.value)}
-                      placeholder="e.g. 15-20 Beds (10 Gen Ward, 3 ICU, 2 Private)"
+                      placeholder="e.g. 15-20 Beds (General/ICU)..."
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:border-[#1E6702] outline-hidden"
                     />
+                    <p className="text-[11px] text-emerald-800/80 mt-1 leading-normal break-words whitespace-normal">
+                      e.g. 15-20 Beds (10 General Ward, 3 ICU, 2 Private)
+                    </p>
                   </div>
 
                   <div>
@@ -1020,14 +1129,17 @@ export default function AnalysisPage() {
                     <select
                       value={facilityType}
                       onChange={(e) => setFacilityType(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:border-[#1E6702] outline-hidden"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:border-[#1E6702] outline-hidden text-ellipsis"
                     >
-                      <option value="">-- Select Hospital Classification --</option>
+                      <option value="">-- Select Classification --</option>
                       <option value="15-25 Bed Community Hospital">15-25 Bed Community Hospital (Secondary Care)</option>
                       <option value="Daycare Surgery & Maternity Nursing Home">Daycare Surgery & Maternity Nursing Home</option>
                       <option value="Primary Care Polyclinic & Diagnostic Hub">Primary Care Polyclinic & Diagnostic Hub</option>
                       <option value="24x7 Emergency Trauma & Resuscitation Center">24x7 Emergency Trauma & Resuscitation Center</option>
                     </select>
+                    <p className="text-[11px] text-emerald-800/80 mt-1 leading-normal break-words whitespace-normal">
+                      Select hospital tier or clinical specialization
+                    </p>
                   </div>
 
                   <div>
@@ -1038,9 +1150,12 @@ export default function AnalysisPage() {
                       type="text"
                       value={medicalSpecialties}
                       onChange={(e) => setMedicalSpecialties(e.target.value)}
-                      placeholder="e.g. General Medicine, Obs/Gyn, Minor OT, 24x7 Pharmacy"
+                      placeholder="e.g. Gen Medicine, Obs/Gyn, OT..."
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:border-[#1E6702] outline-hidden"
                     />
+                    <p className="text-[11px] text-emerald-800/80 mt-1 leading-normal break-words whitespace-normal">
+                      e.g. General Medicine, Obs/Gyn, Minor OT, 24x7 Pharmacy
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1051,7 +1166,7 @@ export default function AnalysisPage() {
           <div>
             <div className="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-slate-100">
               <MapPin className="w-5 h-5 text-[#1E6702]" />
-              <h2 className="text-base font-bold text-slate-900 uppercase tracking-wide">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 uppercase tracking-wide">
                 2. Base Location & Geographical Catchment
               </h2>
             </div>
@@ -1061,55 +1176,93 @@ export default function AnalysisPage() {
                 <LocationAutocompleteInput
                   label="Search Location by Initial Letters (OpenStreetMap & India Census)"
                   value={locationLabel}
-                  placeholder="Type initials (e.g. Pune, Anand, Khed, Coimbatore, Jaipur)..."
+                  placeholder="Type city, district or village initials..."
                   onSelect={handleLocationSelect}
                 />
+                <p className="text-[11px] text-slate-500 mt-1.5 leading-normal break-words whitespace-normal">
+                  Search by initials to auto-fill location (e.g. Pune, Anand, Khed, Coimbatore, Jaipur)
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 bg-slate-50/80 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80">
                 <div>
                   <StateAutocompleteInput
                     label="State"
                     required
                     value={state}
                     onChange={(val) => setState(val)}
-                    placeholder="Type state initials or name (e.g. Maharashtra, Gujarat)..."
+                    placeholder="Type state..."
                     inputClassName="py-2 text-xs"
                   />
+                  <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
+                    e.g. Maharashtra, Gujarat, Tamil Nadu
+                  </p>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">District <span className="text-red-500">*</span></label>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    District <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     required
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
-                    placeholder="e.g. Pune, Anand, Varanasi"
+                    placeholder="e.g. Pune, Anand..."
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-800"
                   />
+                  <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
+                    e.g. Pune, Anand, Varanasi, Satara
+                  </p>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Sub-district / Taluka</label>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Sub-district / Taluka
+                  </label>
                   <input
                     type="text"
                     required
                     value={subdistrict}
                     onChange={(e) => setSubdistrict(e.target.value)}
-                    placeholder="e.g. Haveli, Anand, Khed"
+                    placeholder="e.g. Haveli, Khed..."
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-800"
                   />
+                  <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
+                    e.g. Haveli, Anand, Khed, Baramati
+                  </p>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Village / Ward</label>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Village / Ward
+                  </label>
                   <input
                     type="text"
                     value={village}
                     onChange={(e) => setVillage(e.target.value)}
-                    placeholder="Optional (e.g. Wagholi, Kasba)"
+                    placeholder="Optional (e.g. Wagholi)"
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-800"
                   />
+                  <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
+                    Optional: e.g. Wagholi, Kasba, Shirur
+                  </p>
                 </div>
               </div>
+
+              {/* Location Coordinate Lock Confirmation */}
+              {(locationLabel || district || (centerCoords[0] !== 20.5937 && centerCoords[1] !== 78.9629)) && (
+                <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-900">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#1E6702] shrink-0" />
+                    <span>
+                      <strong className="text-emerald-950">Target Location Locked:</strong>{" "}
+                      {locationLabel || [village, subdistrict, district, state].filter(Boolean).join(", ")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-mono text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2.5 py-1 rounded-lg border border-emerald-300">
+                    <MapPin className="w-3 h-3 text-[#1E6702]" />
+                    <span>{centerCoords[0].toFixed(4)}°N, {centerCoords[1].toFixed(4)}°E</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1117,30 +1270,30 @@ export default function AnalysisPage() {
           <div>
             <div className="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-slate-100">
               <IndianRupee className="w-5 h-5 text-[#1E6702]" />
-              <h2 className="text-base font-bold text-slate-900 uppercase tracking-wide">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 uppercase tracking-wide">
                 3. Capital Margin, Total Project Cost & Operations
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Available Own Capital / Margin (₹) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-3.5 text-slate-400 font-bold text-sm">₹</span>
+                  <span className="absolute left-3.5 top-3 sm:top-3.5 text-slate-400 font-bold text-sm">₹</span>
                   <input
                     type="number"
                     required
-                    min={10000}
-                    step={10000}
+                    min={0}
+                    step="any"
                     value={availableMargin}
                     onChange={(e) => setAvailableMargin(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder="e.g. 250000"
-                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-sm font-semibold outline-hidden transition-all bg-white"
+                    className="w-full pl-8 pr-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-xs sm:text-sm font-semibold outline-hidden transition-all bg-white"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
                   Own equity contribution (e.g. ₹2,50,000)
                 </p>
               </div>
@@ -1150,20 +1303,20 @@ export default function AnalysisPage() {
                   Total Proposed Project Cost / Capex (₹) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-3.5 text-slate-400 font-bold text-sm">₹</span>
+                  <span className="absolute left-3.5 top-3 sm:top-3.5 text-slate-400 font-bold text-sm">₹</span>
                   <input
                     type="number"
                     required
-                    min={50000}
-                    step={25000}
+                    min={0}
+                    step="any"
                     value={projectCost}
                     onChange={(e) => setProjectCost(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder="e.g. 2000000"
-                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-sm font-semibold outline-hidden transition-all bg-white"
+                    className="w-full pl-8 pr-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-xs sm:text-sm font-semibold outline-hidden transition-all bg-white"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Plant, Machinery, Civil & Setup Cost
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
+                  Plant, Machinery, Civil & Setup Cost (e.g. ₹20,00,000)
                 </p>
               </div>
 
@@ -1171,13 +1324,13 @@ export default function AnalysisPage() {
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Calculated Debt Financing Required (₹)
                 </label>
-                <div className="w-full px-4 py-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-emerald-900 font-bold text-sm flex items-center justify-between">
+                <div className="w-full px-4 py-2.5 sm:py-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-emerald-900 font-bold text-xs sm:text-sm flex flex-wrap items-center justify-between gap-1">
                   <span>₹{calculatedLoan.toLocaleString('en-IN')}</span>
                   <span className="text-[11px] uppercase font-bold text-emerald-700">
                     {numCost > 0 ? `${((calculatedLoan / numCost) * 100).toFixed(0)}% Loan` : "Calculated on submit"}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
                   Evaluated against PMEGP / MUDRA caps
                 </p>
               </div>
@@ -1189,12 +1342,15 @@ export default function AnalysisPage() {
                 <select
                   value={landType}
                   onChange={(e) => setLandType(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-sm font-medium outline-hidden transition-all bg-white"
+                  className="w-full px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-xs sm:text-sm font-medium outline-hidden transition-all bg-white text-ellipsis"
                 >
                   {LAND_TYPES.map((lt) => (
                     <option key={lt} value={lt}>{lt}</option>
                   ))}
                 </select>
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
+                  Current property tenure status (Owned, Rented, Leased)
+                </p>
               </div>
 
               <div>
@@ -1207,11 +1363,16 @@ export default function AnalysisPage() {
                   onChange={(e) => setTargetScale(e.target.value)}
                   placeholder={
                     isHealthcare
-                      ? "e.g. 15-20 Beds, 50-75 OPD Patients/day, 24x7 Emergency & Minor OT"
-                      : "e.g. 500 liters/day, 10 tons/month, or 50 customers/day"
+                      ? "e.g. 15-20 Beds, 50 OPD..."
+                      : "e.g. 500 L/day, 10 tons/mo..."
                   }
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-sm font-medium outline-hidden transition-all bg-white"
+                  className="w-full px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-xs sm:text-sm font-medium outline-hidden transition-all bg-white"
                 />
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
+                  {isHealthcare
+                    ? "Examples: 15-20 Beds, 50-75 OPD Patients/day, 24x7 Emergency & Minor OT"
+                    : "Examples: 500 liters/day, 10 tons/month, or 50 customers/day"}
+                </p>
               </div>
 
               <div>
@@ -1219,25 +1380,25 @@ export default function AnalysisPage() {
                   Working Capital Requirement (₹)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-3.5 text-slate-400 font-bold text-sm">₹</span>
+                  <span className="absolute left-3.5 top-3 sm:top-3.5 text-slate-400 font-bold text-sm">₹</span>
                   <input
                     type="number"
-                    min={10000}
-                    step={10000}
+                    min={0}
+                    step="any"
                     value={workingCapital}
                     onChange={(e) => setWorkingCapital(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder={
                       isHealthcare
-                        ? "e.g. 350000 (Pharmacy inventory, surgical consumables & nurses)"
-                        : "e.g. 200000 (Defaults to ~15% of Capex)"
+                        ? "350000"
+                        : "200000"
                     }
-                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-sm font-semibold outline-hidden transition-all bg-white"
+                    className="w-full pl-8 pr-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-xs sm:text-sm font-semibold outline-hidden transition-all bg-white"
                   />
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
                   {isHealthcare
-                    ? "Operating liquidity (pharmacy inventory, emergency drugs & nursing staff)"
-                    : "Operating liquidity (raw materials, inventory & wages)"}
+                    ? "Operating liquidity: pharmacy inventory, surgical consumables & nurses (e.g. ₹3,50,000)"
+                    : "Operating liquidity: raw materials, inventory & wages (~15% of Capex, e.g. ₹2,00,000)"}
                 </p>
               </div>
 
@@ -1248,17 +1409,22 @@ export default function AnalysisPage() {
                 <select
                   value={salesChannel}
                   onChange={(e) => setSalesChannel(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-sm font-medium outline-hidden transition-all bg-white"
+                  className="w-full px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 text-xs sm:text-sm font-medium outline-hidden transition-all bg-white text-ellipsis"
                 >
                   <option value="">
                     {isHealthcare
-                      ? "-- Select Primary Patient Acquisition Channel (Optional) --"
-                      : "-- Select Primary Sales Channel (Optional) --"}
+                      ? "-- Select Patient Channel (Optional) --"
+                      : "-- Select Sales Channel (Optional) --"}
                   </option>
                   {(isHealthcare ? HEALTHCARE_SALES_CHANNELS : SALES_CHANNELS).map((sc) => (
                     <option key={sc} value={sc}>{sc}</option>
                   ))}
                 </select>
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal break-words whitespace-normal">
+                  {isHealthcare
+                    ? "Primary referral, walk-in or institutional patient channel"
+                    : "Primary wholesale, retail or direct distribution route"}
+                </p>
               </div>
             </div>
           </div>
@@ -1266,16 +1432,16 @@ export default function AnalysisPage() {
           {errorMsg && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-              <div className="text-xs text-red-700 leading-relaxed font-medium">
+              <div className="text-xs text-red-700 leading-relaxed font-medium break-words whitespace-normal">
                 {errorMsg}
               </div>
             </div>
           )}
 
           {/* Submit Action */}
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-xs text-slate-500 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <div className="text-xs text-slate-500 flex items-start gap-2 leading-relaxed break-words whitespace-normal">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <span>Uses Trained ML Models 1, 2, 3, OpenStreetMap & Government Scheme Engine</span>
             </div>
 
@@ -1291,9 +1457,9 @@ export default function AnalysisPage() {
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4" />
-                  <span>Run Complete Feasibility & ML Analysis</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4 shrink-0" />
+                  <span className="text-center">Run Complete Feasibility & ML Analysis</span>
+                  <ArrowRight className="w-4 h-4 shrink-0" />
                 </>
               )}
             </button>
@@ -1577,126 +1743,169 @@ export default function AnalysisPage() {
             </div>
           )}
 
-          {/* TAB 2: Competitors & OpenStreetMap */}
+          {/* TAB 2: Competitors & Radius Intelligence */}
           {activeTab === "competition" && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
+              {/* Competition header */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                      <Target className="w-5 h-5 text-[#1E6702]" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-slate-900">Competition Landscape & Radius Intelligence</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {reportData?.competitorRadar?.source?.includes("overpass") ? (
+                          <span className="text-emerald-700 font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Live OSM data via Overpass API
+                            {reportData.competitorRadar?.aiEnriched === "gemini-enriched" && " • Gemini AI Enriched"}
+                          </span>
+                        ) : "Verified competitors within 10km & 20km catchment zones"}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Filter pills */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { id: "all", label: `All (${allAnalysisCompetitors.length})`, active: "bg-slate-800 text-white", inactive: "bg-slate-100 text-slate-600" },
+                      { id: "direct", label: `Direct (${directCompCount})`, active: "bg-red-600 text-white", inactive: "text-red-700 hover:bg-red-50 border border-red-200" },
+                      { id: "indirect", label: `Indirect (${indirectCompCount})`, active: "bg-amber-600 text-white", inactive: "text-amber-700 hover:bg-amber-50 border border-amber-200" },
+                      { id: "govt", label: `Govt (${govtCompCount})`, active: "bg-sky-600 text-white", inactive: "text-sky-700 hover:bg-sky-50 border border-sky-200" },
+                      { id: "private", label: `Private (${privateCompCount})`, active: "bg-purple-600 text-white", inactive: "text-purple-700 hover:bg-purple-50 border border-purple-200" },
+                    ].map(({ id, label, active, inactive }) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setAnalysisCompFilter(id as any)}
+                        className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                          analysisCompFilter === id ? active : `bg-white ${inactive}`
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+              </div>
+              </div>
+
+              {/* ── Population reach & Competitor counts summary (10 km Catchment & 10–20 km District) ── */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 sm:p-5 rounded-2xl border-2 border-emerald-200 bg-emerald-50 flex flex-col gap-1.5 shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center">
+                      <Target className="w-4 h-4 text-emerald-700" />
+                    </div>
+                    <span className="text-xs font-black text-emerald-800 uppercase tracking-wider">10 km Catchment</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-1.5">
+                    <span className="text-3xl font-black text-emerald-950">
+                      {allAnalysis10kmCompetitors.length}
+                    </span>
+                    <span className="text-sm font-bold text-emerald-700">verified competitors</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-800 font-medium mt-0.5">
+                    <Users className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>~{activeReach10km.toLocaleString("en-IN")} pop. reach • 314 km² zone</span>
+                  </div>
+                </div>
+
+                <div className="p-4 sm:p-5 rounded-2xl border-2 border-indigo-200 bg-indigo-50 flex flex-col gap-1.5 shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 border border-indigo-300 flex items-center justify-center">
+                      <Layers className="w-4 h-4 text-indigo-700" />
+                    </div>
+                    <span className="text-xs font-black text-indigo-800 uppercase tracking-wider">10–20 km District</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-1.5">
+                    <span className="text-3xl font-black text-indigo-950">
+                      {allAnalysis20kmCompetitors.length}
+                    </span>
+                    <span className="text-sm font-bold text-indigo-700">verified competitors</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-indigo-800 font-medium mt-0.5">
+                    <Users className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>~{activeReach20km.toLocaleString("en-IN")} pop. reach • 1,257 km² zone</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Interactive Geospatial Catchment Radar & Competitor Heatmap ── */}
+              <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                   <div>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-[#1E6702]" />
-                      OpenStreetMap Competitor Radar & Catchment Mapping
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Target location pinpointed with dynamic {analysisCatchmentRadius}km catchment radar • Permanent Name & Distance Labels active.
+                      <h4 className="text-sm font-black text-slate-900">
+                        OpenStreetMap Catchment Radar ({analysisCatchmentRadius} km)
+                      </h4>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+                      Target location: <strong className="text-slate-800">{locationLabel || [village, subdistrict, district, state].filter(Boolean).join(", ")}</strong> • Coordinates: <span className="font-mono text-emerald-800 font-bold">{centerCoords[0].toFixed(4)}°N, {centerCoords[1].toFixed(4)}°E</span>
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 self-start sm:self-auto flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => setAnalysisCompFilter("all")}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                        analysisCompFilter === "all"
-                          ? "bg-white text-slate-900 shadow-xs"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      All ({radiusCompetitorMarkers.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAnalysisCompFilter("direct")}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                        analysisCompFilter === "direct"
-                          ? "bg-red-600 text-white shadow-xs"
-                          : "text-red-700 hover:bg-red-50"
-                      }`}
-                    >
-                      Direct ({directCompCount})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAnalysisCompFilter("indirect")}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                        analysisCompFilter === "indirect"
-                          ? "bg-amber-600 text-white shadow-xs"
-                          : "text-amber-700 hover:bg-amber-50"
-                      }`}
-                    >
-                      Indirect ({indirectCompCount})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAnalysisCompFilter("govt")}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                        analysisCompFilter === "govt"
-                          ? "bg-sky-600 text-white shadow-xs"
-                          : "text-sky-700 hover:bg-sky-50"
-                      }`}
-                    >
-                      Govt Sector ({govtCompCount})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAnalysisCompFilter("private")}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                        analysisCompFilter === "private"
-                          ? "bg-purple-600 text-white shadow-xs"
-                          : "text-purple-700 hover:bg-purple-50"
-                      }`}
-                    >
-                      Pvt Sector ({privateCompCount})
-                    </button>
+                  {/* Catchment Radius Switcher */}
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase px-2">Radar:</span>
+                    {([5, 10, 20] as const).map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setAnalysisCatchmentRadius(r)}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                          analysisCatchmentRadius === r
+                            ? "bg-[#1E6702] text-white shadow-xs"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-white"
+                        }`}
+                      >
+                        {r} km
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Catchment Radius & Live Population Adjustment Bar */}
-                <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-[#1E6702]" />
-                      Catchment Radar:
-                    </span>
-                    <div className="flex bg-white rounded-xl border border-slate-200 p-0.5 gap-1">
-                      {[5, 10, 20].map((r) => (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => setAnalysisCatchmentRadius(r as 5 | 10 | 20)}
-                          className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                            analysisCatchmentRadius === r
-                              ? "bg-[#1E6702] text-white shadow-xs"
-                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                          }`}
-                        >
-                          {r} km {r === 5 ? "(Core)" : r === 10 ? "(Trade)" : "(District)"}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-xs flex-wrap">
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 font-medium">
-                      <Users className="w-3.5 h-3.5 text-[#1E6702]" />
-                      <span>Adjusted Population Reach: <strong className="font-bold text-emerald-950">~{activeCatchmentPopulation.toLocaleString('en-IN')}</strong> residents</span>
-                    </div>
-                    <div className="text-[11px] text-slate-500 font-medium hidden lg:inline">
-                      Spatial Area: <strong>{Math.round(Math.PI * analysisCatchmentRadius * analysisCatchmentRadius)} km²</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="h-[400px] w-full rounded-2xl overflow-hidden relative shadow-inner">
+                {/* Map Canvas */}
+                <div className="w-full h-[460px] rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative">
                   <DynamicRadiusMap
                     center={centerCoords}
                     radiusInKm={analysisCatchmentRadius}
-                    businessName={reportData.business?.name || "Proposed Venture"}
-                    locationLabel={`${reportData.business?.location?.subdistrict || ""}, ${reportData.business?.location?.district || ""}`}
+                    businessName={businessName || "Proposed Business Venture"}
+                    locationLabel={locationLabel || [village, subdistrict, district, state].filter(Boolean).join(", ")}
                     markers={filteredCompetitorMarkers}
                     showCatchmentCircles={true}
                     showLabels={true}
+                    hideTopBadge={false}
                   />
+                </div>
+
+                {/* Dynamic Legend */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-[11px] text-slate-500 font-medium">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#1E6702] ring-2 ring-emerald-200" />
+                      <strong className="text-slate-800">★ Your Location</strong>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#DC2626]" />
+                      <span>Direct Competitors</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#D97706]" />
+                      <span>Indirect Competitors</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#0284C7]" />
+                      <span>Govt Sector</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#9333EA]" />
+                      <span>Private Hospitals</span>
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400">
+                    {filteredCompetitorMarkers.length} competitors within {analysisCatchmentRadius} km
+                  </span>
                 </div>
               </div>
 
@@ -1788,146 +1997,181 @@ export default function AnalysisPage() {
                 </div>
               </div>
 
-              {/* Verified Local Competitors Matrix */}
+              {/* Radius-Banded Competitor Display */}
               <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-[#1E6702]" />
-                    Verified Local Enterprise Competitors ({analysisCatchmentRadius}km Catchment)
-                  </h4>
-                  <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                    Grounded in DIC & Mandi Data
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(() => {
-                    const allCompList = reportData.feasibility?.competition?.competitors?.length
-                      ? reportData.feasibility.competition.competitors
-                      : competitorMarkers;
-
-                    const radiusFilteredCards = allCompList.filter((c: any) => (c.distanceKm || 0) <= analysisCatchmentRadius);
-
-                    const filteredCards = radiusFilteredCards.filter((comp: any) => {
-                      const isIndirect = (comp.type || "").toLowerCase().includes("indirect");
-                      const isGovt = isCompetitorGovt(comp);
-                      if (analysisCompFilter === "direct") return !isIndirect;
-                      if (analysisCompFilter === "indirect") return isIndirect;
-                      if (analysisCompFilter === "govt") return isGovt;
-                      if (analysisCompFilter === "private") return !isGovt;
-                      return true;
-                    });
-
-                    return filteredCards.map((comp: any, idx: number) => {
-                      const isIndirect = (comp.type || "").toLowerCase().includes("indirect");
-                      const isGovt = isCompetitorGovt(comp);
-                      return (
-                        <div
-                          key={comp.id || idx}
-                          className="p-5 bg-white border border-slate-200/90 rounded-2xl shadow-xs space-y-3 hover:border-emerald-300 transition-colors flex flex-col justify-between"
-                        >
+                {/* ── Within 10 km Band ── */}
+                {(() => {
+                  const rawBand10 = allAnalysis10kmCompetitors;
+                  const band10 = rawBand10.filter((comp: any) => {
+                    const isIndirect = (comp.type || "").toLowerCase().includes("indirect");
+                    const isGovt = isCompetitorGovt(comp);
+                    if (analysisCompFilter === "direct") return !isIndirect;
+                    if (analysisCompFilter === "indirect") return isIndirect;
+                    if (analysisCompFilter === "govt") return isGovt;
+                    if (analysisCompFilter === "private") return !isGovt;
+                    return true;
+                  });
+                  if (rawBand10.length === 0) return null;
+                  return (
+                    <div className="rounded-2xl border-2 border-emerald-300 overflow-hidden">
+                      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-offset-1 ring-emerald-100" />
                           <div>
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <div>
-                                <h5 className="text-sm font-bold text-slate-900 leading-snug">{comp.name || comp.title}</h5>
-                                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium flex-wrap mt-1">
-                                  <span className="flex items-center gap-1">
-                                    <MapPin className="w-3 h-3 text-slate-400" />
-                                    {comp.location || `${comp.distanceKm || (idx + 1) * 1.2} km from venture`}
-                                  </span>
-                                  {comp.facilityType && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">
-                                      {comp.facilityType}
-                                    </span>
-                                  )}
-                                  {comp.source && (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
-                                      📡 {comp.source}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-end gap-1 shrink-0">
-                                <span
-                                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                                    isGovt
-                                      ? "bg-sky-50 text-sky-700 border-sky-200"
-                                      : "bg-purple-50 text-purple-700 border-purple-200"
-                                  }`}
-                                >
-                                  {isGovt ? "🏛️ Govt Sector" : "🏥 Pvt Sector"}
-                                </span>
-                                <span
-                                  className={`px-2.5 py-0.5 rounded-full text-[9.5px] font-bold uppercase tracking-wider border ${
-                                    !isIndirect
-                                      ? "bg-red-50 text-red-700 border-red-200"
-                                      : "bg-amber-50 text-amber-800 border-amber-200"
-                                  }`}
-                                >
-                                  {comp.type || (isIndirect ? "Indirect" : "Direct")}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="p-2.5 bg-slate-50 rounded-xl text-xs font-semibold text-slate-700 flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-1.5">
-                                <Tag className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                <span>Observed Rate:</span>
-                              </div>
-                              <span className="font-bold text-emerald-800">{comp.pricing}</span>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3 text-xs">
-                              <div>
-                                <span className="text-[10px] font-bold uppercase text-teal-700 block mb-1">Strengths</span>
-                                <ul className="space-y-1 text-slate-600">
-                                  {(comp.strengths || ["Established footprint", "Direct customer base"]).map((s: string, i: number) => (
-                                    <li key={i} className="flex items-start gap-1 leading-snug">
-                                      <span className="text-teal-500 font-bold">•</span>
-                                      <span>{s}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                              <div>
-                                <span className="text-[10px] font-bold uppercase text-red-600 block mb-1">Weaknesses</span>
-                                <ul className="space-y-1 text-slate-600">
-                                  {(comp.weaknesses || ["Limited service flexibility", "Higher turnaround times"]).map((w: string, i: number) => (
-                                    <li key={i} className="flex items-start gap-1 leading-snug">
-                                      <span className="text-red-500 font-bold">•</span>
-                                      <span>{w}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </div>
+                            <div className="text-sm font-black text-emerald-700">Within 10 km — Core Trade Zone</div>
+                            <div className="text-[11px] text-slate-500 font-medium">Immediate catchment • {rawBand10.length} competitors verified</div>
                           </div>
-
-                          <div>
-                            {(comp.positioning || comp.details) && (
-                              <div className="pt-2.5 mt-2 border-t border-slate-100 text-[11px] text-slate-600">
-                                <strong className="text-slate-800 font-semibold">Your Strategic Edge: </strong>
-                                {comp.positioning || comp.details}
-                              </div>
-                            )}
-
-                            {(comp.businessImpact || comp.details) && (
-                              <div className="mt-2.5 p-2.5 bg-gradient-to-r from-blue-50/90 to-indigo-50/70 border border-blue-200 rounded-xl text-xs text-blue-950">
-                                <span className="font-bold text-blue-900 mb-0.5 flex items-center gap-1.5">
-                                  <Building2 className="w-3.5 h-3.5 text-blue-700 shrink-0" />
-                                  Effect on Business Analysis & Revenue Dynamics:
-                                </span>
-                                <p className="text-[11.5px] leading-relaxed text-blue-900 font-medium">
-                                  {comp.businessImpact || "Sets local price benchmarks and baseline capacity for regional demand."}
-                                </p>
-                              </div>
-                            )}
-                          </div>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border bg-emerald-100 text-emerald-800 border-emerald-300">{rawBand10.length} total</span>
                         </div>
-                      );
-                    });
-                  })()}
-                </div>
+                        <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                          <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 border border-sky-200">🏛️ {rawBand10.filter(isCompetitorGovt).length} Govt</span>
+                          <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">🏥 {rawBand10.filter((c: any) => !isCompetitorGovt(c)).length} Pvt</span>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        {band10.length === 0 ? (
+                          <p className="text-center text-xs text-slate-400 font-medium py-4">No competitors match this filter in the 10km zone.</p>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {band10.map((comp: any, idx: number) => {
+                              const isIndirect = (comp.type || "").toLowerCase().includes("indirect");
+                              const isGovt = isCompetitorGovt(comp);
+                              return (
+                                <div key={comp.id || idx} className={`bg-white rounded-2xl border transition-all hover:shadow-md ${isGovt ? "border-sky-200 hover:border-sky-400" : "border-purple-200 hover:border-purple-400"}`}>
+                                  <div className="p-4">
+                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex flex-wrap gap-1 mb-1">
+                                          <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${isGovt ? "bg-sky-50 text-sky-700 border-sky-200" : "bg-purple-50 text-purple-700 border-purple-200"}`}>{isGovt ? "🏛️ Govt" : "🏥 Pvt"}</span>
+                                          <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${!isIndirect ? "bg-red-50 text-red-700 border-red-200" : "bg-amber-50 text-amber-800 border-amber-200"}`}>{comp.type || (isIndirect ? "Indirect" : "Direct")}</span>
+                                          {comp.aiEnriched && <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">✨ AI</span>}
+                                          {comp.source?.includes("OpenStreetMap") && <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">🌐 Live OSM</span>}
+                                        </div>
+                                        <h5 className="font-bold text-[13px] text-gray-900 leading-snug">{comp.name || comp.title}</h5>
+                                        <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 flex-wrap">
+                                          <span>{comp.location || `${(comp.distanceKm || (idx+1)*1.2).toFixed(1)} km away`}</span>
+                                          {comp.facilityType && <span className="px-1.5 py-0.5 bg-slate-100 rounded-full font-semibold">{comp.facilityType}</span>}
+                                        </div>
+                                      </div>
+                                      <div className={`shrink-0 w-12 h-12 rounded-xl border-2 flex flex-col items-center justify-center ${isGovt ? "border-sky-200 bg-sky-50" : "border-purple-200 bg-purple-50"}`}>
+                                        <span className={`text-base font-black leading-none ${isGovt ? "text-sky-700" : "text-purple-700"}`}>{(comp.distanceKm || (idx+1)*1.2).toFixed(1)}</span>
+                                        <span className="text-[8px] font-bold text-slate-500 uppercase">km</span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 text-xs mb-3">
+                                      <span className="font-semibold text-slate-600 flex items-center gap-1"><Tag className="w-3 h-3 text-slate-400" />Pricing:</span>
+                                      <span className="font-bold text-emerald-800">{comp.pricing || "Market Rate"}</span>
+                                    </div>
+                                    {(comp.strengths?.length || comp.weaknesses?.length) ? (
+                                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                        <div>
+                                          <span className="text-[9px] font-bold uppercase text-teal-700 block mb-1">Strengths</span>
+                                          <ul className="space-y-0.5 text-slate-600">{(comp.strengths || []).slice(0,2).map((s: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-teal-500">•</span>{s}</li>)}</ul>
+                                        </div>
+                                        <div>
+                                          <span className="text-[9px] font-bold uppercase text-red-600 block mb-1">Weaknesses</span>
+                                          <ul className="space-y-0.5 text-slate-600">{(comp.weaknesses || []).slice(0,2).map((w: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-red-400">•</span>{w}</li>)}</ul>
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                    {comp.positioning && <div className="mt-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-[10.5px] text-emerald-900"><strong>🎯 </strong>{comp.positioning}</div>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ── 10–20 km Band ── */}
+                {(() => {
+                  const rawBand20 = allAnalysis20kmCompetitors;
+                  const band20 = rawBand20.filter((comp: any) => {
+                    const isIndirect = (comp.type || "").toLowerCase().includes("indirect");
+                    const isGovt = isCompetitorGovt(comp);
+                    if (analysisCompFilter === "direct") return !isIndirect;
+                    if (analysisCompFilter === "indirect") return isIndirect;
+                    if (analysisCompFilter === "govt") return isGovt;
+                    if (analysisCompFilter === "private") return !isGovt;
+                    return true;
+                  });
+                  if (rawBand20.length === 0) return null;
+                  return (
+                    <div className="rounded-2xl border-2 border-indigo-300 overflow-hidden">
+                      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 ring-4 ring-offset-1 ring-indigo-100" />
+                          <div>
+                            <div className="text-sm font-black text-indigo-700">10–20 km — District Catchment</div>
+                            <div className="text-[11px] text-slate-500 font-medium">Extended district zone • {rawBand20.length} competitors verified</div>
+                          </div>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border bg-indigo-100 text-indigo-800 border-indigo-300">{rawBand20.length} total</span>
+                        </div>
+                        <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                          <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 border border-sky-200">🏛️ {rawBand20.filter(isCompetitorGovt).length} Govt</span>
+                          <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">🏥 {rawBand20.filter((c: any) => !isCompetitorGovt(c)).length} Pvt</span>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        {band20.length === 0 ? (
+                          <p className="text-center text-xs text-slate-400 font-medium py-4">No competitors match this filter in the 10–20km zone.</p>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {band20.map((comp: any, idx: number) => {
+                              const isIndirect = (comp.type || "").toLowerCase().includes("indirect");
+                              const isGovt = isCompetitorGovt(comp);
+                              return (
+                                <div key={comp.id || idx} className={`bg-white rounded-2xl border transition-all hover:shadow-md ${isGovt ? "border-sky-200 hover:border-sky-400" : "border-purple-200 hover:border-purple-400"}`}>
+                                  <div className="p-4">
+                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex flex-wrap gap-1 mb-1">
+                                          <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${isGovt ? "bg-sky-50 text-sky-700 border-sky-200" : "bg-purple-50 text-purple-700 border-purple-200"}`}>{isGovt ? "🏛️ Govt" : "🏥 Pvt"}</span>
+                                          <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${!isIndirect ? "bg-red-50 text-red-700 border-red-200" : "bg-amber-50 text-amber-800 border-amber-200"}`}>{comp.type || (isIndirect ? "Indirect" : "Direct")}</span>
+                                          {comp.aiEnriched && <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">✨ AI</span>}
+                                          {comp.source?.includes("OpenStreetMap") && <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">🌐 Live OSM</span>}
+                                        </div>
+                                        <h5 className="font-bold text-[13px] text-gray-900 leading-snug">{comp.name || comp.title}</h5>
+                                        <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 flex-wrap">
+                                          <span>{comp.location || `${(comp.distanceKm || 12 + idx).toFixed(1)} km away`}</span>
+                                          {comp.facilityType && <span className="px-1.5 py-0.5 bg-slate-100 rounded-full font-semibold">{comp.facilityType}</span>}
+                                        </div>
+                                      </div>
+                                      <div className={`shrink-0 w-12 h-12 rounded-xl border-2 flex flex-col items-center justify-center ${isGovt ? "border-sky-200 bg-sky-50" : "border-purple-200 bg-purple-50"}`}>
+                                        <span className={`text-base font-black leading-none ${isGovt ? "text-sky-700" : "text-purple-700"}`}>{(comp.distanceKm || 12 + idx).toFixed(1)}</span>
+                                        <span className="text-[8px] font-bold text-slate-500 uppercase">km</span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 text-xs mb-3">
+                                      <span className="font-semibold text-slate-600 flex items-center gap-1"><Tag className="w-3 h-3 text-slate-400" />Pricing:</span>
+                                      <span className="font-bold text-emerald-800">{comp.pricing || "Market Rate"}</span>
+                                    </div>
+                                    {(comp.strengths?.length || comp.weaknesses?.length) ? (
+                                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                        <div>
+                                          <span className="text-[9px] font-bold uppercase text-teal-700 block mb-1">Strengths</span>
+                                          <ul className="space-y-0.5 text-slate-600">{(comp.strengths || []).slice(0,2).map((s: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-teal-500">•</span>{s}</li>)}</ul>
+                                        </div>
+                                        <div>
+                                          <span className="text-[9px] font-bold uppercase text-red-600 block mb-1">Weaknesses</span>
+                                          <ul className="space-y-0.5 text-slate-600">{(comp.weaknesses || []).slice(0,2).map((w: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-red-400">•</span>{w}</li>)}</ul>
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                    {comp.positioning && <div className="mt-2 p-2 bg-indigo-50 border border-indigo-200 rounded-lg text-[10.5px] text-indigo-900"><strong>🎯 </strong>{comp.positioning}</div>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Macroeconomic Sector Impact Card: Govt vs. Private Dynamics */}

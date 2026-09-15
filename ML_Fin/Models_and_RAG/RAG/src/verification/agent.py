@@ -32,8 +32,12 @@ from .retriever import get_retriever
 # ──────────────────────────────────────────────────────────────
 # Gemini Configuration
 # ──────────────────────────────────────────────────────────────
-GEMINI_MODEL = "gemini-2.5-flash"
-GEMINI_FALLBACK_MODEL = "gemini-1.5-flash"
+GEMINI_MODELS = [
+    "gemini-2.5-flash",
+    "gemini-flash-latest",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash-lite",
+]
 
 
 def _get_genai_client() -> genai.Client:
@@ -109,7 +113,7 @@ Promoter Margin  : ₹{int(margin):,}
 {regulations_block}
 
 ═══════════════════════════════════════════════════════════════
-🎯 VERIFICATION INSTRUCTIONS
+🎯 VERIFICATION INSTRUCTIONS & VERDICT RULES
 ═══════════════════════════════════════════════════════════════
 Analyze each ML prediction against the retrieved regulations above. For each prediction:
 
@@ -119,8 +123,13 @@ Analyze each ML prediction against the retrieved regulations above. For each pre
 4. **RISK FLAGS** — Identify any regulatory risks, cap violations, or missing compliance steps.
 5. **CITATIONS** — For every finding, cite the exact source document and section name from the retrieved regulations.
 
+CRITICAL VERDICT & SCORING RULES:
+- **VERIFIED** (Compliance Score 60-100): Assigned when business parameters satisfy scheme limits, financial caps, and margin rules with NO direct statutory violations. Routine operational steps (e.g., Udyam Registration, FSSAI Category, State PCB NOC, Municipal Trade License) are standard administrative prerequisites and MUST NOT downgrade the verdict to FLAG_WARNING if market/financial compliance is proper.
+- **FLAG_WARNING** (Compliance Score 40-59): Assigned ONLY when there are actual near-cap overruns, questionable scheme eligibility, or significant financial risk flags.
+- **REJECTED** (Compliance Score 0-39): Assigned ONLY when there is a direct statutory contradiction, illegal parameter allocation, or total scheme ineligibility.
+
 ═══════════════════════════════════════════════════════════════
-📝 OUTPUT FORMAT (REQUIRED — Structured Markdown)
+📝 OUTPUT FORMAT (REQUIRED — Professional Audit Markdown)
 ═══════════════════════════════════════════════════════════════
 Respond ONLY in this exact structured format:
 
@@ -131,19 +140,22 @@ Respond ONLY in this exact structured format:
 ---
 
 ### ✅ Verified Findings
-[List each ML prediction finding that is compliant, with citations]
+* **[Compliant Domain/Rule Name]**: [Concise regulatory verification finding, referencing applicable statutory guidelines and citing source]
+* **[Compliant Domain/Rule Name]**: [Concise regulatory verification finding, referencing applicable statutory guidelines and citing source]
 
 ### ⚠️ Warnings & Flags
-[List any concerns, near-violations, or missing compliance steps]
+* **[Risk/Advisory Flag Name]**: [Specific concern, near-cap threshold, or requirement needing verification]
+  * **[Prerequisite/License Name]**: [Mandatory operational filing, e.g. Udyam Registration, FSSAI Category, State PCB NOC, or Municipal Trade License]
 
 ### ❌ Violations (if any)
-[List any direct regulatory violations found]
+* [If none found, write: **Zero Direct Statutory Violations**: No direct violations of known statutory limits or illegal parameter allocations were detected based on the retrieved regulations.]
+* [If violations found: **[Violation Type]**: Direct statutory contradiction or ceiling violation]
 
 ### 📚 Regulatory Citations
-[For each finding above, cite: Source Document | Section | Key Rule Applied]
+* [Source Document Name] | SECTION: [Section/Topic Name] | "[Key statutory rule, clause, or regulatory sentence applied]"
 
 ### 💡 Verification Summary
-[2-3 sentence executive summary of the verification outcome and recommended actions]
+* **Executive Assessment**: [2-3 sentence authoritative executive summary of compliance status, risks, and recommended next clearance steps for the promoter and lending institution.]
 """
 
     return prompt
@@ -180,14 +192,17 @@ def run_verification(
     retriever = get_retriever()
 
     # ── Step 1: Build composite query for retrieval ─────────────────────
-    category = business_context.get("category", "")
-    location = business_context.get("location", "")
-    pred_keys = ", ".join(str(v) for v in ml_predictions.keys())
+    category = business_context.get("category", "Micro-Enterprise")
+    location = business_context.get("location", "India")
+    scheme = ml_predictions.get("recommended_scheme", "PMEGP")
+    cost = ml_predictions.get("total_project_cost", "")
 
     rag_query = (
-        f"Business regulations, compliance requirements, subsidy eligibility, "
-        f"financial limits and licensing rules for {category} enterprise "
-        f"in {location}. Topics: {pred_keys}"
+        f"{category} statutory regulations and government compliance in {location}. "
+        f"{scheme} scheme eligibility criteria, capital subsidy percentages, "
+        f"maximum project cost limits {cost}, promoter margin requirements, "
+        f"mandatory operational licensing (FSSAI, Udyam, trade licenses), "
+        f"and environmental permissions."
     )
 
     # ── Step 2: Retrieve relevant regulation chunks ─────────────────────
@@ -208,7 +223,7 @@ def run_verification(
             ),
             "citations": [],
             "retrieved_chunks_count": 0,
-            "model_used": GEMINI_MODEL,
+            "model_used": GEMINI_MODELS[0],
         }
 
     # ── Step 3: Build Gemini verification prompt ────────────────────────
@@ -220,7 +235,7 @@ def run_verification(
 
     # ── Step 4: Call Gemini Agent ───────────────────────────────────────
     client = _get_genai_client()
-    models_to_try = [GEMINI_MODEL, GEMINI_FALLBACK_MODEL]
+    models_to_try = GEMINI_MODELS
     last_error = None
     verification_text = None
     model_used = None
@@ -264,6 +279,24 @@ def run_verification(
     score_match = re.search(r"Compliance Score:\s*(\d+)\s*/\s*100", verification_text)
     if score_match:
         compliance_score = int(score_match.group(1))
+
+    # Safeguard: If market/financial compliance is proper (compliance_score >= 60)
+    # and zero direct statutory violations exist, verdict MUST be VERIFIED.
+    has_no_violations = (
+        "zero direct statutory violation" in verification_text.lower()
+        or "no direct violation" in verification_text.lower()
+        or "zero violations" in verification_text.lower()
+        or "no direct statutory contradiction" in verification_text.lower()
+        or "### ❌ violations (if any)\n* **zero" in verification_text.lower()
+    )
+    if compliance_score >= 60 and verdict == "FLAG_WARNING" and has_no_violations:
+        verdict = "VERIFIED"
+        verification_text = re.sub(
+            r"\*\*VERDICT:\s*FLAG_WARNING\*\*",
+            "**VERDICT: VERIFIED**",
+            verification_text,
+            flags=re.IGNORECASE
+        )
 
     # ── Step 6: Build citations list ─────────────────────────────────────
     citations = [

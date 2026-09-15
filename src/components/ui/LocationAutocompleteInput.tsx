@@ -69,17 +69,24 @@ export const LocationAutocompleteInput: React.FC<LocationAutocompleteInputProps>
   };
 
   const handleSelect = (item: any) => {
-    const label = item.type === "STATE" ? (item.name || item.state) : (item.label || `${item.district || item.name}, ${item.state}`);
+    const d = item.data || {};
+    const label =
+      item.type === "STATE"
+        ? (d.state || item.name || item.state)
+        : (item.label || `${d.village || d.block || d.district || item.name}, ${d.state || item.state}`);
     setSearchTerm(label);
     setIsOpen(false);
 
+    const rawLat = d.latitude ?? item.latitude ?? item.lat;
+    const rawLon = d.longitude ?? item.longitude ?? item.lon;
+
     const loc: SelectedLocation = {
-      state: item.state || item.name || "",
-      district: item.district || item.name || "",
-      block: item.block || item.taluka || "",
-      village: item.village || "",
-      lat: item.lat ? Number(item.lat) : undefined,
-      lon: item.lon ? Number(item.lon) : undefined,
+      state: d.state || item.state || (item.type === "STATE" ? item.name : ""),
+      district: d.district || item.district || (item.type === "DISTRICT" ? item.name : ""),
+      block: d.block || item.block || item.taluka || (item.type === "TALUKA" ? item.name : ""),
+      village: d.village || item.village || (item.type === "VILLAGE" ? item.name : ""),
+      lat: rawLat !== undefined && rawLat !== null && !isNaN(Number(rawLat)) ? Number(rawLat) : undefined,
+      lon: rawLon !== undefined && rawLon !== null && !isNaN(Number(rawLon)) ? Number(rawLon) : undefined,
       label,
     };
 
@@ -112,7 +119,7 @@ export const LocationAutocompleteInput: React.FC<LocationAutocompleteInputProps>
   return (
     <div ref={wrapperRef} className={`relative w-full ${className}`}>
       {label && (
-        <label className="block text-sm font-semibold text-slate-800 mb-1.5">
+        <label className="block text-xs sm:text-sm font-semibold text-slate-800 mb-1.5 leading-normal break-words whitespace-normal">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
@@ -129,7 +136,7 @@ export const LocationAutocompleteInput: React.FC<LocationAutocompleteInputProps>
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className={`w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 bg-white text-slate-800 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-sm ${
+          className={`w-full pl-9 sm:pl-10 pr-10 py-2.5 sm:py-3 rounded-xl border border-slate-200 bg-white text-slate-800 text-xs sm:text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-sm ${
             error ? "border-red-300 focus:border-red-500 focus:ring-red-500/20" : ""
           } ${inputClassName}`}
         />
