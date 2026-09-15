@@ -110,7 +110,14 @@ export const BusinessWizard = () => {
     try {
       let createdBusiness: any = null;
       try {
-        const res: any = await businessApi.create(data);
+        const payload = {
+          ...data,
+          latitude: mapCenter[0],
+          longitude: mapCenter[1],
+          lat: mapCenter[0],
+          lon: mapCenter[1],
+        };
+        const res: any = await businessApi.create(payload as any);
         createdBusiness = res?.data?.business || res?.data?.data?.business || res?.business || res?.data;
       } catch (apiErr: any) {
         console.warn("Backend API business creation warning:", apiErr);

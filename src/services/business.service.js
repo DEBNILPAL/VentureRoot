@@ -104,6 +104,9 @@ async function validateCategory(categoryId) {
 
 
 async function resolveLocation(data) {
+  const lat = data.latitude ?? data.lat;
+  const lon = data.longitude ?? data.lon;
+
   let location =
     await findLocationByHierarchy({
       state: data.state,
@@ -118,6 +121,17 @@ async function resolveLocation(data) {
       district: data.district,
       block: data.block,
       village: data.village,
+      latitude: lat,
+      longitude: lon,
+    });
+  } else if (lat != null && lon != null && (location.latitude === null || location.longitude === null)) {
+    location = await findOrCreateLocationByHierarchy({
+      state: data.state,
+      district: data.district,
+      block: data.block,
+      village: data.village,
+      latitude: lat,
+      longitude: lon,
     });
   }
 

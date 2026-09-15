@@ -91,6 +91,66 @@ export const EditorialAreaChart = ({ data, xKey, yKey, tickFormatter }: { data: 
 };
 
 /* ═══════════════════════════════════════
+   2B. FINANCIAL TRAJECTORY AREA CHART (REVENUE & COSTS & LOSSES)
+   ═══════════════════════════════════════ */
+export const FinancialTrajectoryAreaChart = ({
+  data,
+  tickFormatter,
+}: {
+  data: Array<{ month: string; revenue: number; costs: number; netProfit: number; isLoss: boolean; monthLabel: string }>;
+  tickFormatter?: (value: any) => string;
+}) => {
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+        <defs>
+          <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#1E6702" stopOpacity={0.35} />
+            <stop offset="95%" stopColor="#1E6702" stopOpacity={0.02} />
+          </linearGradient>
+          <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#E11D48" stopOpacity={0.25} />
+            <stop offset="95%" stopColor="#E11D48" stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#200813" opacity={0.05} />
+        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "#200813", opacity: 0.6, fontSize: 11, fontWeight: "bold" }} dy={10} />
+        <YAxis axisLine={false} tickLine={false} tickFormatter={tickFormatter} tick={{ fill: "#200813", opacity: 0.5, fontSize: 11 }} />
+        <Tooltip
+          content={({ active, payload, label }) => {
+            if (active && payload && payload.length) {
+              const d = payload[0]?.payload;
+              return (
+                <div className="bg-white/95 backdrop-blur-md rounded-xl p-3 border border-slate-200 shadow-lg text-xs flex flex-col gap-1 z-50">
+                  <span className="font-bold text-slate-800">{d?.monthLabel || label}</span>
+                  <div className="flex items-center justify-between gap-3 text-emerald-800 font-semibold">
+                    <span>Revenue:</span>
+                    <span>₹{Number(d?.revenue).toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 text-rose-700 font-semibold">
+                    <span>Total Cost:</span>
+                    <span>₹{Number(d?.costs).toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="border-t border-slate-100 pt-1 flex items-center justify-between gap-3 font-bold">
+                    <span>{d?.isLoss ? "Net Operating Loss:" : "Net Profit:"}</span>
+                    <span className={d?.isLoss ? "text-rose-600" : "text-emerald-700"}>
+                      {d?.isLoss ? `-₹${Math.abs(d?.netProfit).toLocaleString("en-IN")}` : `+₹${Number(d?.netProfit).toLocaleString("en-IN")}`}
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          }}
+        />
+        <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#1E6702" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+        <Area type="monotone" dataKey="costs" name="Total Costs" stroke="#E11D48" strokeWidth={2} strokeDasharray="4 4" fillOpacity={1} fill="url(#colorCost)" />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+};
+
+/* ═══════════════════════════════════════
    3. EDITORIAL DONUT CHART
    ═══════════════════════════════════════ */
 const COLORS = ["#1E6702", "#144801", "#4A8F29", "#A6C796", "#E3F0D9"];
@@ -109,7 +169,7 @@ export const EditorialDonutChart = ({ data, nameKey, valueKey, innerRadius = 60,
           stroke="none"
         >
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            <Cell key={`cell-${index}`} fill={entry.fill || COLORS[index % COLORS.length]} />
           ))}
         </Pie>
         <Tooltip

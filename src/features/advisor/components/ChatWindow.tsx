@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, User, Bot, Trash2, Mic, ChevronDown, Building2, Sparkles } from "lucide-react";
+import { Send, User, Bot, Trash2, Mic, ChevronDown, Building2, Sparkles, Volume2, Square, Copy, Check, Globe } from "lucide-react";
 import { EvidenceBadge } from "@/components/evidence/EvidenceBadge";
 import { ChatMessage, advisorApi } from "../api/advisorApi";
-import { VoiceRecorder } from "@/features/voice/components/VoiceRecorder";
+import { VoiceRecorder, REGIONAL_LANGUAGES } from "@/features/voice/components/VoiceRecorder";
 import { useBusinessesComparison } from "@/lib/data/businesses";
 
 interface ChatWindowProps {
@@ -14,6 +14,7 @@ interface ChatWindowProps {
 export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
   const { data: businesses } = useBusinessesComparison();
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>("");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("auto");
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -25,6 +26,13 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  // Audio Playback / TTS State
+  const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+  const [audioLoadingIndex, setAudioLoadingIndex] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Set default business when loaded
@@ -41,6 +49,19 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
     }
   }, [initialQuery]);
 
+  // Clean up audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   const activeBusiness = businesses?.find((b) => b.id === selectedBusinessId) || businesses?.[0];
 
   const scrollToBottom = () => {
@@ -51,9 +72,10 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
     scrollToBottom();
   }, [messages, isStreaming]);
 
-  const sendQuery = async (queryText: string) => {
+  const sendQuery = async (queryText: string, langOverride?: string) => {
     if (!queryText.trim() || isStreaming) return;
 
+    const currentLang = langOverride || selectedLanguage;
     const userMessage: ChatMessage = { role: "user", content: queryText.trim() };
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
@@ -61,7 +83,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
     setIsStreaming(true);
 
     try {
-      // Pass recent conversation history so Gemini can answer follow-ups
+      // Pass recent conversation history and language preference
       const history = nextMessages.slice(-6).map((m) => ({
         role: m.role,
         content: m.content,
@@ -72,6 +94,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
         businessId: selectedBusinessId || undefined,
         context: {
           history,
+          language: currentLang,
         },
       });
 
@@ -100,7 +123,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
       console.error("Advisor API Error:", error);
       const errMsg =
         error?.response?.data?.message ||
-        "I was unable to complete the analysis at this moment. Please verify your GEMINI_API_KEY or connection.";
+        "I was unable to complete the analysis at this moment. Please verify your connection or GEMINI_API_KEY.";
       setMessages((prev) => [
         ...prev,
         {
@@ -128,12 +151,110 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
   };
 
   const clearChat = () => {
+    stopAudioPlayback();
     setMessages([
       {
         role: "assistant",
         content: "Conversation cleared. How can I guide your business decisions?",
       },
     ]);
+  };
+
+  const stopAudioPlayback = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setPlayingIndex(null);
+    setAudioLoadingIndex(null);
+  };
+
+  const handlePlayVoice = async (content: string, index: number) => {
+    // If currently playing this message, stop it
+    if (playingIndex === index) {
+      stopAudioPlayback();
+      return;
+    }
+
+    stopAudioPlayback();
+    setAudioLoadingIndex(index);
+
+    try {
+      const response = await fetch("/api/v1/voice/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: content,
+          language: selectedLanguage !== "auto" ? selectedLanguage : "hi-IN",
+        }),
+      });
+
+      const contentType = response.headers.get("content-type");
+
+      // Cloud TTS audio stream returned (ElevenLabs / OpenAI)
+      if (contentType && contentType.includes("audio")) {
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+
+        audio.onended = () => {
+          stopAudioPlayback();
+        };
+        audio.onerror = () => {
+          console.warn("[ChatWindow] Audio playback error");
+          stopAudioPlayback();
+        };
+
+        setAudioLoadingIndex(null);
+        setPlayingIndex(index);
+        await audio.play();
+        return;
+      }
+
+      // Fallback response: use Web Speech API in browser
+      const data = await response.json();
+      setAudioLoadingIndex(null);
+
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        const textToSpeak = data.sanitizedText || content.replace(/[*_#`]/g, " ");
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+
+        const targetLang = selectedLanguage !== "auto" ? selectedLanguage : "hi-IN";
+        utterance.lang = targetLang;
+
+        // Try to pick a voice matching the language
+        const voices = window.speechSynthesis.getVoices();
+        const prefix = targetLang.split("-")[0];
+        const matchingVoice = voices.find((v) => v.lang.startsWith(prefix));
+        if (matchingVoice) {
+          utterance.voice = matchingVoice;
+        }
+
+        utterance.onend = () => {
+          setPlayingIndex(null);
+        };
+        utterance.onerror = () => {
+          setPlayingIndex(null);
+        };
+
+        setPlayingIndex(index);
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (err) {
+      console.error("[ChatWindow] TTS playback failed:", err);
+      stopAudioPlayback();
+    }
+  };
+
+  const handleCopyText = (content: string, index: number) => {
+    navigator.clipboard.writeText(content);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
   };
 
   const QUICK_PROMPTS = [
@@ -144,7 +265,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-220px)] min-h-[460px] md:h-[75vh] md:min-h-[560px] bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm relative w-full min-w-0">
+    <div className="flex flex-col h-[calc(100vh-220px)] min-h-[480px] md:h-[75vh] md:min-h-[580px] bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm relative w-full min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 p-3 sm:p-4 border-b border-slate-200 bg-slate-50/90 backdrop-blur-sm min-w-0">
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -161,16 +282,37 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
               </span>
             </div>
             <p className="font-sans text-[11px] sm:text-[12px] text-secondary-muted break-words leading-tight mt-0.5">
-              Answers grounded in your exact capital, location & venture inputs
+              Strict privacy isolation • Multilingual • Voice synthesized
             </p>
           </div>
         </div>
 
         {/* Right Header Controls */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end shrink-0">
+          {/* Language Selector */}
+          <div className="relative">
+            <div className="flex items-center gap-1 bg-white border border-slate-200 hover:border-[#1E6702]/40 rounded-xl px-2 py-1 shadow-xs">
+              <Globe className="w-3.5 h-3.5 text-[#1E6702] shrink-0" />
+              <select
+                aria-label="Select Advisor Language"
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="text-[11px] font-semibold text-[#200813] bg-transparent appearance-none cursor-pointer focus:outline-none pr-4 truncate"
+              >
+                <option value="auto">🌐 Auto / Multi</option>
+                {REGIONAL_LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.native} ({l.name.split(" ")[0]})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3 h-3 text-slate-400 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+
           {/* Active Business Switcher */}
           {businesses && businesses.length > 0 && (
-            <div className="relative max-w-[160px] min-[400px]:max-w-[200px] sm:max-w-xs">
+            <div className="relative max-w-[150px] min-[400px]:max-w-[180px] sm:max-w-xs">
               <select
                 aria-label="Select Active Business"
                 value={selectedBusinessId}
@@ -187,11 +329,10 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
             </div>
           )}
 
-
           {/* Clear Chat */}
           <button
             onClick={clearChat}
-            className="p-1.5 sm:p-2 text-secondary-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+            className="p-1.5 sm:p-2 text-secondary-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0 cursor-pointer"
             title="Clear Conversation"
           >
             <Trash2 className="w-4 h-4" />
@@ -251,7 +392,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
             {/* Content Bubble */}
             <div className="flex flex-col gap-2 min-w-0 flex-1 overflow-hidden">
               <div
-                className={`p-3 sm:p-4 rounded-2xl break-words [overflow-wrap:anywhere] ${
+                className={`p-3 sm:p-4 rounded-2xl break-words [overflow-wrap:anywhere] relative group ${
                   msg.role === "user"
                     ? "bg-[#1E6702] text-white rounded-tr-sm shadow-xs"
                     : "bg-slate-50 text-[#200813] rounded-tl-sm border border-slate-200/80 shadow-xs"
@@ -260,6 +401,56 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
                 <div className="whitespace-pre-wrap font-sans text-[13px] sm:text-[14px] leading-relaxed break-words [overflow-wrap:anywhere]">
                   {msg.content}
                 </div>
+
+                {/* Assistant Message Actions: Listen Voice & Copy */}
+                {msg.role === "assistant" && (
+                  <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-200/60 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => handlePlayVoice(msg.content, index)}
+                      disabled={audioLoadingIndex === index}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                        playingIndex === index
+                          ? "bg-red-50 text-red-600 border border-red-200 animate-pulse"
+                          : "bg-white text-secondary hover:text-[#1E6702] hover:bg-[#1E6702]/5 border border-slate-200"
+                      }`}
+                      title={playingIndex === index ? "Stop voice playback" : "Listen to this advisory audio"}
+                    >
+                      {audioLoadingIndex === index ? (
+                        <div className="w-3.5 h-3.5 border-2 border-[#1E6702] border-t-transparent rounded-full animate-spin" />
+                      ) : playingIndex === index ? (
+                        <>
+                          <Square className="w-3 h-3 fill-current" />
+                          <span>Stop Audio</span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3.5 h-3.5 text-[#1E6702]" />
+                          <span>Listen</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleCopyText(msg.content, index)}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-slate-500 hover:text-secondary hover:bg-slate-100 transition-colors cursor-pointer"
+                      title="Copy advice text"
+                    >
+                      {copiedIndex === index ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          <span className="text-emerald-600">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Evidence Rendering */}
@@ -312,7 +503,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
             key={i}
             onClick={() => sendQuery(prompt)}
             disabled={isStreaming}
-            className="whitespace-normal sm:whitespace-nowrap px-3 py-1.5 rounded-full border border-slate-200 bg-white font-sans text-[11px] sm:text-[12px] font-medium text-slate-700 hover:border-[#1E6702] hover:text-[#1E6702] hover:bg-[#1E6702]/5 transition-colors shrink-0 disabled:opacity-50 text-left"
+            className="whitespace-normal sm:whitespace-nowrap px-3 py-1.5 rounded-full border border-slate-200 bg-white font-sans text-[11px] sm:text-[12px] font-medium text-slate-700 hover:border-[#1E6702] hover:text-[#1E6702] hover:bg-[#1E6702]/5 transition-colors shrink-0 disabled:opacity-50 text-left cursor-pointer"
           >
             {prompt}
           </button>
@@ -323,9 +514,10 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
       <div className="p-3 sm:p-4 border-t border-slate-200 bg-white w-full min-w-0">
         {showVoiceRecorder ? (
           <VoiceRecorder
-            onTranscriptConfirm={(transcript) => {
+            defaultLanguage={selectedLanguage !== "auto" ? selectedLanguage : "hi-IN"}
+            onTranscriptConfirm={(transcript, lang) => {
               setShowVoiceRecorder(false);
-              sendQuery(transcript);
+              sendQuery(transcript, lang);
             }}
             onCancel={() => setShowVoiceRecorder(false)}
           />
@@ -338,8 +530,8 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
             <button
               type="button"
               onClick={() => setShowVoiceRecorder(true)}
-              className="p-2 mb-0.5 text-slate-500 hover:text-[#1E6702] hover:bg-[#1E6702]/10 rounded-lg transition-colors flex-shrink-0"
-              title="Voice Input (Speak your question)"
+              className="p-2 mb-0.5 text-slate-500 hover:text-[#1E6702] hover:bg-[#1E6702]/10 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+              title="Voice Input (Speak your question in Indian regional languages)"
             >
               <Mic className="w-4 h-4" />
             </button>
@@ -348,7 +540,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask about local demand, PMEGP/MUDRA subsidies, cost breakdown..."
+              placeholder="Ask about local demand, PMEGP/MUDRA subsidies, break-even, licensing..."
               className="flex-1 min-w-0 bg-transparent border-none focus:ring-0 px-2 py-1.5 font-sans text-[12.5px] sm:text-[14px] text-secondary outline-none resize-none leading-snug break-words whitespace-pre-wrap max-h-24 overflow-y-auto placeholder:text-slate-400 placeholder:leading-snug"
               disabled={isStreaming}
             />
@@ -362,10 +554,6 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
           </form>
         )}
       </div>
-
-
     </div>
   );
 };
-
-

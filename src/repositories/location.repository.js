@@ -194,6 +194,8 @@ export async function findOrCreateLocationByHierarchy({
   district,
   block,
   village,
+  latitude,
+  longitude,
 }) {
   if (!state || !district) return null;
 
@@ -232,6 +234,8 @@ export async function findOrCreateLocationByHierarchy({
         name: districtName,
         type: "DISTRICT",
         parentId: stateRecord.id,
+        latitude: !block && !village && latitude != null ? Number(latitude) : null,
+        longitude: !block && !village && longitude != null ? Number(longitude) : null,
       },
     });
   }
@@ -254,6 +258,8 @@ export async function findOrCreateLocationByHierarchy({
           name: blockName,
           type: "BLOCK",
           parentId: districtRecord.id,
+          latitude: !village && latitude != null ? Number(latitude) : null,
+          longitude: !village && longitude != null ? Number(longitude) : null,
         },
       });
     }
@@ -276,12 +282,27 @@ export async function findOrCreateLocationByHierarchy({
             name: villageName,
             type: "VILLAGE",
             parentId: blockRecord.id,
+            latitude: latitude != null ? Number(latitude) : null,
+            longitude: longitude != null ? Number(longitude) : null,
           },
         });
       }
 
       currentLocation = villageRecord;
     }
+  }
+
+  // If coordinates are provided and current record doesn't have them, update the record
+  if (latitude != null && longitude != null && (currentLocation.latitude === null || currentLocation.longitude === null)) {
+    try {
+      currentLocation = await prisma.location.update({
+        where: { id: currentLocation.id },
+        data: {
+          latitude: Number(latitude),
+          longitude: Number(longitude),
+        },
+      });
+    } catch (_) {}
   }
 
   return currentLocation;

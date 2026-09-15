@@ -82,11 +82,13 @@ export const GoogleTranslateProvider = () => {
     // Synchronize HTML document language attribute
     document.documentElement.lang = lang;
 
-    // Set / clear the googtrans cookie
+    const hostname = window.location.hostname;
     if (lang === "en") {
       document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname};`;
     } else {
-      document.cookie = `googtrans=/en/${lang}; path=/;`;
+      document.cookie = `googtrans=/en/${lang}; path=/; max-age=31536000; SameSite=Lax;`;
+      document.cookie = `googtrans=/en/${lang}; path=/; domain=${hostname}; max-age=31536000; SameSite=Lax;`;
     }
 
     // Check if the combo element is available in the DOM

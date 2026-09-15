@@ -458,8 +458,8 @@ export const STATE_CENTROIDS = {
  * without ever falsely defaulting non-Gujarat inputs to Gujarat.
  */
 export function resolveCoordinatesForLocation(locInput) {
-  if (!locInput) {
-    return { lat: 20.5937, lon: 78.9629, label: "India" };
+  if (!locInput || (!locInput.state && !locInput.district && !locInput.lat && !locInput.latitude && !locInput.lon && !locInput.longitude)) {
+    return { lat: NaN, lon: NaN, label: "No Location Specified" };
   }
 
   const state = (locInput.state || "").trim();
@@ -629,10 +629,10 @@ export function resolveCoordinatesForLocation(locInput) {
     };
   }
 
-  // 5. Default safe center of India
+  // 5. If completely unresolvable, do not guess or use fake defaults
   return {
-    lat: 20.5937,
-    lon: 78.9629,
-    label: [village, block, district, state].filter(Boolean).join(", ") || "India",
+    lat: NaN,
+    lon: NaN,
+    label: [village, block, district, state].filter(Boolean).join(", ") || "Location Not Resolved",
   };
 }

@@ -48,11 +48,13 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       document.cookie = `ventureroot_locale=${code}; path=/; max-age=31536000; SameSite=Lax`;
       document.documentElement.lang = code;
 
-      // Keep single, consistent googtrans cookie without duplicate host/domain entries
+      const hostname = window.location.hostname;
       if (code === "en") {
         document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname};`;
       } else {
-        document.cookie = `googtrans=/en/${code}; path=/;`;
+        document.cookie = `googtrans=/en/${code}; path=/; max-age=31536000; SameSite=Lax;`;
+        document.cookie = `googtrans=/en/${code}; path=/; domain=${hostname}; max-age=31536000; SameSite=Lax;`;
       }
 
       // If Google Translate combo is loaded in DOM, synchronize it quietly and dispatch change

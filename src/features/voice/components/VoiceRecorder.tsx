@@ -1,29 +1,61 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Mic, Square, Play, RefreshCw, Check, X, AlertCircle } from "lucide-react";
+import { Mic, Square, RefreshCw, Check, AlertCircle, Globe, Volume2 } from "lucide-react";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 
 type VoiceState = "IDLE" | "RECORDING" | "STOPPED" | "PROCESSING" | "ERROR" | "PERMISSION_DENIED";
 
+export const REGIONAL_LANGUAGES = [
+  { code: "en-IN", name: "English (India)", native: "English" },
+  { code: "hi-IN", name: "Hindi", native: "हिन्दी" },
+  { code: "bn-IN", name: "Bengali", native: "বাংলা" },
+  { code: "mr-IN", name: "Marathi", native: "मराठी" },
+  { code: "gu-IN", name: "Gujarati", native: "ગુજરાતી" },
+  { code: "ta-IN", name: "Tamil", native: "தமிழ்" },
+  { code: "te-IN", name: "Telugu", native: "తెలుగు" },
+  { code: "kn-IN", name: "Kannada", native: "ಕನ್ನಡ" },
+  { code: "pa-IN", name: "Punjabi", native: "ਪੰਜਾਬੀ" },
+  { code: "ur-IN", name: "Urdu", native: "اردو" },
+];
+
 interface VoiceRecorderProps {
-  onTranscriptConfirm: (transcript: string) => void;
+  onTranscriptConfirm: (transcript: string, language?: string) => void;
   onCancel: () => void;
+  defaultLanguage?: string;
 }
 
-export const VoiceRecorder = ({ onTranscriptConfirm, onCancel }: VoiceRecorderProps) => {
+export const VoiceRecorder = ({ onTranscriptConfirm, onCancel, defaultLanguage = "hi-IN" }: VoiceRecorderProps) => {
   const { t } = useTranslation();
-  
+
   const [currentState, setCurrentState] = useState<VoiceState>("IDLE");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(defaultLanguage);
   const [transcript, setTranscript] = useState("");
+  const [interimText, setInterimText] = useState("");
   const [timer, setTimer] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isSupported, setIsSupported] = useState(true);
 
-  // Clean up timer on unmount
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // Check Web Speech API support on mount
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setIsSupported(false);
+      }
+    }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // ignore
+        }
+      }
     };
   }, []);
 
@@ -34,150 +66,272 @@ export const VoiceRecorder = ({ onTranscriptConfirm, onCancel }: VoiceRecorderPr
   };
 
   const startRecording = () => {
-    // Check mock permission (browser API simulation)
-    // We'll simulate successful permission and recording state
-    setCurrentState("RECORDING");
-    setTimer(0);
+    setErrorMsg("");
     setTranscript("");
-    timerRef.current = setInterval(() => {
-      setTimer((prev) => prev + 1);
-    }, 1000);
+    setInterimText("");
+    setTimer(0);
+
+    if (typeof window === "undefined") return;
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setIsSupported(false);
+      setErrorMsg("Web Speech API is not supported on this browser. Please type your query or use Chrome/Edge.");
+      setCurrentState("ERROR");
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = selectedLanguage;
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setCurrentState("RECORDING");
+        timerRef.current = setInterval(() => {
+          setTimer((prev) => prev + 1);
+        }, 1000);
+      };
+
+      recognition.onresult = (event: any) => {
+        let finalTrans = "";
+        let interimTrans = "";
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const result = event.results[i];
+          if (result.isFinal) {
+            finalTrans += result[0].transcript + " ";
+          } else {
+            interimTrans += result[0].transcript;
+          }
+        }
+
+        if (finalTrans) {
+          setTranscript((prev) => (prev ? `${prev} ${finalTrans}`.trim() : finalTrans.trim()));
+        }
+        setInterimText(interimTrans);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn("[VoiceRecorder] speech recognition error:", event.error);
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          setCurrentState("PERMISSION_DENIED");
+          setErrorMsg("Microphone permission was denied. Please allow microphone access in browser settings.");
+        } else if (event.error === "no-speech") {
+          // Keep recording or handle gracefully
+        } else {
+          setErrorMsg(`Voice input notice: ${event.error}. You can still edit or type your message.`);
+        }
+      };
+
+      recognition.onend = () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        // If stopped intentionally, don't restart
+      };
+
+      recognition.start();
+      recognitionRef.current = recognition;
+    } catch (err: any) {
+      console.error("[VoiceRecorder] Start error:", err);
+      setCurrentState("ERROR");
+      setErrorMsg(err.message || "Failed to initialize microphone.");
+    }
   };
 
   const stopRecording = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore
+      }
+    }
+    // Append any leftover interim text into final transcript
+    if (interimText) {
+      setTranscript((prev) => (prev ? `${prev} ${interimText}`.trim() : interimText.trim()));
+      setInterimText("");
+    }
     setCurrentState("STOPPED");
-    // Mocking an STT result
-    setTranscript("This is a mock transcript of your spoken input. You can edit this text before submitting.");
   };
 
   const confirmTranscript = () => {
     setCurrentState("PROCESSING");
-    // Simulate slight processing delay before passing to parent
+    const fullText = (transcript + (interimText ? " " + interimText : "")).trim();
     setTimeout(() => {
-      onTranscriptConfirm(transcript);
-    }, 500);
+      onTranscriptConfirm(fullText, selectedLanguage);
+    }, 300);
   };
 
   const retryRecording = () => {
     setTranscript("");
+    setInterimText("");
     setCurrentState("IDLE");
   };
 
   return (
-    <div className="w-full bg-white border border-primary/30 rounded-xl p-3 sm:p-4 shadow-sm animate-in fade-in slide-in-from-bottom-2 min-w-0 overflow-hidden">
-      
+    <div className="w-full bg-white border border-[#1E6702]/30 rounded-2xl p-3 sm:p-4 shadow-sm animate-in fade-in slide-in-from-bottom-2 min-w-0 overflow-hidden">
+      {/* Top Bar: Language Picker & Status */}
+      <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100 flex-wrap">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-secondary">
+          <Globe className="w-3.5 h-3.5 text-[#1E6702]" />
+          <span>Spoken Language:</span>
+        </div>
+        <select
+          value={selectedLanguage}
+          onChange={(e) => setSelectedLanguage(e.target.value)}
+          disabled={currentState === "RECORDING"}
+          className="text-xs font-semibold text-secondary bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-[#1E6702] cursor-pointer"
+        >
+          {REGIONAL_LANGUAGES.map((lang) => (
+            <option key={lang.code} value={lang.code}>
+              {lang.native} ({lang.name})
+            </option>
+          ))}
+        </select>
+      </div>
+
       {currentState === "IDLE" && (
-        <div className="flex flex-col items-center justify-center py-6 gap-4">
+        <div className="flex flex-col items-center justify-center py-5 gap-3">
           <button
+            type="button"
             onClick={startRecording}
-            className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-all focus:ring-4 focus:ring-primary/20 outline-none"
-            title={t("voice.idle" as any)}
+            className="w-16 h-16 rounded-full bg-[#1E6702]/10 text-[#1E6702] flex items-center justify-center hover:bg-[#1E6702]/20 hover:scale-105 active:scale-95 transition-all focus:ring-4 focus:ring-[#1E6702]/20 outline-none shadow-sm cursor-pointer"
+            title="Click to start speaking"
           >
             <Mic className="w-8 h-8" />
           </button>
-          <span className="text-sm font-medium text-secondary-muted">{t("voice.idle" as any)}</span>
+          <div className="text-center">
+            <p className="text-sm font-bold text-secondary">Tap microphone to speak</p>
+            <p className="text-xs text-secondary-muted mt-0.5">
+              Speak in {REGIONAL_LANGUAGES.find((l) => l.code === selectedLanguage)?.native || "your language"}
+            </p>
+          </div>
         </div>
       )}
 
       {currentState === "RECORDING" && (
         <div className="flex flex-col items-center justify-center py-4 gap-4">
           <div className="relative">
-            <div className="absolute -inset-2 bg-red-100 rounded-full animate-ping opacity-75" />
+            <div className="absolute -inset-3 bg-red-100 rounded-full animate-ping opacity-75" />
             <button
+              type="button"
               onClick={stopRecording}
-              className="relative w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-all focus:ring-4 focus:ring-red-200 outline-none"
-              title={t("voice.stop" as any)}
+              className="relative w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700 hover:scale-105 transition-all focus:ring-4 focus:ring-red-200 outline-none shadow-md cursor-pointer"
+              title="Click to stop recording"
             >
               <Square className="w-6 h-6 fill-current" />
             </button>
           </div>
+
           <div className="flex flex-col items-center gap-1">
-            <span className="text-sm font-bold text-red-600 animate-pulse">{t("voice.recording" as any)}</span>
-            <span className="text-xl font-mono text-secondary">{formatTime(timer)}</span>
+            <span className="text-xs font-bold text-red-600 uppercase tracking-wider animate-pulse flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-600 inline-block animate-ping" /> Listening ({formatTime(timer)})
+            </span>
+            <div className="max-w-md text-center px-2">
+              <p className="text-sm font-medium text-secondary italic break-words line-clamp-3">
+                {interimText || transcript || "Listening... speak now into your microphone"}
+              </p>
+            </div>
           </div>
         </div>
       )}
 
       {currentState === "STOPPED" && (
-        <div className="flex flex-col gap-4 min-w-0">
-          <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
-            <h4 className="text-sm font-semibold text-secondary flex items-center gap-2">
-              <Mic className="w-4 h-4 text-primary shrink-0" /> {t("voice.edit" as any)}
+        <div className="flex flex-col gap-3 min-w-0">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h4 className="text-xs font-bold text-secondary flex items-center gap-1.5">
+              <Volume2 className="w-3.5 h-3.5 text-[#1E6702]" /> Review / Edit Spoken Input
             </h4>
-            <span className="text-xs font-mono text-secondary-muted bg-slate-100 px-2 py-0.5 rounded-md">{formatTime(timer)}</span>
+            <span className="text-[11px] font-mono text-secondary-muted bg-slate-100 px-2 py-0.5 rounded-md">
+              Recorded: {formatTime(timer)}
+            </span>
           </div>
-          
+
           <textarea
             value={transcript}
             onChange={(e) => setTranscript(e.target.value)}
-            className="w-full h-24 p-3 text-sm text-secondary bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none break-words"
-            placeholder="Transcript will appear here..."
+            className="w-full h-24 p-3 text-xs sm:text-sm text-secondary bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/20 resize-none break-words leading-relaxed"
+            placeholder="Your spoken words will appear here. You can also edit or type directly..."
           />
-          
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-            <div className="flex flex-wrap items-center gap-2">
+
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={retryRecording}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               >
-                <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Retry
+                <RefreshCw className="w-3.5 h-3.5" /> Re-record
               </button>
               <button
+                type="button"
                 onClick={onCancel}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
               >
-                <Trash2Icon /> {t("voice.discard" as any)}
+                Cancel
               </button>
             </div>
-            
+
             <button
+              type="button"
               onClick={confirmTranscript}
               disabled={!transcript.trim()}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold text-white bg-primary rounded-lg hover:bg-primary-light disabled:opacity-50 transition-colors shadow-sm shrink-0"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#1E6702] rounded-xl hover:bg-[#155201] disabled:opacity-40 transition-all shadow-xs cursor-pointer"
             >
-              <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t("voice.confirm" as any)}
+              <Check className="w-3.5 h-3.5" /> Ask Advisor
             </button>
           </div>
         </div>
       )}
 
       {currentState === "PROCESSING" && (
-        <div className="flex flex-col items-center justify-center py-8 gap-3">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-medium text-secondary-muted">Processing voice input...</span>
+        <div className="flex flex-col items-center justify-center py-6 gap-2.5">
+          <div className="w-6 h-6 border-2 border-[#1E6702] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-medium text-secondary-muted">Processing your voice query...</span>
         </div>
       )}
 
       {currentState === "ERROR" && (
-        <div className="flex flex-col items-center justify-center py-6 gap-3 text-red-600">
-          <AlertCircle className="w-8 h-8" />
-          <span className="text-sm font-medium">{errorMsg || t("voice.error" as any)}</span>
-          <button
-            onClick={retryRecording}
-            className="mt-2 px-4 py-1.5 text-sm font-medium bg-red-50 hover:bg-red-100 rounded-md transition-colors"
-          >
-            Try Again
-          </button>
+        <div className="flex flex-col items-center justify-center py-5 gap-2.5 text-center">
+          <AlertCircle className="w-7 h-7 text-red-600" />
+          <p className="text-xs font-semibold text-red-600 max-w-sm">{errorMsg || "Voice recognition encountered an error."}</p>
+          <div className="flex items-center gap-2 mt-1">
+            <button
+              type="button"
+              onClick={retryRecording}
+              className="px-3 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+            >
+              Try Again
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
 
       {currentState === "PERMISSION_DENIED" && (
-        <div className="flex flex-col items-center justify-center py-6 gap-3 text-orange-600">
-          <AlertCircle className="w-8 h-8" />
-          <span className="text-sm font-medium">{t("voice.permission" as any)}</span>
+        <div className="flex flex-col items-center justify-center py-5 gap-2.5 text-center">
+          <AlertCircle className="w-7 h-7 text-orange-600" />
+          <p className="text-xs font-semibold text-orange-700 max-w-sm">
+            Microphone access is blocked. Please enable microphone permissions in your browser bar.
+          </p>
           <button
+            type="button"
             onClick={onCancel}
-            className="mt-2 px-4 py-1.5 text-sm font-medium bg-orange-50 hover:bg-orange-100 rounded-md transition-colors"
+            className="px-4 py-1.5 text-xs font-bold bg-orange-100 text-orange-800 hover:bg-orange-200 rounded-lg transition-colors cursor-pointer"
           >
-            Close
+            Dismiss
           </button>
         </div>
       )}
     </div>
   );
 };
-
-const Trash2Icon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-);

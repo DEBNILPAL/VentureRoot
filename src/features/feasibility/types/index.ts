@@ -50,7 +50,7 @@ export interface OpportunityAnalysis extends IntelligenceData {
 export interface Competitor {
   id: string;
   name: string;
-  type: "Direct" | "Indirect";
+  type: "Direct" | "Indirect" | string;
   location: string;
   pricing: string;
   strengths: string[];
@@ -63,11 +63,21 @@ export interface Competitor {
   facilityType?: string;
   source?: string;
   businessImpact?: string;
+  rank?: number;
+  strengthScore?: number;
+  threatLevel?: "Critical Threat" | "Major Threat" | "High Threat" | "Moderate" | string;
+  whyMajorCompetitor?: string;
+  strategicCountermeasure?: string;
+  contact?: string | null;
+  openingHours?: string | null;
+  aiEnriched?: boolean;
+  tags?: Record<string, string | null>;
 }
 
 export interface CompetitionAnalysis extends IntelligenceData {
   overview: string;
   competitors: Competitor[];
+  topCompetitors?: Competitor[];
   observations: string[];
 }
 
@@ -81,11 +91,14 @@ export interface SWOTAnalysis extends IntelligenceData {
 export interface RiskItem {
   id: string;
   title: string;
-  category: "Market" | "Financial" | "Operational" | "Environmental" | "Competition";
+  category: "Market" | "Financial" | "Operational" | "Environmental" | "Competition" | "Supply Chain" | "Regulatory" | "Climate & Seasonal" | string;
   severity: "Low" | "Medium" | "High" | "Critical";
   explanation: string;
   potentialImpact: string;
   mitigationAdvisory?: string;
+  probability?: "Low" | "Medium" | "High";
+  financialExposure?: string;
+  angle?: string;
   evidence?: Evidence[];
 }
 
@@ -100,6 +113,13 @@ export interface PricingAnalysis extends IntelligenceData {
   unit?: string;
   observations: string[];
   pricingFactors: string[];
+  scrapedSource?: string;
+  scrapedMarketName?: string;
+  scrapedCommodity?: string;
+  priceDate?: string;
+  frequency?: string;
+  premiumPercent?: number;
+  predictionModel?: string;
 }
 
 export interface FeasibilityData {

@@ -60,6 +60,11 @@ export const createBusinessSchema = z
       .nonnegative(
         "Expected revenue cannot be negative"
       ),
+
+    latitude: z.coerce.number().nullish(),
+    longitude: z.coerce.number().nullish(),
+    lat: z.coerce.number().nullish(),
+    lon: z.coerce.number().nullish(),
   })
   .refine(
     (data) => {

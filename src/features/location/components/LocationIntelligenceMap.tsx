@@ -58,7 +58,7 @@ interface LocationIntelligenceMapProps {
 }
 
 export const LocationIntelligenceMap: React.FC<LocationIntelligenceMapProps> = ({
-  center = [20.5937, 78.9629],
+  center,
   locationName = "Regional Enterprise Zone",
   category = "Agro-Enterprise",
   markers: propMarkers = [],
@@ -89,6 +89,9 @@ export const LocationIntelligenceMap: React.FC<LocationIntelligenceMapProps> = (
 
   // Generate dynamic POI markers matching all 5 active geospatial layers
   const dynamicMarkers: MapMarker[] = React.useMemo(() => {
+    if (!center || isNaN(center[0]) || isNaN(center[1]) || (center[0] === 0 && center[1] === 0)) {
+      return [];
+    }
     const list: MapMarker[] = [];
     const lat = center[0];
     const lon = center[1];

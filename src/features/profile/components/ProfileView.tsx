@@ -305,24 +305,28 @@ export const ProfileView = () => {
         },
       };
 
-      if (typeof window !== "undefined" && profile.fullName) {
-        localStorage.setItem("ventureroot_user_name", profile.fullName.trim());
+      if (typeof window !== "undefined") {
+        if (profile.fullName) {
+          localStorage.setItem("ventureroot_user_name", profile.fullName.trim());
+        }
+        if (profile.location) {
+          localStorage.setItem("ventureroot_base_location", JSON.stringify(profile.location));
+        }
       }
 
-      await profileApi.updateProfile(payload as any);
+      const res = await profileApi.updateProfile(payload as any);
+      const updated = res?.data?.profile;
+      if (updated) {
+        setProfile((prev: any) => ({ ...prev, ...updated }));
+      }
       refetch();
       setIsEditing(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err: any) {
       console.error("Failed to update profile", err);
-      // Even if API endpoint errors, persist locally so user experience is smooth
-      if (typeof window !== "undefined" && profile.fullName) {
-        localStorage.setItem("ventureroot_user_name", profile.fullName.trim());
-      }
-      setIsEditing(false);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 4000);
+      const msg = err?.response?.data?.message || err?.message || "Failed to update profile. Please check input values.";
+      setSaveError(msg);
     } finally {
       setIsSaving(false);
     }
@@ -743,8 +747,8 @@ export const ProfileView = () => {
         >
           <SectionHeading icon={Briefcase} label="Enterprise Background" iconClass="bg-purple-50 text-purple-600" />
           <InputField
-            label="Business Experience"
-            options={isEditing ? ["None", "0-2 years", "3-5 years", "5+ years"] : null}
+            label={t("profile.bizExp") || "Business Experience"}
+            options={isEditing ? ["None", "0-2 years", "1-3 years", "3-5 years", "5+ years"] : null}
             value={currentProfile.experience?.businessExperience || "1-3 years"}
             onChange={
               isEditing
