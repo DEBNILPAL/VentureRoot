@@ -170,13 +170,13 @@ function LoginPageContent() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#200813]/40 via-transparent to-transparent md:bg-gradient-to-br md:from-[#200813]/50 md:via-transparent" />
 
         {/* Brand & Message Container (hidden on mobile, visible on tablet+) */}
-        <div className="relative z-10 p-8 pt-10 md:pt-12 h-full hidden md:block">
+        <div className="relative z-10 p-8 pt-10 md:pt-12 h-full hidden md:flex md:flex-col md:justify-between">
 
           <Link href="/" className="bg-[#FFFBE7] w-max h-14 px-6 rounded-xl flex items-center justify-center shadow-xl border border-black/5 hover:scale-[1.02] transition-transform block relative z-20">
             <img src="/logo-wordmark.png" alt="VentureRoot" className="h-8 w-auto object-contain mix-blend-multiply" />
           </Link>
 
-          <div className="absolute inset-0 flex flex-col justify-center p-8 pointer-events-none z-10">
+          <div className="my-auto py-8 pointer-events-none z-10">
             <div className="w-full">
               <h2 className="font-heading text-[20px] lg:text-[24px] xl:text-[27px] font-normal italic text-[#FFFBE7] leading-[1.15] whitespace-nowrap drop-shadow-sm">
                 <TextEffect per='char' preset='fade'>
@@ -184,6 +184,13 @@ function LoginPageContent() {
                 </TextEffect>
               </h2>
             </div>
+          </div>
+
+          {/* Desktop copyright footer positioned at the side on the image in light color for visibility */}
+          <div className="relative z-20 pt-4 pl-12">
+            <p className="font-sans text-[12px] text-[#FFFBE7]/90 font-medium tracking-wide drop-shadow-md select-none">
+              © 2026 VentureRoot. All rights reserved.
+            </p>
           </div>
 
         </div>
@@ -387,6 +394,13 @@ function LoginPageContent() {
               </Link>
             </motion.p>
           </div>
+        </div>
+
+        {/* Side footer for mobile screens */}
+        <div className="p-4 sm:p-6 md:px-12 mt-auto text-center md:text-left">
+          <p className="font-sans text-[12px] text-[#200813]/40 md:hidden select-none">
+            © 2026 VentureRoot. All rights reserved.
+          </p>
         </div>
       </div>
     </div>

@@ -113,19 +113,28 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#200813]/60 via-[#200813]/10 to-transparent md:bg-gradient-to-br md:from-[#200813]/70 md:via-transparent" />
 
         {/* Brand & Message Container (hidden on mobile, visible on tablet+) */}
-        <div className="relative z-10 p-8 pt-10 md:pt-12 h-full hidden md:flex md:flex-col">
-          <Link href="/" className="bg-[#FFFBE7] w-max h-14 px-6 rounded-xl flex items-center justify-center shadow-xl border border-black/5 hover:scale-[1.02] transition-transform block relative z-20">
-            <img src="/logo-wordmark.png" alt="VentureRoot" className="h-8 w-auto object-contain mix-blend-multiply" />
-          </Link>
+        <div className="relative z-10 p-8 pt-10 md:pt-12 h-full hidden md:flex md:flex-col md:justify-between">
+          <div>
+            <Link href="/" className="bg-[#FFFBE7] w-max h-14 px-6 rounded-xl flex items-center justify-center shadow-xl border border-black/5 hover:scale-[1.02] transition-transform block relative z-20">
+              <img src="/logo-wordmark.png" alt="VentureRoot" className="h-8 w-auto object-contain mix-blend-multiply" />
+            </Link>
 
-          <div className="mt-8 lg:mt-12 pointer-events-none z-10">
-            <div className="w-full">
-              <h2 className="font-heading text-[20px] lg:text-[24px] xl:text-[27px] font-medium italic text-[#FFFBE7] leading-[1.15] whitespace-nowrap [text-shadow:_0_4px_24px_rgba(0,0,0,0.6)]">
-                <TextEffect per='char' preset='fade'>
-                  Your idea deserves a clear path.
-                </TextEffect>
-              </h2>
+            <div className="mt-8 lg:mt-12 pointer-events-none z-10">
+              <div className="w-full">
+                <h2 className="font-heading text-[20px] lg:text-[24px] xl:text-[27px] font-medium italic text-[#FFFBE7] leading-[1.15] whitespace-nowrap [text-shadow:_0_4px_24px_rgba(0,0,0,0.6)]">
+                  <TextEffect per='char' preset='fade'>
+                    Your idea deserves a clear path.
+                  </TextEffect>
+                </h2>
+              </div>
             </div>
+          </div>
+
+          {/* Desktop copyright footer positioned at the side on the image in light color for visibility */}
+          <div className="relative z-20 pt-4 pl-12">
+            <p className="font-sans text-[12px] text-[#FFFBE7]/90 font-medium tracking-wide drop-shadow-md select-none">
+              © 2026 VentureRoot. All rights reserved.
+            </p>
           </div>
         </div>
 
@@ -400,6 +409,13 @@ export default function RegisterPage() {
               </Link>
             </motion.p>
           </div>
+        </div>
+
+        {/* Side footer for mobile screens */}
+        <div className="p-4 sm:p-6 md:px-12 mt-auto text-center md:text-left">
+          <p className="font-sans text-[12px] text-[#200813]/40 md:hidden select-none">
+            © 2026 VentureRoot. All rights reserved.
+          </p>
         </div>
       </div>
     </div>
