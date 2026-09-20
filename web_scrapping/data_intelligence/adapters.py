@@ -1334,7 +1334,7 @@ class GeminiAdvisorClient:
         timeout_seconds: float = 30.0
     ):
         self._api_key = api_key or os.environ.get("GEMINI_API_KEY")
-        self._model = model or os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+        self._model = model or os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
         self._temperature = temperature
         self._timeout_seconds = timeout_seconds
 
@@ -1356,9 +1356,9 @@ class GeminiAdvisorClient:
             except Exception as e:
                 logger.warning(f"Error reading root .env for Gemini config: {e}")
 
-        # Model validation guard - ensure gemini-2.5-flash
+        # Model validation guard - ensure gemini-3.6-flash
         if not self._model or "1.5" in self._model:
-            self._model = "gemini-2.5-flash"
+            self._model = "gemini-3.6-flash"
 
     @property
     def api_key(self) -> Optional[str]:

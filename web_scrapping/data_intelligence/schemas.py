@@ -821,7 +821,7 @@ class AdvisorySynthesis(BaseModel):
     action_roadmap: List[str] = Field(default_factory=list)
     full_advisory_report: str
     synthesis_timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    advisor_model: str = "gemini-2.5-flash"
+    advisor_model: str = "gemini-3.6-flash"
     advisor_status: str = "gemini"
 
     def __iter__(self):
@@ -866,7 +866,7 @@ class IntegratedStep4Result(IntegratedStep3Result):
     rag_evidence: Optional[RAGEvidenceResult] = None
     advisory_synthesis: Optional[AdvisorySynthesis] = None
     numerical_integrity: Optional[NumericalIntegrityStatus] = None
-    advisor_model: str = "gemini-2.5-flash"
+    advisor_model: str = "gemini-3.6-flash"
     composite_confidence: str = "HIGH"
     correlation_id: str = ""
     latency_ms: float = 0.0

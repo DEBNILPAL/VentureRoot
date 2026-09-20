@@ -265,7 +265,7 @@ Runs the end-to-end agentic verification audit.
     }
   ],
   "retrieved_chunks_count": 5,
-  "model_used": "gemini-2.5-flash",
+  "model_used": "gemini-3.6-flash",
   "report_id": "rep_2026_kolhapur_dairy"
 }
 ```
@@ -280,7 +280,7 @@ Checks ChromaDB collection status and model readiness.
   "collection": "business_regulations",
   "chunks_count": 3994,
   "embedding_model": "BAAI/bge-large-en-v1.5",
-  "gemini_model": "gemini-2.5-flash"
+  "gemini_model": "gemini-3.6-flash"
 }
 ```
 

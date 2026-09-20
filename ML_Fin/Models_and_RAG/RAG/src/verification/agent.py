@@ -4,7 +4,7 @@ Gemini-Powered Agentic Business Regulation Verification System.
 Architecture:
   1. RAG Retrieval: BAAI/bge-large-en-v1.5 embeds the business context query
      and retrieves the top-K most relevant regulation chunks from ChromaDB.
-  2. Gemini Agent:  google-generativeai (gemini-2.5-flash) synthesizes
+  2. Gemini Agent:  google-generativeai (gemini-3.6-flash) synthesizes
      retrieved rules against ML model predictions to issue a structured verdict.
 
 Verdict types:
@@ -33,7 +33,7 @@ from .retriever import get_retriever
 # Gemini Configuration
 # ──────────────────────────────────────────────────────────────
 GEMINI_MODELS = [
-    "gemini-2.5-flash",
+    "gemini-3.6-flash",
     "gemini-flash-latest",
     "gemini-3.1-flash-lite",
     "gemini-3.5-flash-lite",

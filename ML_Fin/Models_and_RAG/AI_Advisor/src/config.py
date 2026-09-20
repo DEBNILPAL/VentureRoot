@@ -36,7 +36,7 @@ class AdvisorSettings(BaseModel):
     
     # Secrets
     gemini_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("GEMINI_API_KEY", None))
-    gemini_model: str = Field(default_factory=lambda: os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
+    gemini_model: str = Field(default_factory=lambda: os.getenv("GEMINI_MODEL", "gemini-3.6-flash"))
     
     # External Service URLs / Modes
     model_1_mode: str = Field(default_factory=lambda: os.getenv("MODEL_1_MODE", "local"))

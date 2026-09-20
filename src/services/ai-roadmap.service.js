@@ -7,7 +7,7 @@
  */
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 /**
  * Main export: Generate tailored roadmap, action items, and competitor intelligence
@@ -57,7 +57,7 @@ export async function generateTailoredRoadmapAndCompetitors({
 
       if (geminiResult && geminiResult.phases && geminiResult.phases.length === 5) {
         return {
-          source: "gemini-2.5-flash",
+          source: "gemini-3.6-flash",
           roadmap: geminiResult,
           actionItems: geminiResult.actionItems || buildFallbackActionItems(business, geminiResult),
           competitorInsights: geminiResult.competitorInsights || buildFallbackCompetitorInsights(category, district, competitors),

@@ -213,7 +213,7 @@ export const VerificationReportFormatter: React.FC<VerificationReportFormatterPr
   reportText,
   verdict,
   complianceScore,
-  modelUsed = "gemini-2.5-flash",
+  modelUsed = "gemini-3.6-flash",
   retrievedChunksCount = 5,
   businessName,
 }) => {
@@ -314,11 +314,10 @@ export const VerificationReportFormatter: React.FC<VerificationReportFormatterPr
           <div className="inline-flex bg-slate-800/90 p-0.5 rounded-lg border border-slate-700 text-xs">
             <button
               onClick={() => setViewMode("structured")}
-              className={`px-2.5 py-1 rounded-md font-sans text-[11px] font-semibold flex items-center gap-1.5 transition-all ${
-                viewMode === "structured"
-                  ? "bg-[#ebcb2f] text-slate-900 shadow-xs"
-                  : "text-slate-300 hover:text-white"
-              }`}
+              className={`px-2.5 py-1 rounded-md font-sans text-[11px] font-semibold flex items-center gap-1.5 transition-all ${viewMode === "structured"
+                ? "bg-[#ebcb2f] text-slate-900 shadow-xs"
+                : "text-slate-300 hover:text-white"
+                }`}
               title="Structured Executive View"
             >
               <Layers className="w-3 h-3" />
@@ -326,11 +325,10 @@ export const VerificationReportFormatter: React.FC<VerificationReportFormatterPr
             </button>
             <button
               onClick={() => setViewMode("raw")}
-              className={`px-2.5 py-1 rounded-md font-sans text-[11px] font-semibold flex items-center gap-1.5 transition-all ${
-                viewMode === "raw"
-                  ? "bg-[#ebcb2f] text-slate-900 shadow-xs"
-                  : "text-slate-300 hover:text-white"
-              }`}
+              className={`px-2.5 py-1 rounded-md font-sans text-[11px] font-semibold flex items-center gap-1.5 transition-all ${viewMode === "raw"
+                ? "bg-[#ebcb2f] text-slate-900 shadow-xs"
+                : "text-slate-300 hover:text-white"
+                }`}
               title="View Raw Markdown Source"
             >
               <FileCode className="w-3 h-3" />
@@ -528,43 +526,38 @@ export const VerificationReportFormatter: React.FC<VerificationReportFormatterPr
                 return (
                   <div
                     key={sIdx}
-                    className={`border rounded-2xl p-5 shadow-xs transition-all ${
-                      isClean
-                        ? "bg-emerald-50/60 border-emerald-200/90"
-                        : "bg-rose-50/70 border-rose-200/90"
-                    }`}
+                    className={`border rounded-2xl p-5 shadow-xs transition-all ${isClean
+                      ? "bg-emerald-50/60 border-emerald-200/90"
+                      : "bg-rose-50/70 border-rose-200/90"
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-3.5">
                       <div className="flex items-center gap-2.5">
                         <div
-                          className={`w-7 h-7 rounded-lg text-white flex items-center justify-center shrink-0 shadow-xs ${
-                            isClean ? "bg-emerald-600" : "bg-rose-600"
-                          }`}
+                          className={`w-7 h-7 rounded-lg text-white flex items-center justify-center shrink-0 shadow-xs ${isClean ? "bg-emerald-600" : "bg-rose-600"
+                            }`}
                         >
                           {isClean ? <ShieldCheck className="w-4 h-4" /> : <AlertOctagon className="w-4 h-4" />}
                         </div>
                         <h4
-                          className={`font-heading text-[15px] font-bold ${
-                            isClean ? "text-emerald-950" : "text-rose-950"
-                          }`}
+                          className={`font-heading text-[15px] font-bold ${isClean ? "text-emerald-950" : "text-rose-950"
+                            }`}
                         >
                           {isClean ? "Statutory Violations Check" : section.cleanHeading}
                         </h4>
                         <span
-                          className={`px-2 py-0.5 rounded-full font-sans text-[11px] font-bold ${
-                            isClean
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-rose-100 text-rose-900"
-                          }`}
+                          className={`px-2 py-0.5 rounded-full font-sans text-[11px] font-bold ${isClean
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-rose-100 text-rose-900"
+                            }`}
                         >
                           {isClean ? "0 Violations Detected" : `${section.items.length} Violations`}
                         </span>
                       </div>
                       <button
                         onClick={() => toggleSection(secId)}
-                        className={`p-1 rounded-md ${
-                          isClean ? "text-emerald-700 hover:text-emerald-900" : "text-rose-700 hover:text-rose-900"
-                        }`}
+                        className={`p-1 rounded-md ${isClean ? "text-emerald-700 hover:text-emerald-900" : "text-rose-700 hover:text-rose-900"
+                          }`}
                         aria-label="Toggle section"
                       >
                         {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}

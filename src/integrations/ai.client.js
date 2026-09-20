@@ -1,7 +1,7 @@
 /**
  * VentureRoot AI Advisory Integration Client
  * ============================================
- * Synthesizes Google Gemini LLM API (gemini-2.5-flash / gemini-1.5-flash),
+ * Synthesizes Google Gemini LLM API (gemini-3.6-flash / gemini-1.5-flash),
  * comprehensive user & venture context, Scheme RAG, and microservice fallbacks.
  */
 
@@ -131,7 +131,7 @@ let geminiRateLimitedUntil = 0;
 
 /**
  * Calls Google Gemini REST API directly.
- * Uses gemini-2.5-flash and gemini-2.5-flash-lite with fast 429 cooldown protection.
+ * Uses gemini-3.6-flash and gemini-3.6-flash-lite with fast 429 cooldown protection.
  */
 export async function callGeminiApi({ apiKey, systemInstruction, message, history = [] }) {
   if (!apiKey || typeof apiKey !== "string" || !apiKey.trim()) {
@@ -144,7 +144,7 @@ export async function callGeminiApi({ apiKey, systemInstruction, message, histor
     throw new Error(`Gemini rate limit cooldown active (retry in ${remainingSec}s)`);
   }
 
-  const models = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+  const models = ["gemini-3.6-flash", "gemini-3.6-flash-lite"];
 
   const contents = [];
 
