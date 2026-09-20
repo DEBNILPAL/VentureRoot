@@ -182,6 +182,7 @@ function searchMasterLocations(term) {
   if (!cleanTerm) return [];
 
   const results = [];
+  const tokens = cleanTerm.split(/[,\s]+/).map((t) => t.trim()).filter(Boolean);
 
   // 0. Direct Indian State & UT matching (prioritized at top when typing state initials)
   const ALL_INDIAN_STATES = [
@@ -217,9 +218,37 @@ function searchMasterLocations(term) {
   for (const loc of INDIAN_LOCATIONS_MASTER) {
     const districtLower = loc.district.toLowerCase();
     const stateLower = loc.state.toLowerCase();
+    const talukasLower = (loc.popularTalukas || []).map((t) => t.toLowerCase());
+
+    // Multi-token match: e.g. "pune, maharashtra" or "haveli, pune" or "wagholi, pune"
+    if (tokens.length >= 2) {
+      const hasDistrict = tokens.some((t) => districtLower.includes(t) || t.includes(districtLower));
+      const hasState = tokens.some((t) => stateLower.includes(t) || t.includes(stateLower));
+      const hasTaluka = tokens.some((t) => talukasLower.some((tl) => tl.includes(t) || t.includes(tl)));
+
+      if ((hasDistrict && hasState) || (hasDistrict && hasTaluka) || (hasTaluka && hasState)) {
+        const matchedTaluka = loc.popularTalukas?.find((t) => tokens.some((tok) => t.toLowerCase().includes(tok))) || loc.popularTalukas?.[0] || loc.district;
+        results.unshift({
+          id: `master-token-${loc.state}-${loc.district}-${matchedTaluka}`,
+          label: `${matchedTaluka}, ${loc.district}, ${loc.state}`,
+          name: matchedTaluka,
+          type: "DISTRICT_MATCH",
+          source: "master",
+          data: {
+            village: matchedTaluka,
+            block: matchedTaluka,
+            district: loc.district,
+            state: loc.state,
+            latitude: loc.lat,
+            longitude: loc.lon,
+          },
+        });
+        continue;
+      }
+    }
 
     // 1. Direct district match (starts with or contains)
-    if (districtLower.startsWith(cleanTerm) || districtLower.includes(cleanTerm)) {
+    if (districtLower.startsWith(cleanTerm) || districtLower.includes(cleanTerm) || cleanTerm.includes(districtLower)) {
       results.push({
         id: `master-${loc.state}-${loc.district}`,
         label: `${loc.district}, ${loc.state}`,
@@ -240,7 +269,7 @@ function searchMasterLocations(term) {
     // 2. Taluka / Sub-district match
     for (const taluka of loc.popularTalukas) {
       const talukaLower = taluka.toLowerCase();
-      if (talukaLower.startsWith(cleanTerm) || talukaLower.includes(cleanTerm)) {
+      if (talukaLower.startsWith(cleanTerm) || talukaLower.includes(cleanTerm) || cleanTerm.includes(talukaLower)) {
         results.push({
           id: `master-${loc.state}-${loc.district}-${taluka}`,
           label: `${taluka}, ${loc.district}, ${loc.state}`,
@@ -462,14 +491,41 @@ export function resolveCoordinatesForLocation(locInput) {
     return { lat: NaN, lon: NaN, label: "No Location Specified" };
   }
 
-  const state = (locInput.state || "").trim();
-  const district = (locInput.district || "").trim();
-  const block = (locInput.block || locInput.subdistrict || "").trim();
-  const village = (locInput.village || "").trim();
-  const rawLat = locInput.lat ?? locInput.latitude;
-  const rawLon = locInput.lon ?? locInput.longitude;
+  let state = "";
+  let district = "";
+  let block = "";
+  let village = "";
+  let rawLat = undefined;
+  let rawLon = undefined;
 
-  // Check if coordinates already provided
+  if (typeof locInput === "string") {
+    const parts = locInput.split(",").map((p) => p.trim()).filter(Boolean);
+    if (parts.length === 1) {
+      district = parts[0];
+    } else if (parts.length === 2) {
+      district = parts[0];
+      state = parts[1];
+    } else if (parts.length >= 3) {
+      village = parts[0];
+      block = parts[1];
+      district = parts[2];
+      state = parts[3] || "";
+    }
+  } else {
+    state = (locInput.state || "").trim();
+    district = (locInput.district || locInput.city || locInput.town || "").trim();
+    block = (locInput.block || locInput.subdistrict || locInput.taluka || "").trim();
+    village = (locInput.village || locInput.locality || locInput.ward || "").trim();
+    rawLat = locInput.lat ?? locInput.latitude;
+    rawLon = locInput.lon ?? locInput.longitude;
+  }
+
+  const cleanState = state.toLowerCase();
+  const cleanDistrict = district.toLowerCase();
+  const cleanBlock = block.toLowerCase();
+  const cleanVillage = village.toLowerCase();
+
+  // Check if explicit, non-default coordinates were provided
   if (
     rawLat !== undefined &&
     rawLat !== null &&
@@ -482,22 +538,34 @@ export function resolveCoordinatesForLocation(locInput) {
   ) {
     const latNum = Number(rawLat);
     const lonNum = Number(rawLon);
-    // Detect and reject accidental Gujarat fallback if user is in another state
-    const isAnandFallback =
+
+    // Reject generic default India coordinates when user provided specific location text
+    const isIndiaDefault =
+      Math.abs(latNum - 20.5937) < 0.005 &&
+      Math.abs(lonNum - 78.9629) < 0.005 &&
+      Boolean(cleanDistrict || cleanState || cleanBlock || cleanVillage);
+
+    // Reject accidental Anand default when user is outside Anand
+    const isAnandDefault =
       Math.abs(latNum - 22.5645) < 0.005 &&
       Math.abs(lonNum - 72.9289) < 0.005 &&
-      !district.toLowerCase().includes("anand");
+      !cleanDistrict.includes("anand") &&
+      Boolean(cleanDistrict || cleanState || cleanBlock);
 
-    if (!isAnandFallback) {
+    // Reject accidental Pune default when user is outside Pune / Maharashtra
+    const isPuneDefault =
+      Math.abs(latNum - 18.5204) < 0.005 &&
+      Math.abs(lonNum - 73.8567) < 0.005 &&
+      !cleanDistrict.includes("pune") &&
+      !cleanState.includes("maharashtra") &&
+      !cleanBlock.includes("haveli") &&
+      Boolean(cleanDistrict || cleanState);
+
+    if (!isIndiaDefault && !isAnandDefault && !isPuneDefault) {
       const label = [village, block, district, state].filter(Boolean).join(", ");
       return { lat: latNum, lon: lonNum, label: label || "Business Location" };
     }
   }
-
-  const cleanState = state.toLowerCase();
-  const cleanDistrict = district.toLowerCase();
-  const cleanBlock = block.toLowerCase();
-  const cleanVillage = village.toLowerCase();
 
   // Special priority matching for Barasat, West Bengal
   if (
@@ -524,13 +592,12 @@ export function resolveCoordinatesForLocation(locInput) {
 
   // 1. Search in INDIAN_LOCATIONS_MASTER with State matching
   if (cleanState) {
-    // Exact/Partial District match within state
     const stateMatches = INDIAN_LOCATIONS_MASTER.filter(
       (l) => l.state.toLowerCase() === cleanState || l.state.toLowerCase().includes(cleanState) || cleanState.includes(l.state.toLowerCase())
     );
 
     if (stateMatches.length > 0) {
-      // Look for district match
+      // Exact / Partial District match within state
       if (cleanDistrict) {
         const dMatch = stateMatches.find(
           (l) =>
@@ -547,7 +614,7 @@ export function resolveCoordinatesForLocation(locInput) {
         }
       }
 
-      // Look for block or village in popularTalukas
+      // Look for block or village in popularTalukas within state
       const subTerm = cleanBlock || cleanVillage;
       if (subTerm) {
         const tMatch = stateMatches.find((l) =>
@@ -567,7 +634,7 @@ export function resolveCoordinatesForLocation(locInput) {
         }
       }
 
-      // If state matches but district doesn't match specific row, use first match or state centroid
+      // If state matches but district doesn't match specific row, use state centroid or first match
       if (STATE_CENTROIDS[cleanState]) {
         return {
           lat: STATE_CENTROIDS[cleanState].lat,
@@ -600,7 +667,7 @@ export function resolveCoordinatesForLocation(locInput) {
     }
   }
 
-  // 3. Search anywhere by Block / Village
+  // 3. Search anywhere by Block / Village / Taluka
   const searchSub = cleanBlock || cleanVillage;
   if (searchSub) {
     const sMatch = INDIAN_LOCATIONS_MASTER.find((l) =>

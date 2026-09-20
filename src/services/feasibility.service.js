@@ -77,8 +77,8 @@ export async function getFeasibilityContext({
   try {
     const rawLoc = data.business?.location;
     const resolved = resolveCoordinatesForLocation(rawLoc);
-    const lat = rawLoc?.lat ?? rawLoc?.latitude ?? resolved.lat;
-    const lon = rawLoc?.lon ?? rawLoc?.longitude ?? resolved.lon;
+    const lat = resolved.lat;
+    const lon = resolved.lon;
     const category = data.business?.category?.name || data.business?.category || "Agro-Enterprise";
     const district = rawLoc?.district?.name || rawLoc?.district || "Local District";
     const state = rawLoc?.state?.name || rawLoc?.state || "India";
@@ -186,8 +186,8 @@ export async function generateFeasibility({
   try {
     const rawLoc = data.business?.location;
     const resolved = resolveCoordinatesForLocation(rawLoc);
-    const lat = rawLoc?.lat ?? rawLoc?.latitude ?? resolved.lat;
-    const lon = rawLoc?.lon ?? rawLoc?.longitude ?? resolved.lon;
+    const lat = resolved.lat;
+    const lon = resolved.lon;
     const category = data.business?.category?.name || data.business?.category || "Agro-Enterprise";
     const district = rawLoc?.district?.name || rawLoc?.district || "Local District";
     const state = rawLoc?.state?.name || rawLoc?.state || "India";

@@ -11,6 +11,7 @@ import { businessApi } from "../api/businessApi";
 import dynamic from "next/dynamic";
 import { LocationAutocompleteInput, SelectedLocation } from "@/components/ui/LocationAutocompleteInput";
 import { StateAutocompleteInput } from "@/components/ui/StateAutocompleteInput";
+import { resolveCoordinatesForLocation } from "@/services/location-search.service";
 
 const DynamicRadiusMap = dynamic(() => import("@/components/maps/RadiusMap"), {
   ssr: false,
@@ -90,6 +91,23 @@ export const BusinessWizard = () => {
 
   const formValues = watch();
 
+  // Synchronously auto-resolve coordinates whenever user types or selects state/district/block/village
+  useEffect(() => {
+    if (!formValues.district && !formValues.state) return;
+    const resolved = resolveCoordinatesForLocation({
+      state: formValues.state,
+      district: formValues.district,
+      block: formValues.block,
+      village: formValues.village,
+    });
+    const isIndiaDefault = Math.abs(resolved.lat - 20.5937) < 0.005 && Math.abs(resolved.lon - 78.9629) < 0.005;
+    if (!isIndiaDefault) {
+      setMapCenter([resolved.lat, resolved.lon]);
+      const formatted = [formValues.village, formValues.block, formValues.district, formValues.state].filter(Boolean).join(", ");
+      setLocationLabel(formatted || resolved.label);
+    }
+  }, [formValues.district, formValues.state, formValues.block, formValues.village]);
+
   const handleNext = async () => {
     let fieldsToValidate: any[] = [];
     if (currentStep === 1) fieldsToValidate = ["categoryId"];
@@ -123,6 +141,16 @@ export const BusinessWizard = () => {
         console.warn("Backend API business creation warning:", apiErr);
       }
 
+      // Strictly resolve coordinates from user input location
+      const finalLoc = resolveCoordinatesForLocation({
+        state: data.state,
+        district: data.district,
+        block: data.block,
+        village: data.village,
+        lat: mapCenter[0],
+        lon: mapCenter[1],
+      });
+
       // Generate normalized venture object
       const fallbackId = `biz_${Date.now().toString(36)}`;
       const resolvedBiz = {
@@ -135,11 +163,11 @@ export const BusinessWizard = () => {
           block: data.block || data.district || "",
           village: data.village || data.block || data.district || "",
           subdistrict: data.block || data.district || "",
-          lat: mapCenter[0],
-          lon: mapCenter[1],
-          latitude: mapCenter[0],
-          longitude: mapCenter[1],
-          formatted: locationLabel || [data.village, data.block, data.district, data.state].filter(Boolean).join(", "),
+          lat: finalLoc.lat,
+          lon: finalLoc.lon,
+          latitude: finalLoc.lat,
+          longitude: finalLoc.lon,
+          formatted: finalLoc.label || [data.village, data.block, data.district, data.state].filter(Boolean).join(", "),
         },
         availableMargin: Number(data.availableMargin) || 150000,
         expectedRevenue: Number(data.expectedRevenue) || 120000,

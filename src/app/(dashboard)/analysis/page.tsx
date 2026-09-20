@@ -40,6 +40,7 @@ import { LocationAutocompleteInput, SelectedLocation } from "@/components/ui/Loc
 import { StateAutocompleteInput } from "@/components/ui/StateAutocompleteInput";
 import { MapMarker } from "@/components/maps/RadiusMap";
 import { getAuthoritativeCensusDensity } from "@/utils/feasibility.mapper";
+import { resolveCoordinatesForLocation } from "@/services/location-search.service";
 
 const DynamicRadiusMap = dynamic(() => import("@/components/maps/RadiusMap"), {
   ssr: false,
@@ -501,12 +502,27 @@ export default function AnalysisPage() {
     }
   };
 
-  // Debounced auto-resolution when user manually types District / Taluka / Village
+  // Immediate synchronous & debounced auto-resolution when user types District / Taluka / Village / State
   useEffect(() => {
-    if (!district && !subdistrict) return;
-    const isDefault =
-      Math.abs(centerCoords[0] - 20.5937) < 0.005 && Math.abs(centerCoords[1] - 78.9629) < 0.005;
+    if (!district && !state && !subdistrict) return;
 
+    // 1. Instant resolution from master database and centroids
+    const immediate = resolveCoordinatesForLocation({
+      state,
+      district,
+      subdistrict,
+      block: subdistrict,
+      village,
+    });
+
+    const isIndiaDefault = Math.abs(immediate.lat - 20.5937) < 0.005 && Math.abs(immediate.lon - 78.9629) < 0.005;
+    if (!isIndiaDefault) {
+      setCenterCoords([immediate.lat, immediate.lon]);
+      const formatted = [village, subdistrict, district, state].filter(Boolean).join(", ");
+      setLocationLabel(formatted || immediate.label);
+    }
+
+    // 2. High-precision OpenStreetMap lookup if query has specific taluka or village
     const timer = setTimeout(async () => {
       const parts = [village, subdistrict, district, state].filter(Boolean);
       if (parts.length < 2) return;
@@ -520,13 +536,18 @@ export default function AnalysisPage() {
             const rawLat = first.data?.latitude ?? first.latitude;
             const rawLon = first.data?.longitude ?? first.longitude;
             if (rawLat && rawLon && !isNaN(Number(rawLat)) && !isNaN(Number(rawLon))) {
-              setCenterCoords([Number(rawLat), Number(rawLon)]);
-              if (!locationLabel) setLocationLabel(first.label || parts.join(", "));
+              const numLat = Number(rawLat);
+              const numLon = Number(rawLon);
+              // Reject generic India default
+              if (Math.abs(numLat - 20.5937) > 0.01 || Math.abs(numLon - 78.9629) > 0.01) {
+                setCenterCoords([numLat, numLon]);
+                if (!locationLabel) setLocationLabel(first.label || parts.join(", "));
+              }
             }
           }
         }
       } catch (_) {}
-    }, 650);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [district, subdistrict, village, state]);
@@ -542,8 +563,18 @@ export default function AnalysisPage() {
     }, 700);
 
     try {
-      const isDefault =
-        Math.abs(centerCoords[0] - 20.5937) < 0.005 && Math.abs(centerCoords[1] - 78.9629) < 0.005;
+      const strictlyResolved = resolveCoordinatesForLocation({
+        state: state.trim(),
+        district: district.trim(),
+        subdistrict: subdistrict.trim(),
+        block: subdistrict.trim(),
+        village: village?.trim(),
+        lat: centerCoords[0],
+        lon: centerCoords[1],
+      });
+
+      // Ensure centerCoords reflects the strictly resolved user coordinates
+      setCenterCoords([strictlyResolved.lat, strictlyResolved.lon]);
 
       const res = await fetch("/api/v1/feasibility/instant", {
         method: "POST",
@@ -551,12 +582,12 @@ export default function AnalysisPage() {
         body: JSON.stringify({
           businessName: businessName.trim() || "My Business Venture",
           category: category.trim() || "Food Processing",
-          state: state.trim() || "Gujarat",
-          district: district.trim() || "Anand",
-          subdistrict: subdistrict.trim() || district.trim() || "Anand",
+          state: state.trim() || strictlyResolved.label.split(",").pop()?.trim() || "Maharashtra",
+          district: district.trim() || "Pune",
+          subdistrict: subdistrict.trim() || district.trim() || "Haveli",
           village: village?.trim() || null,
-          latitude: isDefault ? null : centerCoords[0],
-          longitude: isDefault ? null : centerCoords[1],
+          latitude: strictlyResolved.lat,
+          longitude: strictlyResolved.lon,
           availableMargin: numMargin || 150000,
           projectCost: numCost || ((numMargin || 150000) * 8),
           landType,
@@ -579,14 +610,24 @@ export default function AnalysisPage() {
       const json = await res.json();
       setReportData(json.data);
 
-      // If backend returned resolved coordinates for the business, sync centerCoords
+      // If backend returned resolved coordinates for the business, sync centerCoords only if valid
       if (
         json.data?.business?.location?.lat &&
         json.data?.business?.location?.lon &&
         !isNaN(json.data.business.location.lat) &&
         !isNaN(json.data.business.location.lon)
       ) {
-        setCenterCoords([json.data.business.location.lat, json.data.business.location.lon]);
+        const bLat = Number(json.data.business.location.lat);
+        const bLon = Number(json.data.business.location.lon);
+        const isDefaultIndia = Math.abs(bLat - 20.5937) < 0.005 && Math.abs(bLon - 78.9629) < 0.005;
+        const isAccidentalAnand =
+          Math.abs(bLat - 22.5645) < 0.005 &&
+          Math.abs(bLon - 72.9289) < 0.005 &&
+          !district.toLowerCase().includes("anand");
+
+        if (!isDefaultIndia && !isAccidentalAnand) {
+          setCenterCoords([bLat, bLon]);
+        }
       }
 
       setTimeout(() => {
