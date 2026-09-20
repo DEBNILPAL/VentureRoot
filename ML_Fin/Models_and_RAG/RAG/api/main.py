@@ -56,7 +56,7 @@ pipeline = RAGPipeline()
 # ══════════════════════════════════════════════════════════════════════════════
 
 class QueryRequest(BaseModel):
-    query: str = Field(..., example="What is the maximum project cost under PMEGP for manufacturing?")
+    query: str = Field(..., examples=["What is the maximum project cost under PMEGP for manufacturing?"])
     top_k: Optional[int] = Field(default=5, ge=1, le=20)
     filters: Optional[Dict[str, Any]] = None
 
@@ -78,28 +78,28 @@ class VerificationRequest(BaseModel):
     """
     business_context: Dict[str, Any] = Field(
         ...,
-        example={
+        examples=[{
             "businessName": "Priya Dairy Farm",
             "category": "Dairy & Food Processing",
             "location": "Purba Bardhaman, West Bengal",
             "investment": 500000,
             "margin": 50000,
-        },
+        }],
         description="Core business details for compliance verification.",
     )
     ml_predictions: Dict[str, Any] = Field(
         ...,
-        example={
+        examples=[{
             "market_potential_score": 78.5,
             "opportunity_level": "HIGH",
             "recommended_scheme": "PMEGP",
             "estimated_subsidy": 125000,
             "loan_amount": 450000,
             "break_even_months": 8,
-        },
+        }],
         description="ML model output predictions to be verified against regulations.",
     )
-    top_k: Optional[int] = Field(
+    top_k: int = Field(
         default=5,
         ge=2,
         le=10,
@@ -232,7 +232,7 @@ def verify_ml_prediction(req: VerificationRequest):
         result = run_verification(
             business_context=req.business_context,
             ml_predictions=req.ml_predictions,
-            top_k=req.top_k,
+            top_k=req.top_k if req.top_k is not None else 5,
             topic_filter=req.topic_filter,
         )
 

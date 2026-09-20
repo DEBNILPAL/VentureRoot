@@ -164,7 +164,7 @@ Respond ONLY in this exact structured format:
 def run_verification(
     business_context: dict,
     ml_predictions: dict,
-    top_k: int = 5,
+    top_k: Optional[int] = 5,
     topic_filter: Optional[str] = None,
 ) -> dict:
     """
@@ -206,10 +206,11 @@ def run_verification(
     )
 
     # ── Step 2: Retrieve relevant regulation chunks ─────────────────────
-    print(f"[Agent] Retrieving top-{top_k} regulation chunks...")
+    effective_top_k = top_k if top_k is not None else 5
+    print(f"[Agent] Retrieving top-{effective_top_k} regulation chunks...")
     retrieved_chunks = retriever.search(
         query=rag_query,
-        top_k=top_k,
+        top_k=effective_top_k,
         topic_filter=topic_filter,
     )
 
