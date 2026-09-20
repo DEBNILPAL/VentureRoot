@@ -7,7 +7,7 @@ import { generateTailoredRoadmapAndCompetitors } from "@/services/ai-roadmap.ser
 import { fetchCompetitorsByRadius } from "@/services/competitor-radar.service";
 import { successResponse } from "@/utils/api-response";
 import { handleError } from "@/utils/error-handler";
-import { INDIAN_LOCATIONS_MASTER } from "@/services/location-search.service";
+import { INDIAN_LOCATIONS_MASTER, resolveCoordinatesForLocation, STATE_CENTROIDS } from "@/services/location-search.service";
 
 export async function POST(request) {
   try {
@@ -29,21 +29,34 @@ export async function POST(request) {
     const bedCapacity = body.bedCapacity || "";
     const medicalSpecialties = body.medicalSpecialties || "";
 
-    // Resolve accurate user coordinates (Cascading OpenStreetMap & Master Index)
-    const isDefaultIndia = (lat, lon) => {
-      if (!lat || !lon || isNaN(lat) || isNaN(lon)) return true;
-      if (Math.abs(lat - 20.5937) < 0.005 && Math.abs(lon - 78.9629) < 0.005) return true;
-      if (Math.abs(lat - 22.5645) < 0.005 && Math.abs(lon - 72.9289) < 0.005 && !(district || "").toLowerCase().includes("anand")) return true;
-      return false;
-    };
-
+    // Strictly resolve coordinates from user input location
     let latitude = body.latitude !== undefined && body.latitude !== null ? Number(body.latitude) : null;
     let longitude = body.longitude !== undefined && body.longitude !== null ? Number(body.longitude) : null;
 
-    if (isDefaultIndia(latitude, longitude)) {
-      latitude = null;
-      longitude = null;
+    const isGenericDefaultIndia = (lat, lon) => {
+      if (!lat || !lon || isNaN(lat) || isNaN(lon)) return true;
+      return Math.abs(lat - 20.5937) < 0.005 && Math.abs(lon - 78.9629) < 0.005;
+    };
 
+    const isAccidentalAnand = (lat, lon) => {
+      if (!lat || !lon || isNaN(lat) || isNaN(lon)) return false;
+      return Math.abs(lat - 22.5645) < 0.005 && Math.abs(lon - 72.9289) < 0.005 && !(district || "").toLowerCase().includes("anand");
+    };
+
+    const resolvedUserLoc = resolveCoordinatesForLocation({
+      state,
+      district,
+      block: subdistrict,
+      subdistrict,
+      village,
+      lat: (isGenericDefaultIndia(latitude, longitude) || isAccidentalAnand(latitude, longitude)) ? undefined : latitude,
+      lon: (isGenericDefaultIndia(latitude, longitude) || isAccidentalAnand(latitude, longitude)) ? undefined : longitude,
+    });
+
+    if (resolvedUserLoc && !isGenericDefaultIndia(resolvedUserLoc.lat, resolvedUserLoc.lon)) {
+      latitude = resolvedUserLoc.lat;
+      longitude = resolvedUserLoc.lon;
+    } else if (isGenericDefaultIndia(latitude, longitude) || !latitude || !longitude) {
       const queries = [
         [village, subdistrict, district, state].filter(Boolean).join(", ") + ", India",
         [village, district, state].filter(Boolean).join(", ") + ", India",
@@ -59,7 +72,7 @@ export async function POST(request) {
           if (apiKey) url += `&key=${encodeURIComponent(apiKey)}`;
           const res = await fetch(url, {
             headers: { "User-Agent": "VentureRoot-App/1.0" },
-            signal: AbortSignal.timeout(3500),
+            signal: AbortSignal.timeout(2500),
           });
           if (res.ok) {
             const data = await res.json();
@@ -71,25 +84,23 @@ export async function POST(request) {
           }
         } catch (_) {}
       }
-
-      if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
-        const match = INDIAN_LOCATIONS_MASTER.find(
-          (l) => l.district.toLowerCase() === (district || "").toLowerCase() &&
-                 (!state || l.state.toLowerCase() === (state || "").toLowerCase())
-        ) || INDIAN_LOCATIONS_MASTER.find(
-          (l) => l.district.toLowerCase() === (district || "").toLowerCase()
-        );
-
-        if (match && match.lat && match.lon) {
-          latitude = match.lat;
-          longitude = match.lon;
-        }
-      }
     }
 
-    if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
-      latitude = null;
-      longitude = null;
+    // If still missing, use master index or state centroid strictly based on user input
+    if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude) || isAccidentalAnand(latitude, longitude)) {
+      if (resolvedUserLoc?.lat && resolvedUserLoc?.lon && !isAccidentalAnand(resolvedUserLoc.lat, resolvedUserLoc.lon)) {
+        latitude = resolvedUserLoc.lat;
+        longitude = resolvedUserLoc.lon;
+      } else {
+        const cleanState = (state || "").toLowerCase().trim();
+        if (cleanState && STATE_CENTROIDS[cleanState]) {
+          latitude = STATE_CENTROIDS[cleanState].lat;
+          longitude = STATE_CENTROIDS[cleanState].lon;
+        } else {
+          latitude = 20.5937;
+          longitude = 78.9629;
+        }
+      }
     }
 
     const businessObj = {

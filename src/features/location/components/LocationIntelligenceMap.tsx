@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Layers, MapPin, Check, Sparkles, CheckSquare, Square } from "lucide-react";
 import { MapMarker } from "@/components/maps/RadiusMap";
 import { getAuthoritativeCensusDensity } from "@/utils/feasibility.mapper";
+import { resolveCoordinatesForLocation } from "@/services/location-search.service";
 
 // Dynamically import the map so it only renders on the client side
 const RadiusMap = dynamic(() => import("@/components/maps/RadiusMap"), {
@@ -87,14 +88,27 @@ export const LocationIntelligenceMap: React.FC<LocationIntelligenceMapProps> = (
     }
   };
 
+  // Derive effective center coordinates: if center is default India, strictly resolve from locationName
+  const effectiveCenter: [number, number] = React.useMemo(() => {
+    const isDefaultIndia =
+      !center ||
+      (Math.abs(center[0] - 20.5937) < 0.005 && Math.abs(center[1] - 78.9629) < 0.005);
+
+    if (isDefaultIndia && locationName && locationName !== "Regional Enterprise Zone") {
+      const resolved = resolveCoordinatesForLocation(locationName);
+      return [resolved.lat, resolved.lon];
+    }
+    return center && !isNaN(center[0]) && !isNaN(center[1]) && center[0] !== 0 ? center : [20.5937, 78.9629];
+  }, [center, locationName]);
+
   // Generate dynamic POI markers matching all 5 active geospatial layers
   const dynamicMarkers: MapMarker[] = React.useMemo(() => {
     if (!center || isNaN(center[0]) || isNaN(center[1]) || (center[0] === 0 && center[1] === 0)) {
       return [];
     }
     const list: MapMarker[] = [];
-    const lat = center[0];
-    const lon = center[1];
+    const lat = effectiveCenter[0];
+    const lon = effectiveCenter[1];
 
     // 1. COMPETITORS LAYER (Direct & Indirect)
     if (activeLayers.includes("Competitors")) {
@@ -403,7 +417,7 @@ export const LocationIntelligenceMap: React.FC<LocationIntelligenceMapProps> = (
 
     // Filter POIs strictly within the active catchment radius
     return list.filter((m) => (m.distanceKm || 0) <= radius);
-  }, [center, category, propMarkers, competitors, activeLayers, radius]);
+  }, [effectiveCenter, category, propMarkers, competitors, activeLayers, radius]);
 
   const populationReach = React.useMemo(() => {
     const density = getAuthoritativeCensusDensity({ name: locationName }, { name: locationName });
@@ -515,7 +529,7 @@ export const LocationIntelligenceMap: React.FC<LocationIntelligenceMapProps> = (
       {/* Map Area */}
       <div className="flex-1 rounded-2xl overflow-hidden shadow-inner border border-slate-200 relative min-h-[460px]">
         <RadiusMap
-          center={center}
+          center={effectiveCenter}
           radiusInKm={radius}
           businessName={locationName}
           locationLabel={`${radius}km Catchment Zone`}
