@@ -326,32 +326,50 @@ export const BusinessDetailsView = () => {
 
           {/* RIGHT: LOCATION */}
           <div className="flex flex-col gap-4">
-            <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 flex flex-col h-full justify-between transition-all duration-300">
-              <div className="flex justify-between items-start mb-6">
-                <span className="font-sans text-[11px] uppercase tracking-wider font-bold text-slate-500 block">Location <span className="text-slate-300 mx-1">•</span> Regional Cluster</span>
-                <span className="font-sans text-[11px] font-bold text-slate-700 bg-slate-200/50 px-2 py-1 rounded-md">
-                  {business.location.district || "Target District"} Cluster
-                </span>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-sans text-[11px] font-bold uppercase tracking-wider text-black-500">
+                Location <span className="text-black mx-1">•</span> Regional Cluster
+              </h2>
+              <span className="font-sans text-[11px] font-bold text-slate-700 bg-slate-200/60 px-2.5 py-0.5 rounded-md border border-slate-300/40">
+                {business.location.district || "Target District"} Cluster
+              </span>
+            </div>
+            <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-5 sm:p-6 flex flex-col h-full justify-between transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-[#1E6702]"></div>
+              <div className="flex flex-col gap-3.5 pt-1">
+                <div className="flex items-center justify-between py-1">
+                  <span className="font-sans text-[13px] text-slate-500 font-medium">State</span>
+                  <span className="font-sans text-[13px] font-bold text-slate-900 flex items-center gap-1.5">{business.location.state} <Check className="w-3.5 h-3.5 text-[#1E6702]" /></span>
+                </div>
+                <div className="w-full h-px bg-slate-100"></div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="font-sans text-[13px] text-slate-500 font-medium">District</span>
+                  <span className="font-sans text-[13px] font-bold text-slate-900">{business.location.district}</span>
+                </div>
+                <div className="w-full h-px bg-slate-100"></div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="font-sans text-[13px] text-slate-500 font-medium">Block</span>
+                  <span className="font-sans text-[13px] font-bold text-slate-900">{business.location.block || "District Block"}</span>
+                </div>
+                <div className="w-full h-px bg-slate-100"></div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="font-sans text-[13px] text-slate-500 font-medium">Village</span>
+                  <span className="font-sans text-[13px] font-bold text-[#1E6702] flex items-center gap-1 cursor-pointer hover:underline">{business.location.village || "Target Village"}</span>
+                </div>
               </div>
-              <div className="flex flex-col gap-5">
-                <div className="flex items-center justify-between">
-                  <span className="font-sans text-[14px] text-slate-500 font-medium">State</span>
-                  <span className="font-sans text-[14px] font-bold text-slate-900 flex items-center gap-1.5">{business.location.state} <Check className="w-3.5 h-3.5 text-[#402a03]" /></span>
+
+              {/* Bottom Regional Hub Ecosystem Info Box */}
+              <div className="mt-4 p-3 bg-slate-50/80 rounded-xl border border-slate-200/60 flex items-center gap-3">
+                <div className="p-2 bg-[#1E6702]/10 rounded-lg text-[#1E6702] shrink-0">
+                  <Map className="w-4 h-4" />
                 </div>
-                <div className="w-full h-px bg-slate-50"></div>
-                <div className="flex items-center justify-between">
-                  <span className="font-sans text-[14px] text-slate-500 font-medium">District</span>
-                  <span className="font-sans text-[14px] font-bold text-slate-900">{business.location.district}</span>
-                </div>
-                <div className="w-full h-px bg-slate-50"></div>
-                <div className="flex items-center justify-between">
-                  <span className="font-sans text-[14px] text-slate-500 font-medium">Block</span>
-                  <span className="font-sans text-[14px] font-bold text-slate-900">{business.location.block || "District Block"}</span>
-                </div>
-                <div className="w-full h-px bg-slate-50"></div>
-                <div className="flex items-center justify-between">
-                  <span className="font-sans text-[14px] text-slate-500 font-medium">Village</span>
-                  <span className="font-sans text-[13px] font-bold text-orange-500 flex items-center gap-1 cursor-pointer hover:underline">{business.location.village || "Target Village"}</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[11px] font-bold text-slate-800 truncate">
+                    {business.location.district || "Regional"} Agro-Industrial Hub
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    Active supply chain & market connectivity
+                  </span>
                 </div>
               </div>
             </div>
@@ -363,72 +381,74 @@ export const BusinessDetailsView = () => {
 
           {/* LEFT: FINANCIAL TRAJECTORY */}
           <div className="lg:col-span-2 flex flex-col gap-4">
-            <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 md:p-8 flex flex-col h-full transition-all duration-300">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                <span className="font-sans text-[11px] uppercase tracking-wider font-bold text-slate-500 block">
-                  Financial Trajectory • Revenue, Costs & Operating Drag
-                </span>
-                {/* Scenario Toggle */}
-                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg self-start sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => setTrajectoryScenario("base")}
-                    className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-bold transition-all ${
-                      trajectoryScenario === "base"
-                        ? "bg-white text-emerald-800 shadow-xs"
-                        : "text-slate-500 hover:text-slate-800"
-                    }`}
-                  >
-                    {t("biz.baseScenario") || "Base Trajectory"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTrajectoryScenario("conservative")}
-                    className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-bold transition-all ${
-                      trajectoryScenario === "conservative"
-                        ? "bg-white text-rose-800 shadow-xs"
-                        : "text-slate-500 hover:text-slate-800"
-                    }`}
-                  >
-                    {t("biz.conservativeScenario") || "High-Friction Loss Scenario"}
-                  </button>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+              <h2 className="font-sans text-[11px] font-bold uppercase tracking-wider text-black-500">
+                Financial Trajectory <span className="text-black mx-1">•</span> Revenue, Costs & Operating Drag
+              </h2>
+              {/* Scenario Toggle */}
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setTrajectoryScenario("base")}
+                  className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-bold transition-all ${
+                    trajectoryScenario === "base"
+                      ? "bg-white text-emerald-800 shadow-xs"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  {t("biz.baseScenario") || "Base Trajectory"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTrajectoryScenario("conservative")}
+                  className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-bold transition-all ${
+                    trajectoryScenario === "conservative"
+                      ? "bg-white text-rose-800 shadow-xs"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  {t("biz.conservativeScenario") || "High-Friction Loss Scenario"}
+                </button>
               </div>
+            </div>
 
-              <div className="flex flex-col md:flex-row gap-8 h-full">
+            <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-5 sm:p-6 flex flex-col h-full justify-between transition-all duration-300">
+              <div className="flex flex-col xl:flex-row gap-6 xl:gap-8 h-full items-stretch">
 
                 {/* Area Chart */}
-                <div className="flex flex-col flex-1">
-                  <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
-                    <h3 className="font-heading text-[19px] font-bold text-slate-900 tracking-tight">
-                      Projected Revenue & Operating Margin (6 Months)
-                    </h3>
-                    <span className="font-sans text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      +{financialTrajectory?.summary.growthPct || 100}% growth
-                    </span>
-                  </div>
-
-                  {/* Break-even & Loss indicator */}
-                  <div className="flex items-center gap-2 mb-4 flex-wrap text-xs">
-                    <span className="px-2 py-0.5 rounded-md font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] flex items-center gap-1">
-                      <Check className="w-3 h-3 text-emerald-600" />
-                      Break-even: {financialTrajectory?.breakEvenMonth}
-                    </span>
-                    {financialTrajectory?.summary.isInitialLossExpected && (
-                      <span className="px-2 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200 text-[11px]">
-                        ⚠️ M1 Launch Drag: -₹{financialTrajectory?.summary.m1Loss.toLocaleString('en-IN')}
+                <div className="flex flex-col flex-1 min-w-0 justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+                      <h3 className="font-heading text-[18px] font-bold text-slate-900 tracking-tight">
+                        Projected Revenue & Operating Margin (6 Months)
+                      </h3>
+                      <span className="font-sans text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
+                        +{financialTrajectory?.summary.growthPct || 100}% growth
                       </span>
-                    )}
+                    </div>
+
+                    {/* Break-even & Loss indicator */}
+                    <div className="flex items-center gap-2 mb-3 flex-wrap text-xs">
+                      <span className="px-2 py-0.5 rounded-md font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] flex items-center gap-1">
+                        <Check className="w-3 h-3 text-emerald-600" />
+                        Break-even: {financialTrajectory?.breakEvenMonth}
+                      </span>
+                      {financialTrajectory?.summary.isInitialLossExpected && (
+                        <span className="px-2 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200 text-[11px]">
+                          ⚠️ M1 Launch Drag: -₹{financialTrajectory?.summary.m1Loss.toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="w-full h-[190px] flex-1">
+                  <div className="w-full h-[185px] flex-1 min-w-0 my-1">
                     <FinancialTrajectoryAreaChart
                       data={financialTrajectory?.trajectory || []}
                       tickFormatter={compactCurrencyFormatter}
                     />
                   </div>
 
-                  <div className="flex justify-between items-center text-[11.5px] font-bold px-2 mt-4 flex-wrap gap-2">
+                  <div className="flex justify-between items-center text-[11.5px] font-bold pt-2 mt-2 border-t border-slate-100 flex-wrap gap-2">
                     <span className="flex items-center gap-1.5 text-slate-600">
                       <div className="w-2 h-2 rounded-full bg-[#1E6702]"></div>
                       M1: ₹{financialTrajectory?.summary.m1Revenue.toLocaleString('en-IN')}
@@ -443,39 +463,41 @@ export const BusinessDetailsView = () => {
                   </div>
                 </div>
 
-                <div className="w-px bg-slate-100 hidden md:block"></div>
+                <div className="w-px bg-slate-200/60 hidden xl:block self-stretch"></div>
 
                 {/* Cost breakdown */}
-                <div className="flex flex-col flex-1 md:max-w-[300px]">
-                  <div className="flex justify-between items-center mb-1.5">
-                    <h3 className="font-heading text-[19px] font-bold text-slate-900 tracking-tight">Outlay Breakdown</h3>
-                    <span className="font-sans text-[12px] font-bold text-slate-700">Total {financialTrajectory?.totalCostLakhs}</span>
+                <div className="w-full xl:w-[320px] 2xl:w-[340px] shrink-0 flex flex-col justify-between min-w-0 pt-4 xl:pt-0 border-t xl:border-t-0 border-slate-100">
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <h3 className="font-heading text-[18px] font-bold text-slate-900 tracking-tight">Outlay Breakdown</h3>
+                      <span className="font-sans text-[12px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">Total {financialTrajectory?.totalCostLakhs}</span>
+                    </div>
+                    <p className="font-sans text-[11.5px] text-slate-500 mb-3">Capital expenditure & launch operating reserves</p>
                   </div>
-                  <p className="font-sans text-[11.5px] text-slate-500 mb-4">Capital expenditure & launch operating reserves</p>
 
-                  <div className="flex items-center gap-5">
-                    <div className="w-[115px] h-[115px] shrink-0 relative">
+                  <div className="flex items-center gap-3 sm:gap-4 my-auto">
+                    <div className="w-[105px] h-[105px] shrink-0 relative">
                       <EditorialDonutChart
                         data={financialTrajectory?.costBreakdown || []}
                         nameKey="name"
                         valueKey="value"
-                        innerRadius={35}
-                        outerRadius={52}
+                        innerRadius={32}
+                        outerRadius={48}
                       />
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                        <span className="font-sans text-[9.5px] font-bold text-slate-400">OUTLAY</span>
-                        <span className="font-sans text-[13px] font-bold text-slate-800">{financialTrajectory?.totalCostLakhs}</span>
+                        <span className="font-sans text-[8.5px] font-bold text-slate-400 uppercase tracking-wider">OUTLAY</span>
+                        <span className="font-sans text-[12px] font-bold text-slate-800 leading-tight">{financialTrajectory?.totalCostLakhs}</span>
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-2 flex-1">
+                    <div className="flex flex-col gap-2 flex-1 min-w-0">
                       {(financialTrajectory?.costBreakdown || []).map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 min-w-0">
+                        <div key={idx} className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
                             <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.fill }}></div>
-                            <span className="font-sans text-[11px] font-semibold text-slate-700 truncate">{item.name}</span>
+                            <span className="font-sans text-[11px] font-semibold text-slate-700 truncate" title={item.name}>{item.name}</span>
                           </div>
-                          <span className="font-sans text-[11px] font-bold text-slate-900 ml-1">{item.pct}</span>
+                          <span className="font-sans text-[11px] font-bold text-slate-900 shrink-0 tabular-nums">{item.pct}</span>
                         </div>
                       ))}
                     </div>
@@ -492,7 +514,7 @@ export const BusinessDetailsView = () => {
               <h2 className="font-sans text-[11px] font-bold uppercase tracking-wider text-black-500">
                 Next Steps
               </h2>
-              <span className="font-sans text-[11px] font-medium text-slate-500">4 Workstreams</span>
+              <span className="font-sans text-[11px] font-medium text-slate-500">3 Workstreams</span>
             </div>
 
             <div className="flex flex-col gap-3 h-full">

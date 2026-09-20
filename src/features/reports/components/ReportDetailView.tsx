@@ -239,10 +239,14 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
             />
           ))}
         </div>
+
+        <div className="mt-auto pt-6 px-2 text-[11px] text-[#f9faeb]/60 font-medium">
+          © 2026 VentureRoot
+        </div>
       </aside>
 
       {/* ── MAIN CONTENT CANVAS ──────────────────────────────────── */}
-      <main className="flex-1 w-full bg-white lg:rounded-tl-[40px] lg:shadow-[-20px_0_40px_rgba(0,0,0,0.2)] min-h-screen pb-20 print:shadow-none print:border-0 print:rounded-none">
+      <main className="flex-1 w-full bg-white lg:rounded-tl-[40px] lg:shadow-[-20px_0_40px_rgba(0,0,0,0.05)] min-h-screen flex flex-col justify-between print:shadow-none print:border-0 print:rounded-none">
 
         {/* ── ACTION BAR ─────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 lg:p-10 pb-0 print:hidden">
@@ -741,6 +745,16 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
           </section>
 
         </div>
+
+        {/* ── REPORT CANVAS FOOTER ─────────────────────────────────── */}
+        <footer className="mt-16 pt-8 pb-10 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-400 font-sans text-[11px] px-6 lg:px-10 print:hidden">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-slate-600">VentureRoot</span>
+            <span>•</span>
+            <span>Detailed Project Report (DPR)</span>
+          </div>
+          <span>© 2026 VentureRoot. All rights reserved.</span>
+        </footer>
       </main>
 
     </div>

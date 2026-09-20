@@ -216,6 +216,7 @@ export default function RegisterPage() {
                 <input
                   id="fullName"
                   type="text"
+                  autoComplete="name"
                   {...register("fullName")}
                   placeholder="Ravi Kumar"
                   className={`w-full rounded-xl bg-white border ${errors.fullName ? "border-red-300 focus:ring-red-200" : "border-[#200813]/10 focus:ring-[#1E6702]/20 focus:border-[#1E6702]"
@@ -233,6 +234,7 @@ export default function RegisterPage() {
                 <input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   {...register("email")}
                   placeholder="you@example.com"
                   className={`w-full rounded-xl bg-white border ${errors.email ? "border-red-300 focus:ring-red-200" : "border-[#200813]/10 focus:ring-[#1E6702]/20 focus:border-[#1E6702]"
@@ -252,6 +254,7 @@ export default function RegisterPage() {
                     <input
                       id="password"
                       type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
                       {...register("password")}
                       placeholder="••••••••"
                       className={`w-full rounded-xl bg-white border ${errors.password ? "border-red-300 focus:ring-red-200" : "border-[#200813]/10 focus:ring-[#1E6702]/20 focus:border-[#1E6702]"
@@ -279,6 +282,7 @@ export default function RegisterPage() {
                     <input
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
+                      autoComplete="new-password"
                       {...register("confirmPassword")}
                       placeholder="••••••••"
                       className={`w-full rounded-xl bg-white border ${errors.confirmPassword ? "border-red-300 focus:ring-red-200" : "border-[#200813]/10 focus:ring-[#1E6702]/20 focus:border-[#1E6702]"

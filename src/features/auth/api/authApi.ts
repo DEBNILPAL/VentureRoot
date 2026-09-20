@@ -1,6 +1,7 @@
 import apiClient from "@/lib/api/client";
 import { LoginFormValues, RegisterFormValues } from "../schemas/authSchema";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { getSafeRedirectUrl } from "@/lib/security/redirect";
 
 export type LoginResponse = unknown;
 export type RegisterResponse = unknown;
@@ -25,8 +26,9 @@ export const authApi = {
         ? window.location.origin
         : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+    const safeTarget = redirectTo ? getSafeRedirectUrl(redirectTo, "/dashboard") : undefined;
     const targetRedirect = `${origin}/auth/callback${
-      redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ""
+      safeTarget ? `?redirect=${encodeURIComponent(safeTarget)}` : ""
     }`;
 
     const { data, error } = await supabase.auth.signInWithOAuth({

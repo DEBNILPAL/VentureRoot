@@ -6,6 +6,7 @@ import { EvidenceBadge } from "@/components/evidence/EvidenceBadge";
 import { ChatMessage, advisorApi } from "../api/advisorApi";
 import { VoiceRecorder, REGIONAL_LANGUAGES } from "@/features/voice/components/VoiceRecorder";
 import { useBusinessesComparison } from "@/lib/data/businesses";
+import { FormattedChatMessage } from "./FormattedChatMessage";
 
 interface ChatWindowProps {
   initialQuery?: string;
@@ -20,7 +21,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
     {
       role: "assistant",
       content:
-        "Namaste! I am your VentureRoot AI Business Advisor powered by Google Gemini. I have loaded your entrepreneur profile, capital, and venture inputs. How can I guide your business decisions today?",
+        "Namaste! I am your VentureRoot AI Business Advisor. I have loaded your entrepreneur profile, capital, and venture inputs. How can I guide your business decisions today?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -112,7 +113,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
         evidence: responsePayload?.evidence || {
           sources: [
             activeBusiness ? `Venture: ${activeBusiness.name || activeBusiness.category}` : "Entrepreneur Profile",
-            "Google Gemini AI Advisor",
+            "VentureRoot AI Engine",
           ],
           type: "FACT",
           confidence: 96,
@@ -123,7 +124,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
       console.error("Advisor API Error:", error);
       const errMsg =
         error?.response?.data?.message ||
-        "I was unable to complete the analysis at this moment. Please verify your connection or GEMINI_API_KEY.";
+        "I was unable to complete the analysis at this moment. Please verify your connection and try again.";
       setMessages((prev) => [
         ...prev,
         {
@@ -278,7 +279,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
                 VentureRoot AI Advisor
               </h3>
               <span className="text-[10px] bg-[#1E6702]/10 text-[#1E6702] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
-                Gemini 2.5
+                Enterprise AI
               </span>
             </div>
             <p className="font-sans text-[11px] sm:text-[12px] text-secondary-muted break-words leading-tight mt-0.5">
@@ -398,8 +399,8 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
                     : "bg-slate-50 text-[#200813] rounded-tl-sm border border-slate-200/80 shadow-xs"
                 }`}
               >
-                <div className="whitespace-pre-wrap font-sans text-[13px] sm:text-[14px] leading-relaxed break-words [overflow-wrap:anywhere]">
-                  {msg.content}
+                <div className="font-sans text-[13px] sm:text-[14px] leading-relaxed break-words [overflow-wrap:anywhere]">
+                  <FormattedChatMessage content={msg.content} isUser={msg.role === "user"} />
                 </div>
 
                 {/* Assistant Message Actions: Listen Voice & Copy */}
@@ -486,7 +487,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
               </div>
             </div>
             <div className="bg-slate-50 text-secondary rounded-2xl rounded-tl-sm border border-slate-200 p-3 sm:p-4 flex gap-1.5 items-center min-w-0">
-              <span className="text-xs font-semibold text-[#1E6702] mr-1">Gemini is analyzing</span>
+              <span className="text-xs font-semibold text-[#1E6702] mr-1">AI Advisor is analyzing</span>
               <div className="w-1.5 h-1.5 bg-[#1E6702] rounded-full animate-bounce" />
               <div className="w-1.5 h-1.5 bg-[#1E6702] rounded-full animate-bounce [animation-delay:150ms]" />
               <div className="w-1.5 h-1.5 bg-[#1E6702] rounded-full animate-bounce [animation-delay:300ms]" />

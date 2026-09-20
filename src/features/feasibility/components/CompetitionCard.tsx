@@ -329,32 +329,16 @@ const TopRankedCompetitorCard = ({ comp }: { comp: Competitor }) => {
   const isGovt = isCompetitorGovt(comp);
   const isDirect = !comp.type?.toLowerCase().includes("indirect");
 
-  const rankBadgeConfig = useMemo(() => {
+  const rankLabel = useMemo(() => {
     switch (comp.rank) {
       case 1:
-        return {
-          badge: "bg-gradient-to-r from-amber-500 to-yellow-600 text-white shadow-amber-200",
-          label: "👑 #1 Dominant Market Anchor",
-          ring: "border-amber-300 ring-2 ring-amber-100",
-        };
+        return "#1 Dominant Market Anchor";
       case 2:
-        return {
-          badge: "bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-slate-200",
-          label: "⚡ #2 Direct Challenger",
-          ring: "border-slate-300 ring-2 ring-slate-100",
-        };
+        return "#2 Direct Challenger";
       case 3:
-        return {
-          badge: "bg-gradient-to-r from-amber-700 to-orange-800 text-white shadow-orange-200",
-          label: "🎯 #3 Strategic Rival",
-          ring: "border-orange-200 ring-2 ring-orange-50",
-        };
+        return "#3 Strategic Rival";
       default:
-        return {
-          badge: "bg-gradient-to-r from-indigo-600 to-blue-700 text-white shadow-indigo-200",
-          label: `💎 #${comp.rank || 4} High-Impact Competitor`,
-          ring: "border-indigo-200 ring-2 ring-indigo-50",
-        };
+        return `#${comp.rank || 4} High-Impact Competitor`;
     }
   }, [comp.rank]);
 
@@ -363,28 +347,28 @@ const TopRankedCompetitorCard = ({ comp }: { comp: Competitor }) => {
       case "Critical Threat":
         return "bg-rose-50 text-rose-700 border-rose-200";
       case "Major Threat":
-        return "bg-orange-50 text-orange-700 border-orange-200";
+        return "bg-amber-50 text-amber-800 border-amber-200";
       case "High Threat":
-        return "bg-amber-50 text-amber-700 border-amber-200";
+        return "bg-amber-50 text-amber-800 border-amber-200";
       default:
-        return "bg-sky-50 text-sky-700 border-sky-200";
+        return "bg-slate-50 text-slate-700 border-slate-200";
     }
   }, [comp.threatLevel]);
 
   return (
-    <div className={`bg-white rounded-2xl border-2 transition-all duration-200 ${rankBadgeConfig.ring} shadow-sm hover:shadow-md p-5 flex flex-col justify-between gap-4`}>
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all duration-200 p-5 flex flex-col justify-between gap-4">
       {/* Top Bar: Rank & Threat Level */}
       <div>
         <div className="flex items-center justify-between gap-2 flex-wrap mb-2.5">
-          <span className={`px-3 py-1 rounded-full text-xs font-black tracking-wide shadow-sm flex items-center gap-1.5 ${rankBadgeConfig.badge}`}>
-            {rankBadgeConfig.label}
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-900 text-white tracking-wide flex items-center gap-1.5 shadow-xs">
+            {rankLabel}
           </span>
           <div className="flex items-center gap-2">
             <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1 ${threatColor}`}>
               <ShieldAlert className="w-3 h-3" />
               {comp.threatLevel || "High Threat"}
             </span>
-            <div className="flex items-center gap-1 bg-slate-900 text-white px-2.5 py-0.5 rounded-full text-[11px] font-black">
+            <div className="flex items-center gap-1 bg-slate-100 text-slate-800 border border-slate-200 px-2.5 py-0.5 rounded-full text-[11px] font-bold">
               <span>{comp.strengthScore || 85}</span>
               <span className="text-[9px] text-slate-400 font-normal">/100</span>
             </div>
@@ -401,14 +385,10 @@ const TopRankedCompetitorCard = ({ comp }: { comp: Competitor }) => {
                 {Number(comp.distanceKm).toFixed(1)} km away
               </span>
               <span className="text-slate-300">•</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                isGovt ? "bg-sky-50 text-sky-700 border-sky-200" : "bg-purple-50 text-purple-700 border-purple-200"
-              }`}>
-                {isGovt ? "🏛️ Govt" : "🏥 Private"}
+              <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-slate-50 text-slate-700 border border-slate-200">
+                {isGovt ? "🏛️ Govt" : "🏢 Private"}
               </span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                isDirect ? "bg-red-50 text-red-700 border-red-200" : "bg-amber-50 text-amber-700 border-amber-200"
-              }`}>
+              <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-slate-50 text-slate-700 border border-slate-200">
                 {isDirect ? "Direct Rival" : "Indirect Feeder"}
               </span>
               {comp.facilityType && (
@@ -417,8 +397,8 @@ const TopRankedCompetitorCard = ({ comp }: { comp: Competitor }) => {
                 </span>
               )}
               {comp.source?.includes("OpenStreetMap") && (
-                <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold text-[10px] border border-blue-200 flex items-center gap-1">
-                  <Globe className="w-2.5 h-2.5" /> Live OSM
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold text-[10px] border border-slate-200 flex items-center gap-1">
+                  <Globe className="w-2.5 h-2.5 text-slate-500" /> Live OSM
                 </span>
               )}
             </div>
@@ -429,48 +409,48 @@ const TopRankedCompetitorCard = ({ comp }: { comp: Competitor }) => {
             <div className="text-[10px] uppercase font-bold text-slate-500 flex items-center justify-end gap-1">
               <Tag className="w-2.5 h-2.5" /> Pricing
             </div>
-            <div className="text-xs font-black text-emerald-800 mt-0.5 max-w-[140px] truncate">
+            <div className="text-xs font-bold text-slate-900 mt-0.5 max-w-[140px] truncate">
               {comp.pricing || "Market Parity"}
             </div>
           </div>
         </div>
       </div>
 
-      {/* WHY THIS IS A MAJOR COMPETITOR (Web-Scraped Evidence Callout) */}
-      <div className="p-3.5 rounded-xl bg-gradient-to-br from-amber-50/90 to-orange-50/70 border border-amber-200/90 shadow-sm">
-        <div className="flex items-center gap-1.5 text-xs font-black text-amber-900 uppercase tracking-wider mb-1.5">
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-          <span>Why This Is a Major Competitor (Web-Scraped Analysis)</span>
+      {/* WHY THIS IS A MAJOR COMPETITOR (Market Analysis Callout) */}
+      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+        <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+          <AlertTriangle className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+          <span>Why This Is a Major Competitor (Market Analysis)</span>
         </div>
-        <p className="text-[12px] text-amber-950 font-medium leading-relaxed">
+        <p className="text-[12.5px] text-slate-700 font-medium leading-relaxed">
           {comp.whyMajorCompetitor}
         </p>
       </div>
 
       {/* RECOMMENDED STRATEGIC COUNTERMEASURE */}
-      <div className="p-3.5 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm">
-        <div className="flex items-center gap-1.5 text-xs font-black text-emerald-900 uppercase tracking-wider mb-1.5">
-          <Zap className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+      <div className="p-3.5 rounded-xl bg-emerald-50/40 border border-emerald-200/70">
+        <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 uppercase tracking-wider mb-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           <span>Recommended Strategic Playbook & Countermeasure</span>
         </div>
-        <p className="text-[12px] text-emerald-950 font-medium leading-relaxed">
+        <p className="text-[12.5px] text-emerald-950 font-medium leading-relaxed">
           {comp.strategicCountermeasure}
         </p>
       </div>
 
       {/* Strengths & Weaknesses Quick Row */}
       {(comp.strengths?.length || comp.weaknesses?.length) ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100 text-[11px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100 text-[11.5px]">
           {comp.strengths?.length ? (
-            <div className="flex items-start gap-1.5 text-teal-800">
-              <span className="font-bold shrink-0">Key Strength:</span>
-              <span className="line-clamp-1">{comp.strengths[0]}</span>
+            <div className="flex items-start gap-1.5 text-slate-600">
+              <span className="font-bold text-slate-800 shrink-0">Key Strength:</span>
+              <span className="line-clamp-1 font-medium text-slate-600">{comp.strengths[0]}</span>
             </div>
           ) : null}
           {comp.weaknesses?.length ? (
-            <div className="flex items-start gap-1.5 text-rose-800">
-              <span className="font-bold shrink-0">Vulnerability:</span>
-              <span className="line-clamp-1">{comp.weaknesses[0]}</span>
+            <div className="flex items-start gap-1.5 text-slate-600">
+              <span className="font-bold text-slate-800 shrink-0">Vulnerability:</span>
+              <span className="line-clamp-1 font-medium text-slate-600">{comp.weaknesses[0]}</span>
             </div>
           ) : null}
         </div>
@@ -1051,23 +1031,23 @@ export const CompetitionCard = ({
       </div>
 
       {/* ── Top 5–6 High-Strength Competitors Radar & Deep Analysis ── */}
-      <div className="rounded-3xl border-2 border-amber-200/90 bg-gradient-to-br from-amber-50/40 via-white to-orange-50/30 p-5 md:p-6 shadow-sm flex flex-col gap-4">
+      <div className="bg-white rounded-3xl border border-slate-200 p-5 md:p-6 shadow-sm flex flex-col gap-5">
         {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-100 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-sm shadow-amber-200 shrink-0">
-              <Award className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center shadow-xs shrink-0">
+              <Award className="w-5 h-5 text-slate-700" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="font-sans text-[17px] font-black text-gray-900">
+                <h4 className="font-sans text-[17px] font-bold text-gray-900">
                   Top 5–6 Dominant Competitors & Threat Rankings
                 </h4>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
-                  ⚡ High-Strength Threat Radar
+                <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                  Threat Radar
                 </span>
               </div>
-              <p className="text-xs text-slate-600 font-medium mt-0.5">
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
                 Algorithmic multi-factor evaluation based on web-scraped facility capacity, statutory price floor, proximity friction, and verified commercial reach.
               </p>
             </div>
@@ -1087,8 +1067,8 @@ export const CompetitionCard = ({
                 onClick={() => setTopFilter(id as typeof topFilter)}
                 className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
                   topFilter === id
-                    ? "bg-amber-600 text-white shadow-sm"
-                    : "bg-white text-slate-600 hover:bg-amber-50 border border-slate-200"
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
                 }`}
               >
                 {label}

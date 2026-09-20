@@ -7,6 +7,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authApi } from "@/features/auth/api/authApi";
 import { AlertCircle, ArrowRight } from "lucide-react";
+import { getSafeRedirectUrl } from "@/lib/security/redirect";
 
 export default function AuthCallbackPage() {
   return (
@@ -30,7 +31,7 @@ export default function AuthCallbackPage() {
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || "/dashboard";
+  const redirectUrl = getSafeRedirectUrl(searchParams.get("redirect"), "/dashboard");
   const loginAction = useAuthStore((state) => state.login);
 
   const [status, setStatus] = useState<"processing" | "success" | "error">(

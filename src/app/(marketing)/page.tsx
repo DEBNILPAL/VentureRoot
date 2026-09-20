@@ -764,7 +764,7 @@ export default function LandingPage() {
                   className="flex flex-col sm:flex-row gap-4 mt-8 sm:mt-9 w-full sm:w-auto justify-center items-center"
                 >
                   <MagneticButton
-                    href={isAuthenticated ? "/dashboard" : "/register"}
+                    href={isAuthenticated ? "/analysis" : "/login?redirect=%2Fanalysis"}
                     variant="espresso"
                     className="px-7 py-3 rounded-full text-white font-semibold text-[13px] md:text-sm tracking-wide"
                   >
@@ -773,7 +773,7 @@ export default function LandingPage() {
                   </MagneticButton>
 
                   <MagneticButton
-                    href={isAuthenticated ? "/dashboard" : "/register"}
+                    href={isAuthenticated ? "/dashboard" : "/login?redirect=%2Fdashboard"}
                     variant="espresso-translucent"
                     className="px-7 py-3 rounded-full font-semibold text-[13px] md:text-sm tracking-wide"
                   >
@@ -1181,13 +1181,13 @@ export default function LandingPage() {
                 </h4>
                 <ul className="space-y-2.5 text-xs text-[#9bb3cc]">
                   <li>
-                    <Link href="/register" className="hover:text-[#FFFBE7] transition-colors">
+                    <Link href={isAuthenticated ? "/analysis" : "/login?redirect=%2Fanalysis"} className="hover:text-[#FFFBE7] transition-colors">
                       Analyze Your Business
                     </Link>
                   </li>
                   <li>
                     <Link href="/dashboard" className="hover:text-[#FFFBE7] transition-colors">
-                      Sample Dashboard
+                      View Dashboard
                     </Link>
                   </li>
                   <li>

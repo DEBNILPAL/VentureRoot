@@ -4,7 +4,7 @@ import { TopNav } from "@/components/layout/TopNav";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { DashboardBackground } from "@/components/layout/DashboardBackground";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { PageFooter } from "@/components/layout/PageFooter";
+import { DashboardFooter } from "@/components/layout/DashboardFooter";
 
 export default function DashboardLayout({
   children,
@@ -19,7 +19,7 @@ export default function DashboardLayout({
           <TopNav />
           <main className="flex-1 w-full relative z-10 flex flex-col justify-between">
             <div className="flex-1 w-full">{children}</div>
-            <PageFooter className="mt-auto py-5" />
+            <DashboardFooter />
           </main>
         </div>
         <MobileBottomNav />

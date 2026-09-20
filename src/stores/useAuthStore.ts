@@ -39,10 +39,6 @@ export const useAuthStore = create<AuthState>()(
       setHasHydrated: (val: boolean) => set({ _hasHydrated: val }),
 
       login: (token: string, user: MockUser) => {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("ventureroot_token", token);
-          document.cookie = `ventureroot_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
-        }
         set({ token, user });
       },
 

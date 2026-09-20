@@ -220,14 +220,20 @@ function VerificationReportSection({ markdown }: { markdown: string }) {
         }
         if (line.trim() === "") return <div key={i} className="h-1" />;
 
-        // Bold handling
-        const boldified = line.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        // Safe bold handling without dangerouslySetInnerHTML
+        const parts = line.split(/(\*\*[^*]+\*\*)/g);
         return (
-          <p
-            key={i}
-            className="text-[13px] text-gray-700"
-            dangerouslySetInnerHTML={{ __html: boldified }}
-          />
+          <p key={i} className="text-[13px] text-gray-700">
+            {parts.map((part, pIdx) =>
+              part.startsWith("**") && part.endsWith("**") ? (
+                <strong key={pIdx} className="font-semibold text-gray-900">
+                  {part.slice(2, -2)}
+                </strong>
+              ) : (
+                part
+              )
+            )}
+          </p>
         );
       })}
     </div>

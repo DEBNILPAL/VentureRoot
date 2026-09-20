@@ -13,6 +13,7 @@ import { motion, Variants } from "framer-motion";
 import { TextEffect } from "@/components/ui/text-effect";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authApi } from "@/features/auth/api/authApi";
+import { getSafeRedirectUrl } from "@/lib/security/redirect";
 
 export default function LoginPage() {
   return (
@@ -29,7 +30,7 @@ export default function LoginPage() {
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect");
+  const redirectUrl = getSafeRedirectUrl(searchParams.get("redirect"), "/dashboard");
   const loginAction = useAuthStore((state) => state.login);
   const mockUser = useAuthStore((state) => state.user);
 
@@ -278,6 +279,7 @@ function LoginPageContent() {
                 <input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   {...register("email")}
                   placeholder="you@example.com"
                   className={`w-full rounded-xl bg-white border ${errors.email ? "border-red-300 focus:ring-red-200" : "border-[#200813]/10 focus:ring-[#1E6702]/20 focus:border-[#1E6702]"
@@ -296,6 +298,7 @@ function LoginPageContent() {
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     {...register("password")}
                     placeholder="••••••••"
                     className={`w-full rounded-xl bg-white border ${errors.password ? "border-red-300 focus:ring-red-200" : "border-[#200813]/10 focus:ring-[#1E6702]/20 focus:border-[#1E6702]"

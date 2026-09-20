@@ -187,6 +187,7 @@ export const OnboardingFlow = () => {
               <label className="block font-sans text-[14px] font-medium text-[#200813]/80 mb-1.5">{t("auth.fullName")} <span className="text-red-500">*</span></label>
               <input
                 type="text"
+                autoComplete="name"
                 {...register("fullName")}
                 className="w-full rounded-xl bg-gray-50/50 border border-black/5 p-3.5 font-sans text-[14px] transition-all outline-none focus:ring-4 focus:ring-[#1E6702]/10 focus:border-[#1E6702] focus:bg-white text-[#200813] font-medium shadow-sm"
                 placeholder="Ravi Kumar"
@@ -197,6 +198,7 @@ export const OnboardingFlow = () => {
               <label className="block font-sans text-[14px] font-medium text-[#200813]/80 mb-1.5">{t("auth.email")}</label>
               <input
                 type="email"
+                autoComplete="email"
                 {...register("email")}
                 className="w-full rounded-xl bg-gray-50/50 border border-black/5 p-3.5 font-sans text-[14px] transition-all outline-none focus:ring-4 focus:ring-[#1E6702]/10 focus:border-[#1E6702] focus:bg-white text-[#200813] font-medium shadow-sm"
                 placeholder={`ravi@example.com ${t("onboarding.optional")}`}
@@ -207,6 +209,7 @@ export const OnboardingFlow = () => {
               <label className="block font-sans text-[14px] font-medium text-[#200813]/80 mb-1.5">{t("onboarding.mobile")}</label>
               <input
                 type="tel"
+                autoComplete="tel"
                 {...register("phone")}
                 className="w-full rounded-xl bg-gray-50/50 border border-black/5 p-3.5 font-sans text-[14px] transition-all outline-none focus:ring-4 focus:ring-[#1E6702]/10 focus:border-[#1E6702] focus:bg-white text-[#200813] font-medium shadow-sm"
                 placeholder={`+91 9876543210 ${t("onboarding.optional")}`}
