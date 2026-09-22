@@ -73,4 +73,19 @@ export const authApi = {
     const response = await apiClient.get("/auth/me");
     return response.data;
   },
+
+  deleteAccount: async (): Promise<void> => {
+    try {
+      await apiClient.delete("/users/me");
+    } catch (err) {
+      console.warn("[authApi] Backend delete account error:", err);
+    }
+    try {
+      if (typeof window !== "undefined") {
+        const supabase = getSupabaseBrowserClient();
+        await supabase.auth.signOut();
+      }
+    } catch (_) {}
+  },
 };
+

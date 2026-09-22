@@ -30,35 +30,36 @@ export const useFeasibility = (businessId: string, options?: UseFeasibilityOptio
 
     try {
       const res: any = await feasibilityApi.getFeasibility(businessId);
-      // API response shape: { success, message, data: { feasibility: { business, profile, mlStatus, feasibility } } }
-      const rawPayload =
-        res?.data?.feasibility?.feasibility ||   // nested: data.feasibility.feasibility (the FeasibilityData)
-        res?.data?.feasibility ||                 // flat: data.feasibility
-        res?.data ||
-        res;
+      // API response shape: { success, message, data: { feasibility: { business, profile, mlStatus, feasibility, competitorRadar } } }
+      const container = res?.data?.feasibility || res?.data || res;
+      const core = container?.feasibility || container;
 
-      const payload = (rawPayload && (rawPayload.market || rawPayload.pricing))
-        ? rawPayload
+      const payload = (core && (core.market || core.pricing))
+        ? {
+            ...core,
+            competitorRadar: container?.competitorRadar || res?.data?.competitorRadar || core?.competitorRadar || null,
+            business: container?.business || res?.data?.business || core?.business || null,
+            mlStatus: container?.mlStatus || null,
+          }
         : (res?.data?.feasibility?.feasibility || feasibilityData);
 
       setData(payload || feasibilityData);
       setLastUpdated(new Date());
     } catch (err: any) {
       console.warn("[useFeasibility] Falling back to baseline feasibility data:", err);
-      if (!data) {
-        setData(feasibilityData);
-      }
+      setData(feasibilityData);
       setError(err);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [businessId, data]);
-
-  // Initial fetch on mount / businessId change
-  useEffect(() => {
-    fetchFeasibility(false);
   }, [businessId]);
+
+  // Initial fetch on mount / businessId change — clear previous business data
+  useEffect(() => {
+    setData(null);
+    fetchFeasibility(false);
+  }, [businessId, fetchFeasibility]);
 
   // Periodic background refresh if refreshIntervalMs is set
   const intervalRef = useRef<NodeJS.Timeout | null>(null);

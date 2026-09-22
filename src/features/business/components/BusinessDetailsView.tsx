@@ -3,14 +3,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
-  Map, Activity, ArrowRight, TrendingUp, ChevronRight, Check,
+  Map, Activity, ArrowRight, ArrowLeft, TrendingUp, ChevronRight, Check,
   ShieldAlert, FileText, Compass, IndianRupee, Layers, BarChart2,
-  Wrench, Building, Users, Zap, AlertTriangle, ShieldCheck
+  Wrench, Building, Users, Zap, AlertTriangle, ShieldCheck, Briefcase, Edit3, Trash2
 } from "lucide-react";
 import { EditorialDonutChart, FinancialTrajectoryAreaChart } from "@/components/ui/charts";
 import { useBusinessDetails } from "@/lib/data/businesses";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { DashboardBackground } from "@/components/layout/DashboardBackground";
+import { DeleteBusinessModal } from "@/features/business/components/DeleteBusinessModal";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 import { getDynamicBusinessResources } from "@/services/business-resources.service";
 import { calculateFinancialTrajectory } from "@/services/financial-trajectory.service";
@@ -38,12 +39,14 @@ const compactCurrencyFormatter = (value: any) => {
 
 export const BusinessDetailsView = () => {
   const { t } = useTranslation();
+  const router = useRouter();
   const params = useParams();
   const id = params?.id as string || "";
   const { data: fetchedBusiness, isLoading } = useBusinessDetails(id);
   const [business, setBusiness] = useState<BusinessDetails | null>(null);
   const [trajectoryScenario, setTrajectoryScenario] = useState<"base" | "conservative">("base");
   const [resourceTab, setResourceTab] = useState<"land" | "equipments" | "growth">("land");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     if (fetchedBusiness) {
@@ -134,6 +137,29 @@ export const BusinessDetailsView = () => {
       <div className="flex flex-col gap-6 relative z-10 w-full">
         {/* HEADER */}
         <div className="flex flex-col gap-2 w-full text-[#402a03] mb-4">
+          {/* Back Arrow Button & Breadcrumb Path */}
+          <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
+            <Link
+              href="/business"
+              aria-label="Back to all businesses"
+              title="Back to all businesses"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white hover:bg-emerald-50 text-slate-700 hover:text-[#1E6702] border border-slate-200 hover:border-[#1E6702]/40 shadow-xs hover:shadow-sm transition-all active:scale-95 shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+              <Link
+                href="/business"
+                className="hover:text-[#1E6702] transition-colors hover:underline"
+              >
+                My Registered Businesses
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
+              <span className="text-slate-800 font-bold truncate max-w-[220px] sm:max-w-none">{business.name}</span>
+            </div>
+          </div>
+
           <span className="font-sans text-[11px] font-bold uppercase tracking-wider text-[#402a03]/70">
             {business.category} • {business.subcategory || 'DAIRY FARMING'}
           </span>
@@ -145,6 +171,24 @@ export const BusinessDetailsView = () => {
               <span className="px-2.5 py-1 rounded-full bg-[#402a03]/10 font-sans text-[12px] font-bold text-[#402a03] flex items-center gap-1.5 shadow-sm border border-[#402a03]/20">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#402a03] animate-pulse"></div> {business.status}
               </span>
+            </div>
+            <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
+              <Link
+                href={`/business/${business.id}/edit`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-emerald-50 text-slate-700 hover:text-[#1E6702] border border-slate-200 hover:border-emerald-300 shadow-xs text-xs sm:text-sm font-bold transition-all active:scale-95"
+              >
+                <Edit3 className="w-4 h-4 text-[#1E6702]" />
+                <span>Edit Details</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 shadow-xs text-xs sm:text-sm font-bold transition-all active:scale-95 cursor-pointer"
+                title="Delete Venture"
+              >
+                <Trash2 className="w-4 h-4 text-rose-600" />
+                <span>Delete</span>
+              </button>
             </div>
           </div>
           <p className="font-sans text-[14px] text-[#402a03]/80 font-medium mt-0.5">
@@ -564,6 +608,19 @@ export const BusinessDetailsView = () => {
 
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <DeleteBusinessModal
+          isOpen={isDeleteModalOpen}
+          businessId={business.id}
+          businessName={business.name}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onDeleted={() => {
+            router.push("/business");
+          }}
+        />
+      )}
     </div>
   );
 };

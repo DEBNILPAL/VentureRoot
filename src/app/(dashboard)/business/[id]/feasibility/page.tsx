@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useParams } from "next/navigation";
 
 import { FeasibilityStateBoundary } from "@/features/feasibility/components/FeasibilityStateBoundary";
@@ -25,13 +25,13 @@ import {
 } from "@/features/feasibility/types";
 
 import { useFeasibility } from "@/lib/data/feasibility";
-import { useBusinessDetails } from "@/lib/data/businesses";
+import { useBusinessDetails, getUserScopeKey } from "@/lib/data/businesses";
 import { getAuthoritativeCensusDensity } from "@/utils/feasibility.mapper";
 import { resolveCoordinatesForLocation } from "@/services/location-search.service";
 
 export default function FeasibilityPage() {
   const params = useParams();
-  const id = params?.id as string || "123";
+  const id = params?.id as string;
 
   const { data: fetchedFeasibility, isLoading, error } = useFeasibility(id);
   const { data: businessDetails } = useBusinessDetails(id);
@@ -40,17 +40,16 @@ export default function FeasibilityPage() {
   const rawLocation = useMemo(() => {
     if ((businessDetails as any)?.location) return (businessDetails as any).location;
     if ((fetchedFeasibility as any)?.business?.location) return (fetchedFeasibility as any).business.location;
+    if ((fetchedFeasibility as any)?.feasibility?.business?.location) return (fetchedFeasibility as any).feasibility.business.location;
     if (typeof window !== "undefined") {
       try {
-        const userId = localStorage.getItem("ventureroot_user_id");
-        const cached = localStorage.getItem(`ventureroot_businesses_${userId || "default"}`);
+        const scopeKey = getUserScopeKey();
+        const cached = localStorage.getItem(`ventureroot_businesses_${scopeKey}`);
         if (cached) {
           const list = JSON.parse(cached);
-          const found = list.find((b: any) => b.id === id) || list[0];
+          const found = list.find((b: any) => b.id === id);
           if (found?.location) return found.location;
         }
-        const baseLoc = localStorage.getItem("ventureroot_base_location");
-        if (baseLoc) return baseLoc;
       } catch (_) {}
     }
     return null;
@@ -168,13 +167,40 @@ export default function FeasibilityPage() {
         
         {/* Header Section */}
         <div className="mb-4 sm:mb-6">
-          <Link href={`/business/${id}`} className="inline-flex items-center gap-1.5 font-sans text-[13px] sm:text-[14px] font-semibold text-secondary-muted hover:text-primary transition-colors mb-2 sm:mb-3">
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to business details
-          </Link>
+          <div className="flex flex-wrap items-center gap-2.5 mb-2 sm:mb-3">
+            <Link
+              href="/feasibility"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white hover:bg-emerald-50 text-slate-700 hover:text-[#1E6702] border border-slate-200 transition-all active:scale-95 shadow-xs shrink-0"
+              title="Back to Feasibility Hub"
+              aria-label="Back to Feasibility Hub"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 flex-wrap">
+              <Link href="/feasibility" className="hover:text-[#1E6702] transition-colors hover:underline">
+                Feasibility Hub
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
+              <Link href={`/business/${id}`} className="hover:text-[#1E6702] transition-colors hover:underline truncate max-w-[160px] sm:max-w-none">
+                {businessDetails?.name || "Business"}
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
+              <span className="text-slate-800 font-bold">Business Intelligence</span>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div>
-              <h1 className="font-heading text-[24px] sm:text-[32px] font-bold text-[#242424] tracking-tight leading-tight">
-                Business Intelligence
+              <h1 className="font-heading text-[24px] sm:text-[32px] font-bold text-[#242424] tracking-tight leading-tight flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                <span>Business Intelligence</span>
+                {businessDetails?.name && (
+                  <>
+                    <span className="text-slate-400 font-normal">-</span>
+                    <span className="italic font-serif font-medium text-slate-600 text-lg sm:text-[24px]">
+                      {businessDetails.name}
+                    </span>
+                  </>
+                )}
               </h1>
               <p className="font-sans text-[13px] sm:text-[14px] text-slate-500 font-medium mt-0.5">
                 Hyper-local market demand, competitor positioning, and feasibility intelligence.

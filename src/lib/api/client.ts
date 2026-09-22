@@ -24,7 +24,19 @@ const apiClient = axios.create({
 // ── Request interceptor: attach auth token ──────────────────────────────
 apiClient.interceptors.request.use(
   (config) => {
-    const token = useAuthStore.getState().token;
+    let token = useAuthStore.getState().token;
+    if (!token && typeof window !== "undefined") {
+      token = localStorage.getItem("ventureroot_token");
+      if (!token) {
+        try {
+          const authStorage = localStorage.getItem("ventureroot_auth_storage");
+          if (authStorage) {
+            const parsed = JSON.parse(authStorage);
+            token = parsed?.state?.token;
+          }
+        } catch (_) {}
+      }
+    }
 
     // Prevent token leakage: only attach to relative paths or the configured baseURL
     const isRelativeUrl =

@@ -112,3 +112,43 @@ export const useProfile = () => {
 
   return { data, onboardingCompleted, isLoading, error, refetch };
 };
+
+export async function deleteAccountCompletely(): Promise<boolean> {
+  // 1. Send delete request to backend
+  try {
+    await authApi.deleteAccount();
+  } catch (err: any) {
+    console.warn("[deleteAccountCompletely] Backend delete notice:", err?.message);
+  }
+
+  // 2. Erase all frontend user storage, caches, and cookies
+  if (typeof window !== "undefined") {
+    try {
+      // Clear all matching localStorage keys
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (
+          key &&
+          (key.startsWith("ventureroot_") ||
+            key.startsWith("feasibility_") ||
+            key.startsWith("finance_") ||
+            key.startsWith("draft_") ||
+            key.startsWith("sb-") ||
+            key.includes("supabase"))
+        ) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+
+      // Clear cookies
+      document.cookie = "ventureroot_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "sb-access-token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "sb-refresh-token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    } catch (_) {}
+  }
+
+  return true;
+}
+

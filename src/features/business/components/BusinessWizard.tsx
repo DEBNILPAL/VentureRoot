@@ -6,12 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { businessFormSchema, BusinessFormValues } from "../schemas/businessSchema";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Check, Info, Bookmark, ArrowRight, Sprout, Leaf, MapPin, Sparkles } from "lucide-react";
+import { AlertCircle, Check, Info, Bookmark, ArrowRight, ArrowLeft, Sprout, Leaf, MapPin, Sparkles, Lock } from "lucide-react";
 import { businessApi } from "../api/businessApi";
 import dynamic from "next/dynamic";
 import { LocationAutocompleteInput, SelectedLocation } from "@/components/ui/LocationAutocompleteInput";
 import { StateAutocompleteInput } from "@/components/ui/StateAutocompleteInput";
 import { resolveCoordinatesForLocation } from "@/services/location-search.service";
+import { getUserScopeKey } from "@/lib/data/businesses";
 
 const DynamicRadiusMap = dynamic(() => import("@/components/maps/RadiusMap"), {
   ssr: false,
@@ -31,13 +32,21 @@ const WIZARD_STEPS = [
   { id: 6, label: "Analyze & Submit", subtitle: "Review and submit" },
 ];
 
-export const BusinessWizard = () => {
+interface BusinessWizardProps {
+  businessId?: string;
+}
+
+export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
   const router = useRouter();
+
+  const isEditMode = Boolean(businessId);
+  const [isLoadingExisting, setIsLoadingExisting] = useState(isEditMode);
+  const [existingName, setExistingName] = useState<string>("");
 
   useEffect(() => {
     businessApi
@@ -59,6 +68,7 @@ export const BusinessWizard = () => {
     trigger,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<BusinessFormValues>({
     resolver: zodResolver(businessFormSchema),
@@ -77,6 +87,99 @@ export const BusinessWizard = () => {
 
   const [mapCenter, setMapCenter] = useState<[number, number]>([18.5204, 73.8567]);
   const [locationLabel, setLocationLabel] = useState<string>("Pune, Maharashtra");
+
+  // Load existing business data when in edit mode
+  useEffect(() => {
+    if (!businessId) return;
+
+    let isMounted = true;
+    const loadBusinessData = async () => {
+      setIsLoadingExisting(true);
+      let foundBiz: any = null;
+
+      // 1. Check local cache
+      if (typeof window !== "undefined") {
+        const cacheKey = `ventureroot_businesses_${getUserScopeKey()}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          try {
+            const list = JSON.parse(cached);
+            if (Array.isArray(list)) {
+              foundBiz = list.find((b: any) => b.id === businessId);
+            }
+          } catch (_) {}
+        }
+      }
+
+      // 2. Fetch from backend API
+      try {
+        const res: any = await businessApi.get(businessId);
+        const fetched = res?.data?.business || res?.data?.data?.business || res?.data || res?.business;
+        if (fetched) {
+          foundBiz = { ...(foundBiz || {}), ...fetched };
+        }
+      } catch (err) {
+        console.warn("Could not fetch business from API, using cached data if available:", err);
+      }
+
+      if (!isMounted || !foundBiz) {
+        if (isMounted) setIsLoadingExisting(false);
+        return;
+      }
+
+      if (foundBiz.name) {
+        setExistingName(foundBiz.name);
+      }
+
+      const catVal = foundBiz.categoryId || foundBiz.category?.id || (typeof foundBiz.category === "string" ? foundBiz.category : "");
+      let resolvedCatId = catVal;
+      if (categories.length > 0) {
+        const matched = categories.find(
+          (c) =>
+            c.id === catVal ||
+            c.slug?.toLowerCase() === catVal.toLowerCase() ||
+            c.name?.toLowerCase() === catVal.toLowerCase()
+        );
+        if (matched) resolvedCatId = matched.id;
+      }
+
+      const st = foundBiz.location?.state || foundBiz.state || "";
+      const dt = foundBiz.location?.district || foundBiz.district || "";
+      const bk = foundBiz.location?.block || foundBiz.location?.subdistrict || foundBiz.block || "";
+      const vl = foundBiz.location?.village || foundBiz.village || "";
+      const margin = Number(foundBiz.capital?.availableMargin ?? foundBiz.availableMargin ?? 0);
+      const rev = Number(foundBiz.operations?.expectedRevenue ?? foundBiz.expectedRevenue ?? 0);
+      const resrc = foundBiz.resources?.existingResources ?? foundBiz.existingResources ?? "";
+
+      const lat = Number(foundBiz.location?.lat ?? foundBiz.location?.latitude ?? foundBiz.latitude ?? 18.5204);
+      const lon = Number(foundBiz.location?.lon ?? foundBiz.location?.longitude ?? foundBiz.longitude ?? 73.8567);
+
+      reset({
+        categoryId: resolvedCatId || "",
+        state: st,
+        district: dt,
+        block: bk,
+        village: vl,
+        availableMargin: margin,
+        existingResources: resrc,
+        expectedRevenue: rev,
+      });
+
+      if (lat && lon && (lat !== 18.5204 || lon !== 73.8567)) {
+        setMapCenter([lat, lon]);
+      }
+      const label = foundBiz.location?.formatted || [vl, bk, dt, st].filter(Boolean).join(", ");
+      if (label) setLocationLabel(label);
+
+      setIsLoadingExisting(false);
+    };
+
+    loadBusinessData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [businessId, categories, reset]);
 
   const handleLocationSelect = (loc: SelectedLocation) => {
     setValue("state", loc.state, { shouldValidate: true });
@@ -126,6 +229,95 @@ export const BusinessWizard = () => {
     setIsSubmitting(true);
     setGlobalError(null);
     try {
+      if (isEditMode && businessId) {
+        // Edit mode: strictly update under the existing businessId (ID cannot be modified)
+        const payload = {
+          categoryId: data.categoryId,
+          state: data.state,
+          district: data.district,
+          block: data.block || undefined,
+          village: data.village || undefined,
+          availableMargin: Number(data.availableMargin),
+          existingResources: data.existingResources || undefined,
+          expectedRevenue: Number(data.expectedRevenue),
+          name: existingName || undefined,
+          latitude: mapCenter[0],
+          longitude: mapCenter[1],
+          lat: mapCenter[0],
+          lon: mapCenter[1],
+        };
+
+        try {
+          await businessApi.update(businessId, payload as any);
+        } catch (apiErr: any) {
+          console.warn("Backend API business update warning:", apiErr);
+        }
+
+        const finalLoc = resolveCoordinatesForLocation({
+          state: data.state,
+          district: data.district,
+          block: data.block,
+          village: data.village,
+          lat: mapCenter[0],
+          lon: mapCenter[1],
+        });
+
+        if (typeof window !== "undefined") {
+          const cacheKey = `ventureroot_businesses_${getUserScopeKey()}`;
+          let existingList: any[] = [];
+          try {
+            existingList = JSON.parse(localStorage.getItem(cacheKey) || "[]");
+          } catch (_) {}
+
+          const updatedList = existingList.map((biz: any) => {
+            if (biz.id === businessId) {
+              return {
+                ...biz,
+                id: businessId, // Business ID strictly preserved and locked
+                name: payload.name || biz.name,
+                category: data.categoryId,
+                location: {
+                  ...biz.location,
+                  state: data.state || "",
+                  district: data.district || "",
+                  block: data.block || data.district || "",
+                  village: data.village || data.block || data.district || "",
+                  subdistrict: data.block || data.district || "",
+                  lat: finalLoc.lat,
+                  lon: finalLoc.lon,
+                  latitude: finalLoc.lat,
+                  longitude: finalLoc.lon,
+                  formatted: finalLoc.label || [data.village, data.block, data.district, data.state].filter(Boolean).join(", "),
+                },
+                availableMargin: Number(data.availableMargin),
+                expectedRevenue: Number(data.expectedRevenue),
+                existingResources: data.existingResources || "",
+                capital: {
+                  ...(biz.capital || {}),
+                  availableMargin: Number(data.availableMargin),
+                },
+                operations: {
+                  ...(biz.operations || {}),
+                  expectedRevenue: Number(data.expectedRevenue),
+                },
+                resources: {
+                  ...(biz.resources || {}),
+                  existingResources: data.existingResources || "",
+                },
+                updatedAt: new Date().toISOString(),
+              };
+            }
+            return biz;
+          });
+
+          localStorage.setItem(cacheKey, JSON.stringify(updatedList));
+          window.dispatchEvent(new Event("business-updated"));
+        }
+
+        router.push(`/business/${businessId}`);
+        return;
+      }
+
       let createdBusiness: any = null;
       try {
         const payload = {
@@ -178,8 +370,7 @@ export const BusinessWizard = () => {
       };
 
       if (typeof window !== "undefined") {
-        const currentUserId = localStorage.getItem("ventureroot_user_id");
-        const cacheKey = `ventureroot_businesses_${currentUserId || "default"}`;
+        const cacheKey = `ventureroot_businesses_${getUserScopeKey()}`;
         let existing: any[] = [];
         try {
           existing = JSON.parse(localStorage.getItem(cacheKey) || "[]");
@@ -189,9 +380,9 @@ export const BusinessWizard = () => {
         window.dispatchEvent(new Event("business-updated"));
       }
 
-      const businessId = createdBusiness?.id || resolvedBiz.id;
-      if (businessId) {
-        router.push(`/business/${businessId}`);
+      const businessIdToRoute = createdBusiness?.id || resolvedBiz.id;
+      if (businessIdToRoute) {
+        router.push(`/business/${businessIdToRoute}`);
       } else {
         router.push("/dashboard");
       }
@@ -209,6 +400,15 @@ export const BusinessWizard = () => {
 
   const progressPercentage = Math.round((currentStep / 6) * 100);
 
+  if (isLoadingExisting) {
+    return (
+      <div className="w-full min-h-[380px] bg-white rounded-2xl border border-slate-200 p-12 flex flex-col items-center justify-center gap-3">
+        <div className="w-9 h-9 border-3 border-[#1E6702] border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-semibold text-slate-600">Loading business details for editing...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full flex flex-col items-center">
       
@@ -217,8 +417,20 @@ export const BusinessWizard = () => {
         {/* Dark Header */}
         <div className="w-full bg-[#81cc87] px-5 py-6 sm:px-10 sm:py-12 relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center text-[#f9faeb]">
           <div className="z-10 mb-4 md:mb-0">
-            <h1 className="font-heading text-[24px] sm:text-[32px] font-bold text-[#f9faeb] tracking-tight leading-tight">Start a New Enterprise</h1>
-            <p className="font-sans text-[13px] sm:text-[14px] text-[#f9faeb]/70 font-medium mt-0.5">Complete the 6 steps to get started</p>
+            <h1 className="font-heading text-[24px] sm:text-[32px] font-bold text-[#f9faeb] tracking-tight leading-tight">
+              {isEditMode ? "Edit Enterprise Details" : "Start a New Enterprise"}
+            </h1>
+            <p className="font-sans text-[13px] sm:text-[14px] text-[#f9faeb]/70 font-medium mt-0.5">
+              {isEditMode
+                ? "Update your enterprise parameters, location, and capital"
+                : "Complete the 6 steps to get started"}
+            </p>
+            {isEditMode && businessId && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/20 text-[#f9faeb] text-xs font-semibold backdrop-blur-xs border border-white/20 mt-3">
+                <Lock className="w-3.5 h-3.5 opacity-80" />
+                <span>Enterprise ID: <strong className="font-mono">{businessId}</strong> (Locked)</span>
+              </div>
+            )}
           </div>
           
           <div className="z-10 hidden md:flex flex-col md:items-end opacity-90 border-l-2 border-[#f9faeb]/10 pl-6">
@@ -242,9 +454,22 @@ export const BusinessWizard = () => {
           {/* MOBILE COMPACT STEPPER (Hidden on Desktop) */}
           <div className="lg:hidden w-full bg-[#fcfbf7] rounded-2xl p-4 border border-gray-200/60 shadow-xs">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-[#81cc87] uppercase tracking-wider">
-                Step {currentStep} of 6
-              </span>
+              <div className="flex items-center gap-2">
+                {currentStep > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
+                    className="w-7 h-7 rounded-full bg-white border border-gray-200 text-slate-700 flex items-center justify-center cursor-pointer active:scale-95 shadow-xs"
+                    title="Previous Step"
+                    aria-label="Previous Step"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <span className="text-xs font-bold text-[#81cc87] uppercase tracking-wider">
+                  Step {currentStep} of 6
+                </span>
+              </div>
               <span className="text-xs font-semibold text-gray-800">
                 {WIZARD_STEPS[currentStep - 1].label}
               </span>
@@ -270,7 +495,18 @@ export const BusinessWizard = () => {
                   const isCompleted = currentStep > step.id;
                   
                   return (
-                    <div key={step.id} className="flex items-start gap-5 relative z-10">
+                    <div 
+                      key={step.id} 
+                      onClick={() => {
+                        if (isCompleted) {
+                          setCurrentStep(step.id);
+                        }
+                      }}
+                      className={`flex items-start gap-5 relative z-10 transition-all ${
+                        isCompleted ? "cursor-pointer hover:opacity-85 active:scale-98" : ""
+                      }`}
+                      title={isCompleted ? `Go back to ${step.label}` : undefined}
+                    >
                       <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center border-2 transition-all duration-300
                         ${isActive ? 'bg-[#81cc87] border-[#81cc87] text-[#f9faeb] shadow-md' : 
                           isCompleted ? 'bg-white border-[#81cc87] text-[#81cc87]' : 
@@ -282,7 +518,7 @@ export const BusinessWizard = () => {
                       </div>
                       <div className="flex flex-col pt-1">
                         <span className={`font-sans text-[14px] font-bold transition-colors duration-300
-                          ${isActive ? 'text-gray-900' : 'text-gray-500'}
+                          ${isActive ? 'text-gray-900' : isCompleted ? 'text-gray-700 hover:text-[#1E6702]' : 'text-gray-500'}
                         `}>
                           {step.label}
                         </span>
@@ -315,6 +551,21 @@ export const BusinessWizard = () => {
           {/* RIGHT SIDE: Content Area */}
           <div className="w-full flex-1 flex flex-col bg-white rounded-3xl p-6 md:p-8">
             
+            {/* Top Navigation Row: Back Arrow Button Above */}
+            {currentStep > 1 && (
+              <div className="mb-4 flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
+                  className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-[#1E6702] border border-slate-200 hover:border-[#1E6702]/40 transition-all active:scale-95 cursor-pointer shadow-xs"
+                  title="Previous Step"
+                  aria-label="Previous Step"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+
             {/* Progress Bar */}
             <div className="w-full mb-10">
                <div className="flex justify-between font-sans text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-3">
@@ -597,20 +848,33 @@ export const BusinessWizard = () => {
               </div>
 
               {/* Navigation Buttons */}
-              <div className="flex flex-col-reverse md:flex-row justify-between items-center pt-8 mt-12 gap-4">
+              <div className="flex flex-col-reverse sm:flex-row justify-between items-center pt-8 mt-12 gap-4 border-t border-gray-100">
                 
-                <button
-                  type="button"
-                  className="w-full md:w-auto px-6 py-3.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors font-sans text-[14px] font-semibold flex items-center justify-center gap-2"
-                >
-                  <Bookmark className="w-4 h-4" /> Save & Continue Later
-                </button>
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  {currentStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
+                      className="w-12 h-12 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-[#1E6702] hover:border-[#1E6702]/40 transition-all flex items-center justify-center cursor-pointer active:scale-95 shadow-2xs shrink-0"
+                      title="Previous step"
+                      aria-label="Previous step"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="w-full sm:w-auto px-5 py-3.5 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors font-sans text-[14px] font-semibold flex items-center justify-center gap-2"
+                  >
+                    <Bookmark className="w-4 h-4" /> Save & Continue Later
+                  </button>
+                </div>
                 
                 {currentStep < 6 ? (
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="w-full md:w-auto px-8 py-3.5 rounded-xl bg-[#81cc87] text-[#f9faeb] hover:bg-[#81cc87]/90 shadow-lg shadow-[#81cc87]/20 transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#81cc87] text-[#f9faeb] hover:bg-[#81cc87]/90 shadow-lg shadow-[#81cc87]/20 transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2 cursor-pointer"
                   >
                     Next Step <ArrowRight className="w-4 h-4" />
                   </button>
@@ -618,12 +882,14 @@ export const BusinessWizard = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full md:w-auto px-8 py-3.5 rounded-xl bg-[#81cc87] text-[#f9faeb] hover:bg-[#81cc87]/90 shadow-lg shadow-[#81cc87]/20 transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none min-w-[200px]"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#81cc87] text-[#f9faeb] hover:bg-[#81cc87]/90 shadow-lg shadow-[#81cc87]/20 transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none min-w-[200px] cursor-pointer"
                   >
                     {isSubmitting ? (
                       <div className="w-5 h-5 border-2 border-[#f9faeb]/30 border-t-[#f9faeb] rounded-full animate-spin" />
                     ) : (
-                      <>Analyze & Submit <ArrowRight className="w-4 h-4" /></>
+                      <>
+                        {isEditMode ? "Save & Update Business" : "Analyze & Submit"} <ArrowRight className="w-4 h-4" />
+                      </>
                     )}
                   </button>
                 )}

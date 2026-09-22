@@ -84,7 +84,7 @@ export const updateBusinessSchema =
 
 export const businessIdSchema = z
   .string()
-  .uuid("Invalid business ID");
+  .min(1, "Invalid business ID");
 
 
 export const businessQuerySchema = z

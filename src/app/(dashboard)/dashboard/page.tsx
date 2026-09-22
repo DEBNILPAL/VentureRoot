@@ -121,10 +121,6 @@ export default function DashboardPage() {
   const pop10km = Math.round(314.16 * density);
   const pop20km = Math.round(1256.64 * density);
 
-  // Time-adjusted operational lifecycle calculation
-  const businessCreatedAt = activeBusiness?.createdAt ? new Date(activeBusiness.createdAt) : new Date();
-  const daysElapsed = Math.max(3, Math.min(84, Math.floor((Date.now() - businessCreatedAt.getTime()) / (1000 * 60 * 60 * 24)) || 14));
-
   // Sector-Specific Semantic Summaries
   const feasibilitySummary = useMemo(() => {
     if (isHealthcare) {
@@ -257,16 +253,6 @@ export default function DashboardPage() {
               )}
             </p>
           </div>
-
-          {/* Real-time Status Badge */}
-          <div className="flex items-center gap-2 self-start lg:self-auto bg-white border border-slate-200/90 rounded-xl px-3 py-1.5 shadow-xs">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
-            <span className="text-xs font-bold text-slate-700">Operational Phase 1</span>
-            <span className="text-[11px] font-medium text-slate-400">| Day {daysElapsed} of 90</span>
-          </div>
         </div>
 
         {/* ─── Multi-Business Horizontal Switcher (Scroll-safe on mobile) ─── */}
@@ -279,8 +265,9 @@ export default function DashboardPage() {
                   <button
                     key={biz.id || idx}
                     type="button"
+                    title={biz.name || `Business ${idx + 1}`}
                     onClick={() => setSelectedBusinessIndex(idx)}
-                    className={`shrink-0 px-2 py-0.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 ${
+                    className={`shrink-0 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 ${
                       isSelected
                         ? "bg-[#1E6702] text-white shadow-sm shadow-emerald-900/20 ring-1.5 ring-emerald-600/30 scale-[1.01]"
                         : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
@@ -291,7 +278,7 @@ export default function DashboardPage() {
                       <span className="sm:hidden">V{idx + 1}:</span>
                       <span className="hidden sm:inline">Venture {idx + 1}:</span>
                     </span>
-                    <span className="truncate max-w-[36px] xs:max-w-[50px] sm:max-w-[150px]">
+                    <span className="truncate max-w-[120px] sm:max-w-[200px]">
                       {biz.name || `Business ${idx + 1}`}
                     </span>
                   </button>
@@ -367,26 +354,26 @@ export default function DashboardPage() {
           {/* Header */}
           <div className="flex items-start justify-between gap-2 min-h-[54px]">
             <div>
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-1">
+              <span className="text-xs font-semibold tracking-normal text-slate-500 flex items-center gap-1.5 mb-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                 Feasibility Status
               </span>
-              <h3 className="font-heading text-[15px] sm:text-[16px] font-bold text-slate-900 leading-snug">
+              <h2 className="font-heading text-sm sm:text-base font-bold text-slate-900 leading-snug">
                 {feasibilitySummary.verdict}
-              </h3>
+              </h2>
             </div>
-            <span className={`text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md border shrink-0 shadow-xs ${feasibilitySummary.statusTheme}`}>
+            <span className={`text-xs font-bold tracking-normal px-2.5 py-0.5 rounded-md border shrink-0 shadow-xs ${feasibilitySummary.statusTheme}`}>
               {feasibilitySummary.grade}
             </span>
           </div>
 
           {/* Body */}
-          <div className="flex-1 flex flex-col justify-between my-3">
-            <div className="space-y-1.5 text-xs text-slate-600 leading-relaxed bg-slate-50/90 backdrop-blur-xs p-3 rounded-xl border border-slate-100 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
-              <p className="line-clamp-3 sm:line-clamp-none">{feasibilitySummary.why}</p>
-              <div className="pt-2 border-t border-slate-200/60 flex items-start gap-1.5 font-medium text-emerald-800 text-[11px]">
+          <div className="flex-1 flex flex-col justify-between my-2.5">
+            <div className="space-y-2 text-xs text-slate-600 leading-relaxed bg-slate-50/90 backdrop-blur-xs p-3 rounded-xl border border-slate-100 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+              <p className="line-clamp-2 text-slate-700 font-medium">{feasibilitySummary.why}</p>
+              <div className="pt-1.5 border-t border-slate-200/60 flex items-start gap-1.5 font-medium text-emerald-800 text-xs">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                <span className="break-words leading-tight">Moat: {feasibilitySummary.keyMoat}</span>
+                <span className="break-words">Moat: {feasibilitySummary.keyMoat}</span>
               </div>
             </div>
           </div>
@@ -415,35 +402,35 @@ export default function DashboardPage() {
           {/* Header */}
           <div className="flex items-start justify-between gap-2 min-h-[54px]">
             <div>
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-1">
+              <span className="text-xs font-semibold tracking-normal text-slate-500 flex items-center gap-1.5 mb-1">
                 <Landmark className="w-3.5 h-3.5 text-sky-600" />
                 Capital & Financing
               </span>
-              <h3 className="font-heading text-[15px] sm:text-[16px] font-bold text-slate-900 leading-snug">
+              <h2 className="font-heading text-sm sm:text-base font-bold text-slate-900 leading-snug">
                 Structured ₹{totalCapex}L Outlay (80% Debt Eligible)
-              </h3>
+              </h2>
             </div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md border text-sky-700 bg-sky-50 border-sky-200 shrink-0 shadow-xs">
+            <span className="text-xs font-bold tracking-normal px-2.5 py-0.5 rounded-md border text-sky-700 bg-sky-50 border-sky-200 shrink-0 shadow-xs">
               PMEGP Eligible
             </span>
           </div>
 
           {/* Body */}
-          <div className="flex-1 flex flex-col justify-between my-3">
+          <div className="flex-1 flex flex-col justify-between my-2.5">
             <div className="space-y-1.5 text-xs text-slate-600 bg-slate-50/90 backdrop-blur-xs p-3 rounded-xl border border-slate-100 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500">Promoter Equity (15%):</span>
                 <span className="font-bold text-slate-900">₹{promoterEquity}L</span>
               </div>
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500">Bank Term Loan (80%):</span>
                 <span className="font-bold text-sky-800">₹{loanAmount}L</span>
               </div>
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500">Govt Subsidy Grant:</span>
                 <span className="font-bold text-emerald-800">Up to ₹{subsidyAmount}L</span>
               </div>
-              <div className="pt-1.5 border-t border-slate-200/60 text-[11px] text-slate-500 font-medium">
+              <div className="pt-1.5 border-t border-slate-200/60 text-xs text-slate-500 font-medium">
                 Break-Even: <span className="font-bold text-slate-800">{feasibilitySummary.breakEvenHorizon}</span>
               </div>
             </div>
@@ -473,35 +460,35 @@ export default function DashboardPage() {
           {/* Header */}
           <div className="flex items-start justify-between gap-2 min-h-[54px]">
             <div>
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-1">
+              <span className="text-xs font-semibold tracking-normal text-slate-500 flex items-center gap-1.5 mb-1">
                 <MapPin className="w-3.5 h-3.5 text-amber-600" />
                 Demographic Reach
               </span>
-              <h3 className="font-heading text-[15px] sm:text-[16px] font-bold text-slate-900 leading-snug">
+              <h2 className="font-heading text-sm sm:text-base font-bold text-slate-900 leading-snug">
                 ~{pop5km >= 100000 ? `${(pop5km / 100000).toFixed(2)}L` : pop5km.toLocaleString("en-IN")} Pop. in 5km Core
-              </h3>
+              </h2>
             </div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md border text-amber-800 bg-amber-50 border-amber-200 shrink-0 shadow-xs">
+            <span className="text-xs font-bold tracking-normal px-2.5 py-0.5 rounded-md border text-amber-800 bg-amber-50 border-amber-200 shrink-0 shadow-xs">
               Census 2011 PCA
             </span>
           </div>
 
           {/* Body */}
-          <div className="flex-1 flex flex-col justify-between my-3">
+          <div className="flex-1 flex flex-col justify-between my-2.5">
             <div className="space-y-1.5 text-xs text-slate-600 bg-slate-50/90 backdrop-blur-xs p-3 rounded-xl border border-slate-100 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500">5km Daily Footfall:</span>
                 <span className="font-bold text-slate-900">~{pop5km.toLocaleString("en-IN")}</span>
               </div>
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500">10km Regional Trade:</span>
                 <span className="font-bold text-slate-900">~{pop10km.toLocaleString("en-IN")}</span>
               </div>
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500">20km District Reach:</span>
                 <span className="font-bold text-slate-900">~{pop20km.toLocaleString("en-IN")}</span>
               </div>
-              <div className="pt-1.5 border-t border-slate-200/60 text-[11px] text-slate-500 font-medium break-words leading-tight">
+              <div className="pt-1.5 border-t border-slate-200/60 text-xs text-slate-500 font-medium break-words leading-tight">
                 Density: <span className="font-bold text-slate-800">{density} /km²</span> in {activeBusiness?.location?.district || "District"}
               </div>
             </div>
@@ -531,28 +518,28 @@ export default function DashboardPage() {
           {/* Header */}
           <div className="flex items-start justify-between gap-2 min-h-[54px]">
             <div>
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-1">
+              <span className="text-xs font-semibold tracking-normal text-slate-500 flex items-center gap-1.5 mb-1">
                 <Target className="w-3.5 h-3.5 text-purple-600" />
                 Execution Roadmap
               </span>
-              <h3 className="font-heading text-[15px] sm:text-[16px] font-bold text-slate-900 leading-snug line-clamp-2">
+              <h2 className="font-heading text-sm sm:text-base font-bold text-slate-900 leading-snug line-clamp-2">
                 Phase 1: Clearances & Statutory Filing
-              </h3>
+              </h2>
             </div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded-md border text-purple-800 bg-purple-50 border-purple-200 shrink-0 shadow-xs">
+            <span className="text-xs font-bold tracking-normal px-2.5 py-0.5 rounded-md border text-purple-800 bg-purple-50 border-purple-200 shrink-0 shadow-xs">
               3 Actions Active
             </span>
           </div>
 
           {/* Body */}
-          <div className="flex-1 flex flex-col justify-between my-3">
+          <div className="flex-1 flex flex-col justify-between my-2.5">
             <div className="space-y-1.5 text-xs text-slate-600 bg-slate-50/90 backdrop-blur-xs p-3 rounded-xl border border-slate-100 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
               {immediateMilestones.map((item, idx) => (
-                <div key={idx} className="flex items-start gap-1.5 text-[11px]">
+                <div key={idx} className="flex items-start gap-1.5 text-xs">
                   <CheckSquare className="w-3.5 h-3.5 text-purple-600 mt-0.5 shrink-0" />
                   <div>
                     <span className="font-bold text-slate-900">{item.title}: </span>
-                    <span className="text-slate-600 line-clamp-1 sm:line-clamp-none">{item.desc}</span>
+                    <span className="text-slate-600 line-clamp-1">{item.desc}</span>
                   </div>
                 </div>
               ))}
@@ -591,9 +578,9 @@ export default function DashboardPage() {
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none" />
             <div className="absolute -top-16 -right-16 w-48 h-48 bg-white/30 rounded-full blur-2xl pointer-events-none" />
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#2b542f]/15 relative z-10">
               <div>
-                <span className="font-sans text-[10px] sm:text-[11px] uppercase tracking-wider font-extrabold text-[#2b542f] bg-white/70 backdrop-blur-xs border border-[#2b542f]/20 px-2.5 py-0.5 rounded-md shadow-xs inline-block mb-1">
+                <span className="font-sans text-xs uppercase tracking-wider font-extrabold text-[#2b542f] bg-white/70 backdrop-blur-xs border border-[#2b542f]/20 px-2.5 py-0.5 rounded-md shadow-xs inline-block mb-1">
                   Venture {currentIdx + 1} Profile & Positioning
                 </span>
                 <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#2b542f]">
@@ -601,19 +588,19 @@ export default function DashboardPage() {
                 </h2>
               </div>
 
-              <div className="flex items-center gap-2 self-start sm:self-auto">
+              <div className="flex items-center gap-2 self-start sm:self-end">
                 <Link
                   href={`/business/${activeBusiness?.id}/feasibility`}
-                  className="inline-flex items-center gap-1.5 bg-white/85 hover:bg-white text-[#2b542f] px-3 py-1.5 rounded-xl font-sans text-xs font-bold shadow-xs border border-white/70 hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  className="inline-flex items-center gap-1.5 bg-[#2b542f] hover:bg-[#204023] text-white px-3.5 py-1.5 rounded-xl font-sans text-xs font-bold shadow-xs hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
-                  <BarChart2 className="w-3.5 h-3.5 text-[#2b542f]" />
+                  <BarChart2 className="w-3.5 h-3.5 text-emerald-200" />
                   <span>Feasibility</span>
                 </Link>
                 <Link
                   href={`/reports/${activeBusiness?.id}`}
-                  className="inline-flex items-center gap-1.5 bg-[#2b542f] hover:bg-[#204023] text-white px-3 py-1.5 rounded-xl font-sans text-xs font-bold shadow-xs hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  className="inline-flex items-center gap-1.5 bg-[#2b542f] hover:bg-[#204023] text-white px-3.5 py-1.5 rounded-xl font-sans text-xs font-bold shadow-xs hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
-                  <FileText className="w-3.5 h-3.5" />
+                  <FileText className="w-3.5 h-3.5 text-emerald-200" />
                   <span>DPR Report</span>
                 </Link>
               </div>
@@ -686,6 +673,20 @@ export default function DashboardPage() {
               </span>
             </div>
 
+            {/* Direct Inline Legend directly above bar */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#f2f5d0]/80 relative z-10">
+              {capexBreakdown.map((item: any, i: number) => {
+                const pct = Math.round((item.value / Math.max(1, totalBreakdown)) * 100);
+                const color = breakdownColors[i % breakdownColors.length];
+                return (
+                  <div key={item.name} className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color.hex }} />
+                    <span>{item.name}: <strong className="text-white font-bold">{pct}%</strong></span>
+                  </div>
+                );
+              })}
+            </div>
+
             {/* Progress bar */}
             <div className="flex h-3 rounded-full overflow-hidden w-full gap-[2px] shadow-[inset_0_1px_3px_rgba(0,0,0,0.4),0_0_15px_rgba(56,189,248,0.2)] bg-black/35 p-0.5 relative z-10">
               {capexBreakdown.map((item: any, i: number) => {
@@ -738,7 +739,7 @@ export default function DashboardPage() {
             <div className="absolute -top-20 -right-20 w-56 h-56 bg-emerald-300/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10">
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-[#fbfce6]/75 block mb-1">
+              <span className="text-xs uppercase tracking-wider font-bold text-[#fbfce6]/75 block mb-1">
                 Financial Health & Cashflow
               </span>
               <h3 className="font-heading text-xl sm:text-2xl font-bold text-[#fbfce6]">
@@ -748,13 +749,13 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-2 gap-3 bg-white/12 backdrop-blur-md p-3.5 rounded-xl border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] relative z-10">
               <div>
-                <span className="text-[10px] sm:text-[11px] font-medium text-[#fbfce6]/70 block">Monthly Revenue</span>
+                <span className="text-xs font-medium text-[#fbfce6]/70 block">Monthly Revenue</span>
                 <span className="text-xl sm:text-2xl font-bold text-white block mt-0.5">
                   {monthlyRevenueFormatted}
                 </span>
               </div>
               <div>
-                <span className="text-[10px] sm:text-[11px] font-medium text-[#fbfce6]/70 block">Net Profit / mo</span>
+                <span className="text-xs font-medium text-[#fbfce6]/70 block">Net Profit / mo</span>
                 <span className="text-xl sm:text-2xl font-bold text-emerald-200 block mt-0.5">
                   {monthlyProfitFormatted}
                 </span>
@@ -843,7 +844,7 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            <p className="text-[11px] text-slate-400 text-center font-medium relative z-10">
+            <p className="text-xs text-slate-500 text-center font-medium relative z-10">
               VentureRoot Intelligence Grounded in Census 2011 & APMC Mandis
             </p>
           </motion.div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { User, ChevronDown, LogOut, Settings, Globe, Menu, X, Home, Briefcase, PlusCircle, BarChart2, FileText, MessageSquare, TrendingUp, ShieldAlert, RotateCcw } from "lucide-react";
+import { User, ChevronDown, LogOut, Settings, Globe, Menu, X, Home, Briefcase, PlusCircle, BarChart2, FileText, MessageSquare, TrendingUp, ShieldAlert, RotateCcw, UserX } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 import { LanguageSwitcher } from "@/features/i18n/components/LanguageSwitcher";
@@ -10,6 +10,7 @@ import { useBusinessesComparison } from "@/lib/data/businesses";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { DeleteAccountModal } from "@/components/auth/DeleteAccountModal";
 
 export const TopNav = () => {
   const user = useAuthStore((s) => s.user);
@@ -22,6 +23,7 @@ export const TopNav = () => {
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -44,17 +46,12 @@ export const TopNav = () => {
     };
   }, []);
 
-  const activeBusiness = businesses?.[0];
-  const businessBase = activeBusiness?.id ? `/business/${activeBusiness.id}` : "/business";
-  const financeBase = activeBusiness?.id ? `/business/${activeBusiness.id}/finance` : "/business/create";
-  const feasibilityBase = activeBusiness?.id ? `/business/${activeBusiness.id}/feasibility` : "/business/create";
-
   const NAV_ITEMS = [
     { id: "nav-dashboard",    href: "/dashboard",     tKey: "nav.dashboard",   icon: Home },
     { id: "nav-analysis",     href: "/analysis",      tKey: "nav.analysis",    icon: BarChart2 },
-    { id: "nav-my-business",  href: businessBase,     tKey: "nav.myBusiness",  icon: Briefcase },
-    { id: "nav-finance",      href: financeBase,      tKey: "nav.finance",     icon: TrendingUp },
-    { id: "nav-feasibility",  href: feasibilityBase,  tKey: "nav.feasibility", icon: ShieldAlert },
+    { id: "nav-my-business",  href: "/business",      tKey: "nav.myBusiness",  icon: Briefcase },
+    { id: "nav-finance",      href: "/finance",       tKey: "nav.finance",     icon: TrendingUp },
+    { id: "nav-feasibility",  href: "/feasibility",   tKey: "nav.feasibility", icon: ShieldAlert },
     { id: "nav-new-business", href: "/business/create", tKey: "nav.newBusiness", icon: PlusCircle },
     { id: "nav-advisor",      href: "/advisor",       tKey: "nav.advisor",     icon: MessageSquare },
   ];
@@ -66,9 +63,9 @@ export const TopNav = () => {
       case "nav-analysis":
         return pathname === "/analysis" || pathname.startsWith("/analysis/");
       case "nav-finance":
-        return pathname.includes("/finance");
+        return pathname === "/finance" || pathname.includes("/finance");
       case "nav-feasibility":
-        return pathname.includes("/feasibility");
+        return pathname === "/feasibility" || pathname.includes("/feasibility");
       case "nav-new-business":
         return pathname === "/business/create" || pathname.startsWith("/business/create");
       case "nav-advisor":
@@ -242,9 +239,18 @@ export const TopNav = () => {
                         logout();
                         router.push("/login");
                       }}
-                      className="flex items-center gap-2.5 w-full text-left px-3 py-2.5 text-[13px] font-semibold text-[#200813]/60 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200"
+                      className="flex items-center gap-2.5 w-full text-left px-3 py-2.5 text-[13px] font-semibold text-[#200813]/60 hover:bg-slate-100 hover:text-slate-900 rounded-xl transition-all duration-200"
                     >
                       <LogOut className="w-[15px] h-[15px]" /> Sign Out
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        setIsDeleteAccountOpen(true);
+                      }}
+                      className="flex items-center gap-2.5 w-full text-left px-3 py-2 text-[12px] font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 rounded-xl transition-all duration-200 mt-0.5 cursor-pointer"
+                    >
+                      <UserX className="w-[14px] h-[14px]" /> Delete Account
                     </button>
                   </div>
                 </motion.div>
@@ -329,6 +335,13 @@ export const TopNav = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Delete Account Confirmation Modal */}
+      <DeleteAccountModal
+        isOpen={isDeleteAccountOpen}
+        onClose={() => setIsDeleteAccountOpen(false)}
+        userDisplayName={displayName}
+      />
     </motion.header>
   );
 };

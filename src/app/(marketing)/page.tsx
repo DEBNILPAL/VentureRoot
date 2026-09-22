@@ -137,7 +137,7 @@ function USPCarousel() {
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center px-4 lg:px-8">
 
       {/* Card Stack Container */}
-      <div className="relative w-full z-10 h-[520px] sm:h-[480px] lg:h-[440px]">
+      <div className="relative w-full z-10 h-[460px] sm:h-[420px] lg:h-[390px]">
         <AnimatePresence mode="popLayout" custom={direction}>
           {USP_ITEMS.map((item, index) => {
             // Calculate relative position (0 is active top card, 1 is behind it, 2 is behind that)
@@ -184,12 +184,12 @@ function USPCarousel() {
                       <div className="w-5 h-5 rounded-md bg-[#f4fce8] border border-[#1E6702]/20 flex items-center justify-center">
                         {React.createElement(item.icon, { className: "w-3 h-3 text-[#1E6702]" })}
                       </div>
-                      <span className="text-[10px] font-bold text-[#1E6702] uppercase tracking-widest">{item.category}</span>
+                      <span className="text-xs font-bold text-[#1E6702] uppercase tracking-wider">{item.category}</span>
                     </div>
                     <h3 className="text-lg sm:text-2xl md:text-3xl font-sans font-bold text-[#200813] leading-tight mb-2 sm:mb-3">
                       {item.title}
                     </h3>
-                    <p className="text-xs sm:text-sm md:text-[15px] text-[#200813]/65 leading-relaxed mb-3 sm:mb-5 max-w-md">
+                    <p className="text-sm md:text-base text-[#200813]/70 leading-relaxed mb-3 sm:mb-5 max-w-md">
                       {item.description}
                     </p>
                     <ul className="flex flex-col gap-1.5 sm:gap-2">
@@ -218,7 +218,7 @@ function USPCarousel() {
       </div>
 
       {/* Carousel Controls */}
-      <div className="flex flex-col items-center mt-6 sm:mt-8 relative z-20">
+      <div className="flex flex-col items-center mt-3 sm:mt-4 relative z-20">
         <div className="flex items-center gap-4">
           <button
             onClick={prev}
@@ -252,7 +252,7 @@ function USPCarousel() {
         </div>
 
         {/* Counter */}
-        <p className="text-center text-[11px] text-[#200813]/50 font-bold uppercase tracking-widest mt-3 sm:mt-4">
+        <p className="text-center text-xs text-[#200813]/50 font-bold uppercase tracking-wider mt-2">
           {active + 1} / {total}
         </p>
       </div>
@@ -490,11 +490,11 @@ function HowItWorksSelector() {
                     {feature.shortLabel}
                   </span>
                   {isActive ? (
-                    <span className="text-[9px] font-bold text-[#144801] bg-[#aed455]/40 border border-[#aed455]/60 px-1.5 py-0.5 rounded-full uppercase tracking-wider mt-0.5">
+                    <span className="text-xs font-bold text-[#144801] bg-[#aed455]/40 border border-[#aed455]/60 px-1.5 py-0.5 rounded-full uppercase tracking-wider mt-0.5">
                       Active
                     </span>
                   ) : (
-                    <span className="text-[9px] font-semibold text-stone-400 uppercase tracking-wider mt-0.5">
+                    <span className="text-xs font-medium text-stone-500 uppercase tracking-wider mt-0.5">
                       0{idx + 1}
                     </span>
                   )}
@@ -504,17 +504,17 @@ function HowItWorksSelector() {
           })}
         </div>
 
-        {/* Small < > arrow navigation buttons beside the cards */}
-        <div className="flex items-center gap-2 self-end sm:self-center shrink-0 bg-white/80 backdrop-blur-sm px-2 py-1.5 rounded-2xl border border-stone-800/12 shadow-sm">
-          <span className="text-[11px] font-semibold text-stone-500 px-1">
+        {/* Navigation buttons and step indicator */}
+        <div className="flex items-center gap-2 self-end sm:self-center shrink-0 bg-white/80 backdrop-blur-sm px-2.5 py-1.5 rounded-2xl border border-stone-800/12 shadow-sm">
+          <span className="text-xs font-semibold text-stone-600 px-1">
             0{currentIndex + 1} / 0{HOW_IT_WORKS_FEATURES.length}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={handlePrev}
               aria-label="Previous step"
-              className="w-7 h-7 rounded-xl bg-stone-50 hover:bg-[#aed455]/25 border border-stone-200 hover:border-[#aed455] text-[#200813] hover:text-[#144801] flex items-center justify-center transition-all duration-150 active:scale-95 cursor-pointer shadow-xs"
+              className="w-8 h-8 rounded-full bg-white hover:bg-[#f4fce8] border border-stone-200 hover:border-[#1E6702]/40 text-[#200813] hover:text-[#1E6702] flex items-center justify-center transition-all duration-150 active:scale-95 cursor-pointer shadow-xs"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -522,7 +522,7 @@ function HowItWorksSelector() {
               type="button"
               onClick={handleNext}
               aria-label="Next step"
-              className="w-7 h-7 rounded-xl bg-stone-50 hover:bg-[#aed455]/25 border border-stone-200 hover:border-[#aed455] text-[#200813] hover:text-[#144801] flex items-center justify-center transition-all duration-150 active:scale-95 cursor-pointer shadow-xs"
+              className="w-8 h-8 rounded-full bg-white hover:bg-[#f4fce8] border border-stone-200 hover:border-[#1E6702]/40 text-[#200813] hover:text-[#1E6702] flex items-center justify-center transition-all duration-150 active:scale-95 cursor-pointer shadow-xs"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -552,7 +552,7 @@ function HowItWorksSelector() {
                   <div className="w-6 h-6 rounded-lg bg-[#1E6702]/15 border border-[#1E6702]/25 flex items-center justify-center">
                     {React.createElement(current.icon, { className: "w-3.5 h-3.5 text-[#1E6702]" })}
                   </div>
-                  <span className="text-[10px] font-bold text-[#1E6702] uppercase tracking-widest">{current.label}</span>
+                  <span className="text-xs font-bold text-[#1E6702] uppercase tracking-wider">{current.label}</span>
                 </div>
 
                 <h3 className="text-2xl md:text-3xl font-sans font-bold text-[#200813] leading-tight mb-3">
@@ -572,33 +572,14 @@ function HowItWorksSelector() {
                 </ul>
               </div>
 
-              {/* Bottom in-card quick navigation with small < > arrows */}
-              <div className="mt-8 pt-5 border-t border-[#200813]/10 flex items-center justify-between">
+              {/* Bottom in-card status indicator */}
+              <div className="mt-8 pt-5 border-t border-[#200813]/10 flex items-center">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-[#1E6702] uppercase tracking-wider">
                     Step 0{currentIndex + 1} of 0{HOW_IT_WORKS_FEATURES.length}
                   </span>
                   <span className="text-xs text-[#200813]/30">•</span>
                   <span className="text-xs font-semibold text-[#200813]/60">{current.shortLabel}</span>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={handlePrev}
-                    aria-label="Previous step"
-                    className="w-7 h-7 rounded-lg bg-white/80 hover:bg-white border border-[#200813]/15 hover:border-[#1E6702]/40 text-[#200813] hover:text-[#1E6702] flex items-center justify-center transition-all duration-150 active:scale-95 cursor-pointer shadow-xs"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    aria-label="Next step"
-                    className="w-7 h-7 rounded-lg bg-white/80 hover:bg-white border border-[#200813]/15 hover:border-[#1E6702]/40 text-[#200813] hover:text-[#1E6702] flex items-center justify-center transition-all duration-150 active:scale-95 cursor-pointer shadow-xs"
-                  >
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
                 </div>
               </div>
             </div>
@@ -778,7 +759,7 @@ export default function LandingPage() {
                     className="px-7 py-3 rounded-full font-semibold text-[13px] md:text-sm tracking-wide"
                   >
                     <span>{t("landing.sampleBtn")}</span>
-                    <ChevronRight className="w-4 h-4 text-[#361606] transition-transform duration-200 group-hover:translate-x-0.5" />
+                    <ChevronRight className="w-4 h-4 text-[#200813] transition-transform duration-200 group-hover:translate-x-0.5" />
                   </MagneticButton>
                 </motion.div>
               </div>
@@ -793,7 +774,7 @@ export default function LandingPage() {
               <div className="flex flex-col items-center text-center mb-8 sm:mb-12">
                 <div className="flex items-center gap-2 mb-3 sm:mb-4">
                   <Leaf className="w-4 h-4 text-[#1E6702]" />
-                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#5A1832]">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#1E6702]">
                     WHAT VENTUREROOT OFFERS
                   </span>
                 </div>
@@ -815,7 +796,7 @@ export default function LandingPage() {
             {/* Trust/Value Strip */}
             <div className="w-full bg-[#1E6702] py-10 sm:py-12 border-t border-black/10 mt-12 sm:mt-16">
               <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-8 md:gap-12 lg:gap-16 justify-center text-left">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C8F89B] shrink-0 text-center md:text-left">
+                <span className="text-xs font-bold uppercase tracking-wider leading-tight text-[#C8F89B] shrink-0 text-center md:text-left">
                   BUILT FOR<br className="hidden md:block" />REAL-WORLD<br className="hidden md:block" />DECISIONS
                 </span>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 w-full md:w-auto">
@@ -929,9 +910,9 @@ export default function LandingPage() {
                   className="lg:col-span-7 flex flex-col items-start"
                 >
                   {/* Badge */}
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#1E6702]/25 border border-[#1E6702]/40 text-[#C8F89B] text-[11px] font-bold uppercase tracking-[0.2em] mb-5">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#1E6702]/25 border border-[#1E6702]/40 text-[#C8F89B] text-xs font-semibold tracking-wide mb-5">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#C8F89B]" />
-                    <span>DATA-BACKED VERIFICATION</span>
+                    <span>Data-Backed Verification</span>
                   </div>
 
                   {/* Heading */}
@@ -1022,10 +1003,10 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="relative w-full px-4 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+            <div className="relative w-full max-w-7xl mx-auto px-6 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]">
 
               <motion.div
-                className="flex -ml-4 w-max"
+                className="flex gap-4 w-max"
                 animate={{ x: ["0%", "-50%"] }}
                 transition={{
                   duration: 40,
@@ -1047,7 +1028,7 @@ export default function LandingPage() {
                   { name: "Vikram P.", role: "Dairy Entrepreneur", quote: "The financial planner saved us months of painful calculations. Everything is so transparent." },
                   { name: "Sneha M.", role: "Boutique Owner", quote: "I found 3 government schemes I was eligible for instantly. The AI advisor feels incredibly personalized." }
                 ].map((t, i) => (
-                  <div key={i} className="basis-[350px] shrink-0 pl-4 group">
+                  <div key={i} className="basis-[350px] shrink-0 group">
                     <div className="flex flex-col h-full justify-between p-8 rounded-3xl bg-white border border-black/5 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-300">
                       <p className="text-[#200813]/85 font-medium leading-relaxed mb-8">
                         "{t.quote}"
@@ -1057,7 +1038,7 @@ export default function LandingPage() {
                           {t.name.charAt(0)}
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm text-[#200813]">{t.name}</h4>
+                          <h3 className="font-bold text-sm text-[#200813]">{t.name}</h3>
                           <p className="text-xs text-[#200813]/60">{t.role}</p>
                         </div>
                       </div>

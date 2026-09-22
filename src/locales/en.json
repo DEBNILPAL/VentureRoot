@@ -176,7 +176,7 @@
   "business.wizard.block": "Block",
   "business.wizard.village": "Village",
   "business.wizard.q3": "How much capital?",
-  "business.wizard.availMargin": "Available Margin Capital (₹)",
+  "business.wizard.availMargin": "Available Capital",
   "business.wizard.q4": "What resources do you have?",
   "business.wizard.resources": "Existing Resources (e.g. land, shop, equipment)",
   "business.wizard.q5": "Expected Monthly Numbers",

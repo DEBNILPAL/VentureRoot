@@ -12,15 +12,6 @@ export const MobileBottomNav = () => {
   const { data: businesses } = useBusinessesComparison();
   const { t } = useTranslation();
 
-  const businessMatch = pathname.match(/^\/business\/([^/?#]+)/);
-  const routeBusinessId = businessMatch && businessMatch[1] !== "create" && businessMatch[1] !== "compare" ? businessMatch[1] : null;
-  const activeBusiness = businesses?.[0];
-  const selectedBusinessId = routeBusinessId || activeBusiness?.id;
-
-  const businessBase = selectedBusinessId ? `/business/${selectedBusinessId}` : "/business";
-  const financeBase = selectedBusinessId ? `/business/${selectedBusinessId}/finance` : "/business/create";
-  const feasibilityBase = selectedBusinessId ? `/business/${selectedBusinessId}/feasibility` : "/business/create";
-
   const NAV_ITEMS = [
     {
       id: "mob-dashboard",
@@ -38,7 +29,7 @@ export const MobileBottomNav = () => {
     },
     {
       id: "mob-business",
-      href: businessBase,
+      href: "/business",
       label:
         t("nav.myBusiness" as any) === "My Business"
           ? "Business"
@@ -54,17 +45,17 @@ export const MobileBottomNav = () => {
     },
     {
       id: "mob-finance",
-      href: financeBase,
+      href: "/finance",
       label: t("nav.finance" as any) || "Finance",
       icon: TrendingUp,
-      isActive: pathname.includes("/finance"),
+      isActive: pathname === "/finance" || pathname.includes("/finance"),
     },
     {
       id: "mob-feasibility",
-      href: feasibilityBase,
+      href: "/feasibility",
       label: t("nav.feasibility" as any) || "Feasibility",
       icon: ShieldAlert,
-      isActive: pathname.includes("/feasibility"),
+      isActive: pathname === "/feasibility" || pathname.includes("/feasibility"),
     },
     {
       id: "mob-advisor",

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, Map, Compass, TrendingUp, Wallet, PiggyBank,
@@ -9,6 +9,7 @@ import {
   MapPin
 } from "lucide-react";
 import { useParams } from "next/navigation";
+import apiClient from "@/lib/api/client";
 import { WhatIfSimulator } from "@/features/finance/components/WhatIfSimulator";
 import { useBusinessDetails } from "@/lib/data/businesses";
 import {
@@ -140,6 +141,25 @@ export default function FinancePage() {
   const params = useParams();
   const id = params?.id as string;
   const { data: business, isLoading } = useBusinessDetails(id);
+  const [backendFinance, setBackendFinance] = useState<any>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    let isMounted = true;
+    apiClient
+      .get(`/finance/${id}`)
+      .then((res: any) => {
+        if (isMounted && res?.data?.data?.finance) {
+          setBackendFinance(res.data.data.finance);
+        }
+      })
+      .catch((err) => {
+        console.warn("[FinancePage] Backend finance fetch notice:", err?.message);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
   const businessLocationStr = useMemo(() => {
     const loc = (business as any)?.location;
@@ -204,17 +224,40 @@ export default function FinancePage() {
 
       {/* ── 1. Header ─────────────────────────────────────────────────── */}
       <div className="mb-4 sm:mb-8">
-        <Link
-          href={`/business/${id}`}
-          className="inline-flex items-center gap-1.5 font-sans text-xs sm:text-[14px] font-semibold text-gray-500 hover:text-primary transition-colors mb-3 sm:mb-5"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to business
-        </Link>
+        <div className="flex flex-wrap items-center gap-2.5 mb-3 sm:mb-4">
+          <Link
+            href="/finance"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white hover:bg-emerald-50 text-slate-700 hover:text-[#1E6702] border border-slate-200 transition-all active:scale-95 shadow-xs shrink-0"
+            title="Back to Finance Hub"
+            aria-label="Back to Finance Hub"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 flex-wrap">
+            <Link href="/finance" className="hover:text-[#1E6702] transition-colors hover:underline">
+              Finance Hub
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
+            <Link href={`/business/${id}`} className="hover:text-[#1E6702] transition-colors hover:underline truncate max-w-[160px] sm:max-w-none">
+              {business?.name || "Business"}
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
+            <span className="text-slate-800 font-bold">Financial Plan</span>
+          </div>
+        </div>
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="font-heading text-2xl sm:text-[32px] font-bold text-[#242424] tracking-tight leading-tight break-words">
-              Financial Planning
+            <h1 className="font-heading text-2xl sm:text-[32px] font-bold text-[#242424] tracking-tight leading-tight break-words flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+              <span>Financial Planning</span>
+              {business?.name && (
+                <>
+                  <span className="text-slate-400 font-normal">-</span>
+                  <span className="italic font-serif font-medium text-slate-600 text-lg sm:text-[24px]">
+                    {business.name}
+                  </span>
+                </>
+              )}
             </h1>
             <p className="font-sans text-xs sm:text-[14px] text-slate-500 font-medium mt-0.5 break-words">
               Understand the money needed, possible funding, and repayment burden.

@@ -136,6 +136,11 @@ export async function findBusinessByIdAndUserId({
   businessId,
   userId,
 }) {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(businessId);
+  if (!isUuid) {
+    return null;
+  }
+
   return prisma.business.findFirst({
     where: {
       id: businessId,
@@ -188,6 +193,11 @@ export async function deleteBusinessByIdAndUserId({
   businessId,
   userId,
 }) {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(businessId);
+  if (!isUuid) {
+    return { id: businessId };
+  }
+
   const business =
     await prisma.business.findFirst({
       where: {

@@ -1,21 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   Briefcase, PlusCircle, ArrowRight, MapPin, BarChart2,
-  CircleDollarSign, Compass, Layers, ShieldCheck, ChevronRight,
-  Building2, TrendingUp, Sparkles, Landmark
+  CircleDollarSign, Compass, ShieldCheck, ChevronRight,
+  Building2, TrendingUp, Sparkles, Landmark, Edit3, Trash2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useBusinessesComparison } from "@/lib/data/businesses";
 import { useProfile } from "@/lib/data/users";
+import { DeleteBusinessModal } from "@/features/business/components/DeleteBusinessModal";
 
 const EASE_OUT_EXPO = [0.22, 1, 0.36, 1] as const;
 
 export default function MyBusinessPage() {
   const { data: businesses, isLoading } = useBusinessesComparison();
   const { data: profile } = useProfile();
+  const [deletingBusiness, setDeletingBusiness] = useState<{ id: string; name: string } | null>(null);
 
   if (isLoading) {
     return (
@@ -64,33 +66,6 @@ export default function MyBusinessPage() {
       {/* ─── Business List or Empty State ─── */}
       {hasBusinesses ? (
         <div className="flex flex-col gap-6">
-          
-          {/* Portfolio summary bar if multiple businesses exist */}
-          {businesses.length > 1 && (
-            <div className="bg-emerald-950 text-white rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md border border-emerald-900">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-800 flex items-center justify-center text-emerald-200 shrink-0">
-                  <Layers className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-xs uppercase tracking-wider font-extrabold text-emerald-300 block">
-                    Enterprise Portfolio ({businesses.length} Active Ventures)
-                  </span>
-                  <p className="text-xs text-emerald-100">
-                    Switch between ventures to inspect individual feasibility, capex, and operational roadmaps.
-                  </p>
-                </div>
-              </div>
-              <Link
-                href="/business/compare"
-                className="shrink-0 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-sm"
-              >
-                <span>Side-by-Side Compare</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          )}
-
           {/* Business Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {businesses.map((biz: any, idx: number) => {
@@ -121,9 +96,32 @@ export default function MyBusinessPage() {
                         </span>
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       </div>
-                      <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
-                        {biz.status || "Active / Verified"}
-                      </span>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <Link
+                          href={`/business/${biz.id}/edit`}
+                          className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold text-slate-700 hover:text-[#1E6702] bg-slate-100 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 transition-all active:scale-95 shadow-2xs"
+                          title={`Edit ${biz.name || "Business"} details`}
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-slate-500 hover:text-[#1E6702]" />
+                          <span>Edit</span>
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDeletingBusiness({ id: biz.id, name: biz.name || `Business ${idx + 1}` });
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                          title={`Delete ${biz.name || "Business"}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                          <span>Delete</span>
+                        </button>
+                        <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                          {biz.status || "Active / Verified"}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Title & Category */}
@@ -248,6 +246,16 @@ export default function MyBusinessPage() {
             </Link>
           </div>
         </motion.div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingBusiness && (
+        <DeleteBusinessModal
+          isOpen={!!deletingBusiness}
+          businessId={deletingBusiness.id}
+          businessName={deletingBusiness.name}
+          onClose={() => setDeletingBusiness(null)}
+        />
       )}
 
     </div>
