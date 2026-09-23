@@ -13,6 +13,7 @@ import { SWOTCard } from "@/features/feasibility/components/SWOTCard";
 import { MockDisclaimer } from "@/components/ui/mock-disclaimer";
 import { RiskCard } from "@/features/feasibility/components/RiskCard";
 import { PricingCard } from "@/features/feasibility/components/PricingCard";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 
 import { 
   FeasibilityData, 
@@ -130,7 +131,7 @@ export default function FeasibilityPage() {
     return (
       <div className="w-full h-full flex items-center justify-center p-12">
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-10 h-10 border-4 border-[#1E6702]/30 border-t-[#1E6702] rounded-full animate-spin" />
+          <PrismFluxLoader size={38} speed={4} />
           <p className="font-sans text-[15px] font-medium text-slate-500">
             Running market intelligence analysis…
           </p>

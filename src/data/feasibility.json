@@ -54,7 +54,48 @@
     "evidenceSources": [
       "Block Panchayat Records",
       "Local Market Survey 2025"
-    ]
+    ],
+    "marketReachMetrics": {
+      "tam": {
+        "code": "TAM",
+        "name": "Total Regional Market",
+        "shortName": "TAM",
+        "explanation": "Total spending and customer demand across your broader regional district.",
+        "value": 192800000,
+        "formattedValue": "₹19.28 Cr",
+        "customerCount": 192800,
+        "formattedCustomerCount": "1.9L People",
+        "percentage": 100,
+        "chartValue": 100,
+        "unitLabel": "Regional District"
+      },
+      "sam": {
+        "code": "SAM",
+        "name": "Serviceable Local Market",
+        "shortName": "SAM",
+        "explanation": "Demand from buyers and households within your direct 10km service area.",
+        "value": 48200000,
+        "formattedValue": "₹4.82 Cr",
+        "customerCount": 48200,
+        "formattedCustomerCount": "48.2K People",
+        "percentage": 25,
+        "chartValue": 25,
+        "unitLabel": "10km Catchment"
+      },
+      "som": {
+        "code": "SOM",
+        "name": "Your Year 1 Realistic Sales Goal",
+        "shortName": "SOM",
+        "explanation": "Realistic sales target your enterprise can comfortably capture in Year 1.",
+        "value": 2500000,
+        "formattedValue": "₹25.00 Lakhs",
+        "customerCount": 2500,
+        "formattedCustomerCount": "2.5K Customers",
+        "percentage": 5.2,
+        "chartValue": 5.2,
+        "unitLabel": "Year 1 Target"
+      }
+    }
   },
   "opportunity": {
     "evidence": [
@@ -196,6 +237,54 @@
           "No FSSAI or food hygiene accreditation"
         ],
         "positioning": "Informal Producers — Build trust through certified purity, tamper-proof pouches, and lactometer transparency."
+      },
+      {
+        "id": "comp-5",
+        "name": "Sub-District Wholesale Trade & Cold Chilling Hub",
+        "type": "Indirect",
+        "location": "7.8 km North-East",
+        "distanceKm": 7.8,
+        "position": [22.6185, 72.9609],
+        "pricing": "Wholesale Sub-Mandi Rate",
+        "strengths": ["Regional bulk milk aggregation", "Direct insulated road link"],
+        "weaknesses": ["Intermediary fee deductions", "Limited consumer packaging"],
+        "positioning": "Regional Hub — Capture direct consumer margin by bypassing mandi intermediaries."
+      },
+      {
+        "id": "comp-6",
+        "name": "District Private Dairy & Processing Cluster",
+        "type": "Direct",
+        "location": "8.5 km South-East",
+        "distanceKm": 8.5,
+        "position": [22.5185, 72.9659],
+        "pricing": "Commercial Market Parity",
+        "strengths": ["Modernized automated packaging", "Semi-urban retail reach"],
+        "weaknesses": ["Higher freight to interior villages", "Fixed corporate overhead"],
+        "positioning": "Regional Private Peer — Win through hyper-local farm-fresh delivery."
+      },
+      {
+        "id": "comp-7",
+        "name": "Central District Apex Dairy Mandi & Terminal",
+        "type": "Indirect",
+        "location": "14.2 km North-West",
+        "distanceKm": 14.2,
+        "position": [22.6685, 72.8409],
+        "pricing": "State Apex Mandi Benchmark",
+        "strengths": ["High volume daily auctions", "District-wide supplier liquidity"],
+        "weaknesses": ["Significant travel distance for small farmers", "2-3% brokerage fees"],
+        "positioning": "Apex Trading Yard — Leverage for wholesale offloading during peak flush seasons."
+      },
+      {
+        "id": "comp-8",
+        "name": "Automated Agro-Processing & Chilling Plant",
+        "type": "Direct",
+        "location": "16.5 km South-West",
+        "distanceKm": 16.5,
+        "position": [22.4585, 72.8509],
+        "pricing": "Commercial Market Parity",
+        "strengths": ["Automated packaging line and cold chain warehousing"],
+        "weaknesses": ["Higher distribution overhead to peripheral rural blocks"],
+        "positioning": "Regional Private Benchmark — Win local village market share through fresher stock."
       }
     ],
     "observations": [
@@ -323,5 +412,18 @@
       "Fat content / purity guarantee",
       "Packaging (glass bottles vs plastic)"
     ]
+  },
+  "businessLocationFit": {
+    "status": "GOOD_FIT",
+    "statusLabel": "Good Fit",
+    "score": 84,
+    "explanation": "Strong daily household consumption and established rural collection routes make this enterprise well suited for your area.",
+    "supportingFactors": [
+      "Daily Liquidity Cycle",
+      "Minimal Cold Spoilage Transit",
+      "High Household Consumption"
+    ],
+    "warning": null,
+    "alternativeSuggestion": null
   }
 }

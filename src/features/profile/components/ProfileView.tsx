@@ -28,6 +28,7 @@ import { useProfile } from "@/lib/data/users";
 import { useBusinessesComparison } from "@/lib/data/businesses";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { profileApi } from "@/features/profile/api/profileApi";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 import { StateAutocompleteInput } from "@/components/ui/StateAutocompleteInput";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 
@@ -114,7 +115,7 @@ function Avatar({ name, isEditing }: { name: string; isEditing: boolean }) {
 
 function SectionHeading({ icon: Icon, label, iconClass }: { icon: any; label: string; iconClass: string }) {
   return (
-    <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-gray-900/8">
+    <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-slate-200/80">
       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${iconClass}`}>
         <Icon className="w-4 h-4" />
       </div>
@@ -150,7 +151,7 @@ function InputField({ label, value, onChange, type = "text", editable = true, op
         )
       ) : (
         <div
-          className={`w-full bg-white/70 border border-gray-900/8 rounded-xl px-3 py-2.5 ${classes.profileValue} min-h-[42px] flex items-center shadow-sm group-hover:border-[#1E6702]/30 transition-colors`}
+          className={`w-full bg-white/70 border border-slate-200/80 rounded-xl px-3 py-2.5 ${classes.profileValue} min-h-[42px] flex items-center shadow-sm group-hover:border-[#1E6702]/30 transition-colors`}
         >
           {value || <span className={`${classes.smallSupporting} italic font-normal`}>Not provided</span>}
         </div>
@@ -350,7 +351,7 @@ export const ProfileView = () => {
       {/* ═══ Header Card ═══ */}
       <motion.div
         variants={itemVariants}
-        className="relative w-full bg-[#fffff5] rounded-2xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] overflow-hidden"
+        className="relative w-full bg-white/95 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-[0_4px_24px_rgb(0,0,0,0.05)] overflow-hidden"
       >
         <div className="absolute top-0 left-0 right-0 h-[4px] bg-gradient-to-r from-[#1E6702] via-[#2ca104] to-[#81cc87]" />
         <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-[#1E6702]/8 blur-3xl pointer-events-none" />
@@ -611,7 +612,7 @@ export const ProfileView = () => {
         <motion.div
           variants={itemVariants}
           whileHover={{ y: -2, boxShadow: "0 8px 28px rgba(30,103,2,0.12)" }}
-          className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 flex flex-col gap-4 transition-shadow"
+          className="bg-white/95 backdrop-blur-sm rounded-xl border border-slate-200/80 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 flex flex-col gap-4 transition-shadow"
         >
           <SectionHeading icon={User} label="Personal Details" iconClass="bg-[#1E6702]/10 text-[#1E6702]" />
           <InputField
@@ -639,7 +640,7 @@ export const ProfileView = () => {
         <motion.div
           variants={itemVariants}
           whileHover={{ y: -2, boxShadow: "0 8px 28px rgba(30,103,2,0.12)" }}
-          className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 flex flex-col gap-4 transition-shadow"
+          className="bg-white/95 backdrop-blur-sm rounded-xl border border-slate-200/80 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 flex flex-col gap-4 transition-shadow"
         >
           <SectionHeading icon={MapPin} label="Base Location" iconClass="bg-orange-50 text-orange-600" />
           {isEditing ? (
@@ -705,7 +706,7 @@ export const ProfileView = () => {
         <motion.div
           variants={itemVariants}
           whileHover={{ y: -2, boxShadow: "0 8px 28px rgba(30,103,2,0.12)" }}
-          className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 flex flex-col gap-4 transition-shadow"
+          className="bg-white/95 backdrop-blur-sm rounded-xl border border-slate-200/80 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 flex flex-col gap-4 transition-shadow"
         >
           <SectionHeading icon={Wallet} label="Capital & Income" iconClass="bg-blue-50 text-blue-600" />
           <InputField
@@ -743,7 +744,7 @@ export const ProfileView = () => {
         <motion.div
           variants={itemVariants}
           whileHover={{ y: -2, boxShadow: "0 8px 28px rgba(30,103,2,0.12)" }}
-          className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 flex flex-col gap-4 transition-shadow"
+          className="bg-white/95 backdrop-blur-sm rounded-xl border border-slate-200/80 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-6 flex flex-col gap-4 transition-shadow"
         >
           <SectionHeading icon={Briefcase} label="Enterprise Background" iconClass="bg-purple-50 text-purple-600" />
           <InputField
@@ -794,7 +795,7 @@ export const ProfileView = () => {
 
       {/* ═══ MY VENTURES & ANALYZED BUSINESSES (Business 1, 2, 3...) ═══ */}
       <motion.div variants={itemVariants} className="flex flex-col gap-5 mt-2">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-900/8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#1E6702]/15 text-[#1E6702] flex items-center justify-center font-bold shadow-xs">
               <Briefcase className="w-5 h-5" />
@@ -819,11 +820,9 @@ export const ProfileView = () => {
         </div>
 
         {isBusinessesLoading ? (
-          <div className="p-8 bg-[#fffff5] rounded-xl border border-gray-900/8 flex items-center justify-center">
-            <div className="flex items-center gap-3 text-slate-500 text-sm">
-              <div className="w-5 h-5 border-2 border-[#1E6702] border-t-transparent rounded-full animate-spin" />
-              <span>Loading your businesses...</span>
-            </div>
+          <div className="p-8 bg-white/95 backdrop-blur-sm rounded-xl border border-slate-200/80 flex flex-col items-center justify-center gap-3">
+            <PrismFluxLoader size={34} speed={4} />
+            <span className="text-slate-500 text-sm font-medium">Loading your businesses...</span>
           </div>
         ) : businesses && businesses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -837,7 +836,7 @@ export const ProfileView = () => {
                   key={biz.id || idx}
                   variants={itemVariants}
                   whileHover={{ y: -3, boxShadow: "0 10px 30px rgba(30,103,2,0.14)" }}
-                  className="bg-[#fffff5] rounded-2xl border border-gray-900/8 p-6 flex flex-col justify-between gap-5 transition-all shadow-[0_4px_24px_rgb(0,0,0,0.04)] relative overflow-hidden group"
+                  className="bg-white/95 backdrop-blur-sm rounded-2xl border border-slate-200/80 p-6 flex flex-col justify-between gap-5 transition-all shadow-[0_4px_24px_rgb(0,0,0,0.04)] relative overflow-hidden group"
                 >
                   <div className="space-y-3.5">
                     {/* Header with explicit "Business 1", "Business 2", etc. */}
@@ -879,7 +878,7 @@ export const ProfileView = () => {
                       </p>
                     )}
 
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-900/8 text-xs">
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/80 text-xs">
                       <div className="p-2 rounded-lg bg-slate-50/80">
                         <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
                           Available Margin
@@ -899,7 +898,7 @@ export const ProfileView = () => {
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-gray-900/8 grid grid-cols-3 gap-2">
+                  <div className="pt-3 border-t border-slate-200/80 grid grid-cols-3 gap-2">
                     <Link
                       href={`/business/${biz.id}/feasibility`}
                       className="text-center py-2 px-2 rounded-xl bg-[#1E6702]/10 hover:bg-[#1E6702]/20 text-[#1E6702] text-[11px] font-bold transition-colors flex items-center justify-center gap-1"
@@ -927,7 +926,7 @@ export const ProfileView = () => {
             })}
           </div>
         ) : (
-          <div className="bg-[#fffff5] rounded-2xl border-2 border-dashed border-gray-900/15 p-8 text-center flex flex-col items-center gap-4 shadow-sm">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center flex flex-col items-center gap-4 shadow-sm">
             <div className="w-14 h-14 rounded-2xl bg-[#1E6702]/10 text-[#1E6702] flex items-center justify-center shadow-xs">
               <Building2 className="w-7 h-7" />
             </div>

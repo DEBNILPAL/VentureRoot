@@ -24,6 +24,26 @@ export interface IntelligenceData {
   why?: WhyExplanation;
 }
 
+export interface MarketMetric {
+  code: "TAM" | "SAM" | "SOM";
+  name: string;
+  shortName: string;
+  explanation: string;
+  value: number;
+  formattedValue: string;
+  customerCount?: number;
+  formattedCustomerCount?: string;
+  percentage: number;
+  chartValue: number;
+  unitLabel?: string;
+}
+
+export interface MarketReachMetrics {
+  tam: MarketMetric;
+  sam: MarketMetric;
+  som: MarketMetric;
+}
+
 export interface MarketAnalysis extends IntelligenceData {
   reach: {
     radius5km: number;
@@ -36,6 +56,7 @@ export interface MarketAnalysis extends IntelligenceData {
   marketSizeValue?: number;
   marketTrends: string[];
   evidenceSources: string[];
+  marketReachMetrics?: MarketReachMetrics;
 }
 
 export interface OpportunityAnalysis extends IntelligenceData {
@@ -122,6 +143,19 @@ export interface PricingAnalysis extends IntelligenceData {
   predictionModel?: string;
 }
 
+export interface BusinessLocationFit {
+  status: "GOOD_FIT" | "NEEDS_ATTENTION" | "POOR_FIT";
+  statusLabel: string;
+  score: number;
+  explanation: string;
+  supportingFactors: string[];
+  warning?: string | null;
+  alternativeSuggestion?: {
+    category: string;
+    reason: string;
+  } | null;
+}
+
 export interface FeasibilityData {
   status: "LOADING" | "SUCCESS" | "ERROR" | "EMPTY";
   market?: MarketAnalysis;
@@ -130,4 +164,5 @@ export interface FeasibilityData {
   swot?: SWOTAnalysis;
   risks?: RiskItem[];
   pricing?: PricingAnalysis;
+  businessLocationFit?: BusinessLocationFit;
 }

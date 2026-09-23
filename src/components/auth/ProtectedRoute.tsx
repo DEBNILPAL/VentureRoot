@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -19,7 +20,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!hasHydrated || !token) {
     return (
       <div className="min-h-screen w-full bg-[#FFFBE7] flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-[#1E6702]/30 border-t-[#1E6702] rounded-full animate-spin" />
+        <PrismFluxLoader size={34} speed={4} />
       </div>
     );
   }

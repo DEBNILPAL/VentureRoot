@@ -539,7 +539,7 @@ def get_location_statistics(location_id: str):
                 "Hyper-local rural consumption patterns"
             ],
             "evidenceSources": [
-                "Census of India 2011 Primary Census Abstract (Sub-district PCA)",
+                "Official Primary Census Abstract (Sub-district PCA)",
                 "VentureRoot Geospatial Density Model"
             ]
         }

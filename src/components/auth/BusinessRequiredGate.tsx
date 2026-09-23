@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useBusinessesComparison } from "@/lib/data/businesses";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 import { PlusCircle, BarChart2, ArrowRight, Lock, Sparkles, Building2, Home } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -22,7 +23,7 @@ export function BusinessRequiredGate({
   if (isLoading) {
     return (
       <div className="w-full min-h-[50vh] flex flex-col items-center justify-center p-6 gap-3">
-        <div className="w-8 h-8 border-3 border-[#1E6702]/30 border-t-[#1E6702] rounded-full animate-spin" />
+        <PrismFluxLoader size={36} speed={4} />
         <p className="font-sans text-xs sm:text-sm font-semibold text-slate-500">
           Checking your enterprise status...
         </p>

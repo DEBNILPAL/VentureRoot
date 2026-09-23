@@ -7,6 +7,7 @@ import { ReportGenerator } from "@/features/reports/components/ReportGenerator";
 import { FileText, Plus } from "lucide-react";
 import { useReports } from "@/lib/data/reports";
 import { Report } from "@/features/reports/types";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 
 export default function ReportsPage() {
   const { t } = useTranslation();
@@ -70,7 +71,7 @@ export default function ReportsPage() {
         </div>
       ) : isLoading ? (
         <div className="flex-1 flex flex-col items-center justify-center py-24">
-          <div className="w-8 h-8 border-3 border-[#1E6702] border-t-transparent rounded-full animate-spin mb-3" />
+          <PrismFluxLoader size={36} speed={4} className="mb-3" />
           <p className="font-sans text-[14px] text-slate-500 font-medium">Loading your reports...</p>
         </div>
       ) : (

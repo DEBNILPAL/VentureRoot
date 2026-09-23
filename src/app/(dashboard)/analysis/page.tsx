@@ -1060,7 +1060,8 @@ export default function AnalysisPage() {
       </div>
 
       {/* Main Configuration Card */}
-      <div className="bg-[#fffff5] border border-gray-900/8 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-[0_4px_24px_rgb(0,0,0,0.05)]">
+      <div className="bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.05),0_2px_4px_rgba(0,0,0,0.02)] relative overflow-hidden">
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/60 to-transparent pointer-events-none" />
         <form onSubmit={handleGenerateAnalysis} className="space-y-6 sm:space-y-8">
           
           {/* SECTION 1: Target Project & Identity */}
@@ -1800,7 +1801,7 @@ export default function AnalysisPage() {
                         {reportData?.competitorRadar?.source?.includes("overpass") ? (
                           <span className="text-emerald-700 font-bold flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3" /> Live OSM data via Overpass API
-                            {reportData.competitorRadar?.aiEnriched === "gemini-enriched" && " • Gemini AI Enriched"}
+                            {(reportData.competitorRadar?.aiEnriched === "gemini-enriched" || reportData.competitorRadar?.aiEnriched === "ai-enriched") && " • AI-Enriched"}
                           </span>
                         ) : "Verified competitors within 10km & 20km catchment zones"}
                       </p>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { MapContainer, TileLayer, Circle, Marker, Popup, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Circle, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { AlertTriangle, MapPin as MapPinIcon } from "lucide-react";
@@ -293,22 +293,6 @@ export const RadiusMap: React.FC<RadiusMapProps> = ({
   return (
     <div className="w-full h-full relative" style={{ minHeight: "360px" }}>
       <style>{`
-        .vr-map-marker-tooltip {
-          background: rgba(255, 255, 255, 0.98) !important;
-          border: 1px solid rgba(203, 213, 225, 0.95) !important;
-          border-radius: 9px !important;
-          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
-          padding: 3px 6px !important;
-          pointer-events: none !important;
-          white-space: normal !important;
-        }
-        .vr-map-marker-tooltip::before {
-          border-top-color: rgba(203, 213, 225, 0.95) !important;
-        }
-        .vr-user-tooltip {
-          border: 1.5px solid #1E6702 !important;
-          box-shadow: 0 4px 16px rgba(30, 103, 2, 0.28) !important;
-        }
         .leaflet-popup-content-wrapper {
           border-radius: 16px !important;
           padding: 2px !important;
@@ -393,49 +377,12 @@ export const RadiusMap: React.FC<RadiusMapProps> = ({
           </>
         )}
 
-        {/* Main User Venture Marker - Distinctive Green Pin with Pulse and Label */}
-        <Marker position={safeCenter} icon={userPin}>
-          {showLabels && (
-            <Tooltip
-              permanent
-              direction="top"
-              offset={[0, -44]}
-              opacity={1}
-              className="vr-map-marker-tooltip vr-user-tooltip"
-            >
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: "90px", maxWidth: "180px", textAlign: "center", lineHeight: "1.2" }}>
-                <span
-                  style={{
-                    fontSize: "8.5px",
-                    fontWeight: 900,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    padding: "1px 6px",
-                    borderRadius: "9999px",
-                    backgroundColor: "#dcfce7",
-                    color: "#15803d",
-                    border: "1px solid #86efac",
-                    marginBottom: "2px",
-                  }}
-                >
-                  ★ Your Venture
-                </span>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 800,
-                    color: "#0f172a",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }}
-                >
-                  {businessName}
-                </span>
-              </div>
-            </Tooltip>
-          )}
+        {/* Main User Venture Marker - Distinctive Green Pin with Pulse */}
+        <Marker
+          position={safeCenter}
+          icon={userPin}
+          title={`Your Venture: ${businessName}`}
+        >
           <Popup>
             <div className="p-1 space-y-1.5 font-sans text-xs min-w-[210px]">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#1E6702] text-white font-bold text-[10px] uppercase tracking-wider">
@@ -579,59 +526,8 @@ export const RadiusMap: React.FC<RadiusMapProps> = ({
               key={marker.id || `marker-${idx}`}
               position={marker.position}
               icon={icon}
+              title={`${marker.title}${marker.distanceKm != null ? ` (${marker.distanceKm.toFixed(1)} km)` : ""}`}
             >
-              {/* Permanent on-map label showing competitor name, distance & sector badge */}
-              {showLabels && (
-                <Tooltip
-                  permanent
-                  direction="top"
-                  offset={[0, -28]}
-                  opacity={1}
-                  className="vr-map-marker-tooltip"
-                >
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: "80px", maxWidth: "155px", textAlign: "center", lineHeight: "1.25", padding: "1px 2px" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", width: "100%", marginBottom: "2px" }}>
-                      <span
-                        style={{
-                          fontSize: "8px",
-                          fontWeight: 800,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.04em",
-                          padding: "1px 5px",
-                          borderRadius: "9999px",
-                          lineHeight: "1.2",
-                          backgroundColor: badgeBg,
-                          color: badgeColor,
-                          border: `1px solid ${badgeBorder}`,
-                        }}
-                      >
-                        {badgeText}
-                      </span>
-                      {marker.distanceKm != null && (
-                        <span style={{ fontSize: "8.5px", fontWeight: 700, color: "#475569", whiteSpace: "nowrap" }}>
-                          • {marker.distanceKm.toFixed(1)} km
-                        </span>
-                      )}
-                    </div>
-                    <span
-                      style={{
-                        fontSize: "10px",
-                        fontWeight: 700,
-                        color: "#0f172a",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        lineHeight: "1.25",
-                      }}
-                      title={marker.title}
-                    >
-                      {marker.title}
-                    </span>
-                  </div>
-                </Tooltip>
-              )}
 
               {/* Detailed interactive popup on click */}
               <Popup>

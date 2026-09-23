@@ -10,10 +10,29 @@ interface UseFeasibilityOptions {
 }
 
 export const useFeasibility = (businessId: string, options?: UseFeasibilityOptions) => {
-  const [data, setData] = useState<any | null>(
-    DATA_SOURCE === "json" ? feasibilityData : null
-  );
-  const [isLoading, setIsLoading] = useState(DATA_SOURCE === "database");
+  // Helper to load persistent venture feasibility from client localStorage
+  const getPersistedData = useCallback(() => {
+    if (typeof window === "undefined" || !businessId) return null;
+    try {
+      const stored = localStorage.getItem(`ventureroot_feasibility_${businessId}`);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (_) {}
+    return null;
+  }, [businessId]);
+
+  const [data, setData] = useState<any | null>(() => {
+    if (DATA_SOURCE === "json") return feasibilityData;
+    return getPersistedData();
+  });
+
+  const [isLoading, setIsLoading] = useState(() => {
+    if (DATA_SOURCE !== "database") return false;
+    // If we already have persistent cached data for this venture, don't show blank loading state
+    return !getPersistedData();
+  });
+
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -24,7 +43,11 @@ export const useFeasibility = (businessId: string, options?: UseFeasibilityOptio
     if (isSilent) {
       setIsRefreshing(true);
     } else {
-      setIsLoading(true);
+      // Only set loading true if we don't already have persistent data
+      const existing = getPersistedData();
+      if (!existing) {
+        setIsLoading(true);
+      }
     }
     setError(null);
 
@@ -41,25 +64,46 @@ export const useFeasibility = (businessId: string, options?: UseFeasibilityOptio
             business: container?.business || res?.data?.business || core?.business || null,
             mlStatus: container?.mlStatus || null,
           }
-        : (res?.data?.feasibility?.feasibility || feasibilityData);
+        : (res?.data?.feasibility?.feasibility || null);
 
-      setData(payload || feasibilityData);
-      setLastUpdated(new Date());
+      if (payload) {
+        setData(payload);
+        setLastUpdated(new Date());
+
+        // Persist on client so page refresh or tab switches remain 100% deterministic and fixed
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(`ventureroot_feasibility_${businessId}`, JSON.stringify(payload));
+          } catch (_) {}
+        }
+      }
     } catch (err: any) {
-      console.warn("[useFeasibility] Falling back to baseline feasibility data:", err);
-      setData(feasibilityData);
+      console.warn("[useFeasibility] Warning during fetch:", err?.message);
       setError(err);
+
+      // Do NOT overwrite with mock dairy farm if we already have persistent venture data!
+      setData((prev: any) => {
+        if (prev) return prev;
+        const persisted = getPersistedData();
+        return persisted || feasibilityData;
+      });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [businessId]);
+  }, [businessId, getPersistedData]);
 
-  // Initial fetch on mount / businessId change — clear previous business data
+  // Initial fetch on mount / businessId change
   useEffect(() => {
-    setData(null);
+    const persisted = getPersistedData();
+    if (persisted) {
+      setData(persisted);
+      setIsLoading(false);
+    } else {
+      setData(null);
+    }
     fetchFeasibility(false);
-  }, [businessId, fetchFeasibility]);
+  }, [businessId, fetchFeasibility, getPersistedData]);
 
   // Periodic background refresh if refreshIntervalMs is set
   const intervalRef = useRef<NodeJS.Timeout | null>(null);

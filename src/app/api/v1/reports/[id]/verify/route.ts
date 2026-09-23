@@ -160,12 +160,12 @@ Return ONLY a valid JSON object with:
   );
 
   if (!geminiRes.ok) {
-    throw new Error(`Gemini API returned status ${geminiRes.status}`);
+    throw new Error(`AI service returned status ${geminiRes.status}`);
   }
 
   const geminiData = await geminiRes.json();
   const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("Empty response from Gemini agent");
+  if (!text) throw new Error("Empty response from AI verification agent");
 
   const parsed = JSON.parse(text);
   return {
@@ -254,7 +254,7 @@ function buildBaselineVerification(
       },
     ],
     retrieved_chunks_count: 3,
-    model_used: "gemini-3.6-flash (Agentic Verifier)",
+    model_used: "Autonomous AI Agentic Verifier",
     report_id: reportId,
   };
 }

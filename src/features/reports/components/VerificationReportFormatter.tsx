@@ -213,7 +213,7 @@ export const VerificationReportFormatter: React.FC<VerificationReportFormatterPr
   reportText,
   verdict,
   complianceScore,
-  modelUsed = "gemini-3.6-flash",
+  modelUsed = "AI Regulatory Verifier",
   retrievedChunksCount = 5,
   businessName,
 }) => {

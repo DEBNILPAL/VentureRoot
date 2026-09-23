@@ -844,7 +844,7 @@ export async function fetchCompetitorsByRadius({ lat, lon, category, district, s
     topCompetitors: top6Competitors,
     total: final10km.length + final20km.length,
     source: hasLiveOsm ? "overpass-osm-live" : "domain-models-verified",
-    aiEnriched: GEMINI_API_KEY ? "gemini-enriched" : "domain-fallback",
+    aiEnriched: GEMINI_API_KEY ? "ai-enriched" : "domain-fallback",
     fetchedAt: new Date().toISOString(),
   };
 }

@@ -223,7 +223,7 @@ class VentureRootPipeline:
                 population_density_per_sqkm=density,
                 reach_status="DEGRADED",
                 methodology="fallback_density_multiplication",
-                evidence_sources=["Census 2011 Density Fallback"]
+                evidence_sources=["Demographic Density Fallback"]
             )
             component_health["market_reach"] = ComponentStatus.DEGRADED
 

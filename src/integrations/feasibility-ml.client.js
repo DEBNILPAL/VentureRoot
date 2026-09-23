@@ -16,7 +16,7 @@ const MODEL3_URL = process.env.MODEL3_URL || "http://127.0.0.1:8003";
 const DATA_SERVICE_URL = process.env.DATA_SERVICE_URL || "http://127.0.0.1:8000";
 
 // Timeout for each ML call (ms)
-const ML_TIMEOUT_MS = 20000;
+const ML_TIMEOUT_MS = 2500;
 
 /**
  * Wraps fetch with an AbortController timeout so we don't hang forever.

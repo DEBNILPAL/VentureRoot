@@ -14,12 +14,13 @@ import { TextEffect } from "@/components/ui/text-effect";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authApi } from "@/features/auth/api/authApi";
 import { getSafeRedirectUrl } from "@/lib/security/redirect";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 
 export default function LoginPage() {
   return (
     <React.Suspense fallback={
       <div className="flex w-full min-h-screen items-center justify-center bg-[#FFFBE7]">
-        <div className="w-6 h-6 border-2 border-[#1E6702]/30 border-t-[#1E6702] rounded-full animate-spin" />
+        <PrismFluxLoader size={34} speed={4} />
       </div>
     }>
       <LoginPageContent />

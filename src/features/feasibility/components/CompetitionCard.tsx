@@ -11,6 +11,7 @@ import {
 import { CompetitionAnalysis } from "../types";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 import { getAuthoritativeCensusDensity } from "@/utils/feasibility.mapper";
+import { resolveCatchmentCompetitors } from "../utils/competitorResolver";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -594,316 +595,25 @@ export const CompetitionCard = ({
     category.toLowerCase().includes("hospital") ||
     category.toLowerCase().includes("clinic");
 
-  // ── Build competitors from either live OSM radar OR static fallback ──
+  // ── Authoritative Catchment Competitor Resolution (Synced with Dashboard) ──
+  const resolved = useMemo(() => {
+    return resolveCatchmentCompetitors({
+      competitorRadar,
+      competition: data,
+      category,
+      locationName,
+      centerCoords,
+    });
+  }, [competitorRadar, data, category, locationName, centerCoords]);
 
-  const rawCompetitors10km = useMemo((): Competitor[] => {
-    // Prefer live OSM data if available
-    if (competitorRadar?.within10km && competitorRadar.within10km.length > 0) {
-      return competitorRadar.within10km;
-    }
+  const rawCompetitors10km = resolved.raw10km;
+  const rawCompetitors20km = resolved.raw20km;
+  const allCompetitors = resolved.allCompetitors;
 
-    // Fallback to ML model / AI data if it has 10km competitors
-    if (data?.competitors && data.competitors.length > 0) {
-      const fromModel = (data.competitors as Competitor[]).filter((c) => (c.distanceKm || 0) <= 10 && (c.distanceKm || 0) > 0);
-      if (fromModel.length > 0) return fromModel;
-    }
-
-    const lat = centerCoords ? centerCoords[0] : 0;
-    const lon = centerCoords ? centerCoords[1] : 0;
-
-    if (isHealthcare) {
-      return [
-        {
-          id: "comp-gen-h1",
-          name: `${locationName} District Civil / Sub-Divisional Government Hospital & Trauma Center`,
-          type: "Indirect", sectorType: "Govt / Public Sector", ownership: "Government",
-          facilityType: "Civil Hospital", source: "Ministry of Health & Family Welfare (MoHFW) / Ayushman Bharat PM-JAY Registry",
-          location: `2.1 km North (${locationName})`, distanceKm: 2.1, position: [lat + 0.016, lon + 0.012],
-          pricing: "Free OPD / ₹10 Token • PM-JAY 100% Free Coverage",
-          strengths: ["150+ bed public capacity", "Free essential generic drugs", "Official Ayushman Bharat PM-JAY nodal center"],
-          weaknesses: ["Severe overcrowding with 3–5 hour OPD wait times", "Overburdened nursing staff", "Frequent stockouts of advanced surgical consumables"],
-          positioning: "Complement by offering dignified private single rooms, zero wait times, and dedicated bedside nursing.",
-          businessImpact: "Acts as the baseline price floor. Drives high private demand among middle-income families who seek timely care.",
-        },
-        {
-          id: "comp-gen-h2",
-          name: `${locationName} PHC & Community Health Centre (CHC)`,
-          type: "Indirect", sectorType: "Govt / Public Sector", ownership: "Government",
-          facilityType: "Community Health Centre", source: "National Health Mission (NHM) Rural Facility Registry",
-          location: `3.4 km West (${locationName})`, distanceKm: 3.4, position: [lat + 0.024, lon - 0.019],
-          pricing: "Free Government Public Health Service",
-          strengths: ["Grassroot village healthcare reach via ASHA/ANM network", "Free maternal checkups and immunization"],
-          weaknesses: ["No major surgical OT or ventilator backup", "Doctors unavailable during nighttime emergencies"],
-          positioning: "Establish institutional ambulance coordination to receive stabilized emergency referrals.",
-          businessImpact: "Acts as a primary referral source when rural CHCs face acute surgical cases.",
-        },
-        {
-          id: "comp-gen-h3",
-          name: `Apex Multi-Specialty Private Hospital & Critical Care Center`,
-          type: "Direct", sectorType: "Private Sector", ownership: "Private",
-          facilityType: "Multi-Specialty Hospital", source: "State Clinical Establishments Act Registry / PM-JAY Empanelled List",
-          location: `2.6 km East (${locationName})`, distanceKm: 2.6, position: [lat - 0.015, lon + 0.018],
-          pricing: "₹500–₹750 OPD / ₹2,800–₹4,500/day Private Bed",
-          strengths: ["Modern 35-bed setup with ICU, ventilators, and laminar airflow OT", "Tie-ups with corporate TPAs"],
-          weaknesses: ["High out-of-pocket costs unaffordable for non-insured rural families", "Unexpected surgical consumable billing"],
-          positioning: "Differentiate through 100% transparent all-inclusive surgical packages and friendly cashless desk.",
-          businessImpact: "Direct competitor for insured patients. Sets the local private market rate for room charges.",
-        },
-        {
-          id: "comp-gen-h4",
-          name: `Sanjeevani Private Nursing Home & Maternity Surgical Clinic`,
-          type: "Direct", sectorType: "Private Sector", ownership: "Private",
-          facilityType: "Nursing Home", source: "State Directorate of Health Services / District Medical Council",
-          location: `1.8 km South (${locationName})`, distanceKm: 1.8, position: [lat - 0.018, lon - 0.014],
-          pricing: "₹350–₹500 OPD / ₹1,800–₹3,000/day Bed",
-          strengths: ["Strong legacy in normal and cesarean deliveries", "Deep community trust built over decades"],
-          weaknesses: ["Aging diagnostic equipment without neonatal nursery (NICU) backup", "No 24x7 RMO on premise at night"],
-          positioning: "Outcompete with modern pediatric phototherapy and guaranteed 24x7 on-duty medical officers.",
-          businessImpact: "Directly competes for local maternal and women's health volume.",
-        },
-        {
-          id: "comp-gen-h5",
-          name: `Family Polyclinic & 24x7 Diagnostic Imaging Lab`,
-          type: "Direct", sectorType: "Private Sector", ownership: "Private",
-          facilityType: "Day Clinic & Lab", source: "NABL Accredited Diagnostics Directory",
-          location: `1.4 km South-East (${locationName})`, distanceKm: 1.4, position: [lat - 0.019, lon - 0.013],
-          pricing: "₹200–₹300 OPD / Tests ₹250–₹1,800",
-          strengths: ["Convenient neighborhood walk-in location with attached retail pharmacy", "Fast 1-hour basic blood counts"],
-          weaknesses: ["No overnight inpatient beds or surgical suites", "Unable to stabilize critical cardiac or trauma emergencies"],
-          positioning: "Capture their referral patients who require multi-day monitoring and inpatient admissions.",
-          businessImpact: "Diagnostic partner or competitor for lab revenue.",
-        },
-        {
-          id: "comp-gen-h6",
-          name: `Sub-Divisional Civil Hospital & Maternal Care Unit`,
-          type: "Indirect", sectorType: "Govt / Public Sector", ownership: "Government",
-          facilityType: "Civil Hospital", source: "State Health Systems Resource Centre (SHSRC)",
-          location: `7.5 km North-East (${locationName})`, distanceKm: 7.5, position: [lat + 0.048, lon + 0.042],
-          pricing: "Free Govt OPD & PM-JAY Cashless",
-          strengths: ["Dedicated 50-bed maternal & pediatric ward", "Free ambulance transport under JSSK"],
-          weaknesses: ["Specialist doctor shortages after 2 PM", "Frequent ultrasound equipment backlogs"],
-          positioning: "Sub-district Public Anchor — Partner for planned surgical admissions.",
-          businessImpact: "Absorbs peripheral taluka delivery volume; steady source of surgical transfers.",
-        },
-        {
-          id: "comp-gen-h7",
-          name: `Metro Heart & Multi-Specialty Surgical Hospital`,
-          type: "Direct", sectorType: "Private Sector", ownership: "Private",
-          facilityType: "Multi-Specialty Hospital", source: "State Clinical Establishments Act Registry",
-          location: `8.8 km South-East (${locationName})`, distanceKm: 8.8, position: [lat - 0.054, lon + 0.048],
-          pricing: "₹600 OPD / ₹3,800/day IPD Bed",
-          strengths: ["Advanced cardiac catheterization lab and 8-bed CCU", "Full-time interventional cardiologists"],
-          weaknesses: ["Higher corporate price points prohibitive for agricultural labor families", "Highway corridor location"],
-          positioning: "Regional Tertiary Peer — Win on local proximity and personalized nursing care.",
-          businessImpact: "Competes for high-value cases in the 5–10km corridor.",
-        },
-      ];
-    }
-
-    return [
-      {
-        id: "comp-gen-1",
-        name: `${category} District Cooperative Processing Center`,
-        type: "Direct", sectorType: "Govt / Public Sector", ownership: "Co-operative / Govt Supported",
-        facilityType: "Cooperative Center", source: "District Cooperative Society Registry / Web Scraped",
-        location: `1.8 km North (${locationName})`, distanceKm: 1.8, position: [lat + 0.014, lon + 0.012],
-        pricing: "Standard Rate",
-        strengths: ["Established collection network", "High local footprint"],
-        weaknesses: ["Delayed payment cycles", "Rigid quality deductions"],
-        positioning: "Win local market with instant settlements and fresh delivery.",
-        businessImpact: "Anchors district procurement volume; price competition tempered by bureaucratic payment delays.",
-      },
-      {
-        id: "comp-gen-2",
-        name: `Private ${category} Processing & Packing Enterprise`,
-        type: "Direct", sectorType: "Private Sector", ownership: "Private",
-        facilityType: "Private Enterprise", source: "Udyam Registration Portal / Web Scraped",
-        location: `2.6 km East (${locationName})`, distanceKm: 2.6, position: [lat - 0.016, lon + 0.018],
-        pricing: "Market Parity",
-        strengths: ["High margin value-added products", "Modern processing equipment"],
-        weaknesses: ["Limited distribution radius", "Higher overhead"],
-        positioning: "Differentiate on certified farm freshness and digital ordering.",
-        businessImpact: "Sets the benchmark for commercial retail prices and margins.",
-      },
-      {
-        id: "comp-gen-3",
-        name: `Regional APMC Wholesale ${category} Trading Hub`,
-        type: "Indirect", sectorType: "Govt / Public Sector", ownership: "Government APMC",
-        facilityType: "Mandi Yard", source: "Agmarknet / State Agricultural Marketing Board",
-        location: `3.7 km West (${locationName})`, distanceKm: 3.7, position: [lat + 0.022, lon - 0.019],
-        pricing: "Wholesale Mandi Rate",
-        strengths: ["High volume throughput", "Institutional links"],
-        weaknesses: ["No direct village retail identity", "High middleman commissions"],
-        positioning: "Capture direct retail margins by bypassing Mandi brokers.",
-        businessImpact: "Determines raw input and wholesale clearing rates.",
-      },
-      {
-        id: "comp-gen-4",
-        name: `Local Informal ${category} Village Retailers`,
-        type: "Indirect", sectorType: "Private Sector", ownership: "Informal Private",
-        facilityType: "Informal Retail", source: "Local Panchayat Survey / Web Scraped",
-        location: `1.3 km South (${locationName})`, distanceKm: 1.3, position: [lat - 0.021, lon - 0.014],
-        pricing: "Unorganized Cash Pricing",
-        strengths: ["Immediate neighborhood trust", "Low overhead"],
-        weaknesses: ["Zero hygiene accreditation", "Inconsistent daily supply"],
-        positioning: "Win customer loyalty through certified hygienic packaging.",
-        businessImpact: "Captures price-sensitive cash transactions.",
-      },
-      {
-        id: "comp-gen-5",
-        name: `${locationName} Sub-District Wholesale Trade & Cold Hub`,
-        type: "Indirect", sectorType: "Govt / Public Sector", ownership: "Government APMC",
-        facilityType: "Mandi Yard", source: "State Agricultural Marketing Board",
-        location: `7.8 km North-East (${locationName})`, distanceKm: 7.8, position: [lat + 0.046, lon + 0.040],
-        pricing: "Wholesale Sub-Mandi Rate",
-        strengths: ["Regional commodity aggregation point", "Direct rail/road link"],
-        weaknesses: ["Intermediary fee deductions", "Limited value-addition processing"],
-        positioning: "Capture direct consumer margin.",
-        businessImpact: "Sets input commodity clearing prices in the 10km regional trade corridor.",
-      },
-      {
-        id: "comp-gen-6",
-        name: `Private ${category} Agro-Tech & Processing Cluster`,
-        type: "Direct", sectorType: "Private Sector", ownership: "Private",
-        facilityType: "Private Enterprise", source: "Udyam Registration Portal",
-        location: `8.5 km South-East (${locationName})`, distanceKm: 8.5, position: [lat - 0.051, lon + 0.045],
-        pricing: "Commercial Market Parity",
-        strengths: ["Modernized automated machinery", "Semi-urban retail distribution"],
-        weaknesses: ["High logistics freight to interior villages", "Fixed corporate overhead"],
-        positioning: "Win hyper-local village proximity.",
-        businessImpact: "Direct benchmark for regional retail pricing and packaging standards.",
-      },
-    ];
-  }, [competitorRadar, data?.competitors, isHealthcare, category, locationName, centerCoords]);
-
-  const rawCompetitors20km = useMemo((): Competitor[] => {
-    // Prefer live OSM data if available
-    if (competitorRadar?.within20km && competitorRadar.within20km.length > 0) {
-      return competitorRadar.within20km;
-    }
-
-    // Fallback to ML model / AI data if it has 10–20km competitors
-    if (data?.competitors && data.competitors.length > 0) {
-      const fromModel = (data.competitors as Competitor[]).filter((c) => (c.distanceKm || 0) > 10 && (c.distanceKm || 0) <= 20);
-      if (fromModel.length > 0) return fromModel;
-    }
-
-    const lat = centerCoords ? centerCoords[0] : 0;
-    const lon = centerCoords ? centerCoords[1] : 0;
-
-    if (isHealthcare) {
-      return [
-        {
-          id: "comp-gen-h8",
-          name: `Sub-District Multi-Specialty Referral Hospital`,
-          type: "Direct", sectorType: "Private Sector", ownership: "Private",
-          facilityType: "Multi-Specialty Hospital", source: "State Clinical Establishments Act Registry",
-          location: `12.4 km North-East (${locationName})`, distanceKm: 12.4, position: [lat + 0.078, lon + 0.065],
-          pricing: "₹500 OPD / ₹3,200/day IPD Bed",
-          strengths: ["Secondary surgical care with laparoscopic OT", "Tie-ups with private insurers"],
-          weaknesses: ["Distance friction for emergency night transport from rural talukas"],
-          positioning: "Offer localized primary admissions and immediate emergency stabilization.",
-          businessImpact: "Draws non-critical elective patients from our catchment.",
-        },
-        {
-          id: "comp-gen-h9",
-          name: `District Government Medical College & Apex Civil Hospital`,
-          type: "Indirect", sectorType: "Govt / Public Sector", ownership: "Government",
-          facilityType: "Medical College Hospital", source: "Directorate of Medical Education & Research (DMER)",
-          location: `14.8 km North-West (${locationName})`, distanceKm: 14.8, position: [lat + 0.098, lon - 0.088],
-          pricing: "100% Free Public Super-Specialty Coverage",
-          strengths: ["500+ bed academic facility", "Comprehensive Level-3 trauma & neurosurgery"],
-          weaknesses: ["Massive patient crowding with 4–8 hour OPD lines", "Long waitlists for elective surgery"],
-          positioning: "Benchmark for emergency stabilization before tertiary transfers.",
-          businessImpact: "Long waiting periods create steady private demand.",
-        },
-        {
-          id: "comp-gen-h10",
-          name: `Regional Cardiac & Critical Care Super-Specialty Hospital`,
-          type: "Direct", sectorType: "Private Sector", ownership: "Private",
-          facilityType: "Super-Specialty Hospital", source: "NABH Accredited Hospitals Directory",
-          location: `16.5 km South-East (${locationName})`, distanceKm: 16.5, position: [lat - 0.108, lon + 0.095],
-          pricing: "Corporate Super-Specialty Tariffs",
-          strengths: ["Advanced interventional cardiology and neuro-critical ICU", "24x7 ambulance fleet"],
-          weaknesses: ["High expense barriers for lower-income rural households", "Highway corridor location"],
-          positioning: "Complement as affordable community primary and secondary healthcare provider.",
-          businessImpact: "Captures high-complexity tertiary referrals across the district.",
-        },
-        {
-          id: "comp-gen-h11",
-          name: `Apex Comprehensive Cancer & Multi-Organ Institute`,
-          type: "Direct", sectorType: "Private Sector", ownership: "Private",
-          facilityType: "Super-Specialty Hospital", source: "NABH Accredited Hospitals Directory",
-          location: `18.2 km South-East (${locationName})`, distanceKm: 18.2, position: [lat - 0.118, lon - 0.102],
-          pricing: "Corporate Super-Specialty Tariffs",
-          strengths: ["Linear accelerator, robotic surgery, and organ transplant ICU", "International patient desks"],
-          weaknesses: ["High expense barriers for lower-middle class", "Distance friction from rural villages"],
-          positioning: "Complement as community primary & secondary healthcare provider.",
-          businessImpact: "Dominates super-specialty cases across the 20km zone.",
-        },
-      ];
-    }
-
-    return [
-      {
-        id: "comp-gen-7",
-        name: `${locationName} Regional Wholesale Distribution Center`,
-        type: "Indirect", sectorType: "Govt / Public Sector", ownership: "Cooperative Apex Federation",
-        facilityType: "Wholesale Depot", source: "State Cooperative Marketing Federation",
-        location: `11.8 km North-East (${locationName})`, distanceKm: 11.8, position: [lat + 0.075, lon + 0.062],
-        pricing: "Wholesale Bulk Trade Pricing",
-        strengths: ["High-tonnage aggregation and multi-district supply logistics"],
-        weaknesses: ["Requires minimum bulk consignment volumes", "Inflexible ordering schedules"],
-        positioning: "Leverage as high-volume institutional supplier or offload surplus output.",
-        businessImpact: "Sets baseline wholesale bulk procurement pricing across the district.",
-      },
-      {
-        id: "comp-gen-8",
-        name: `Central District Principal Mandi & Food Park Terminal`,
-        type: "Indirect", sectorType: "Govt / Public Sector", ownership: "Government APMC",
-        facilityType: "Mandi Yard", source: "National APMC Directory",
-        location: `14.2 km North-West (${locationName})`, distanceKm: 14.2, position: [lat + 0.092, lon - 0.082],
-        pricing: "State Apex Mandi Benchmark",
-        strengths: ["High volume daily auctions", "District-wide supplier liquidity"],
-        weaknesses: ["Significant travel distance for small farmers", "2-3% brokerage fees"],
-        positioning: "Leverage for wholesale offloading.",
-        businessImpact: "Defines district-wide wholesale commodity floor across the 20km trade zone.",
-      },
-      {
-        id: "comp-gen-9",
-        name: `District Commercial Processing & Automated Packaging Unit`,
-        type: "Direct", sectorType: "Private Sector", ownership: "Private",
-        facilityType: "Private Enterprise", source: "Udyam Portal / Web Scraped",
-        location: `16.5 km South-East (${locationName})`, distanceKm: 16.5, position: [lat - 0.106, lon + 0.092],
-        pricing: "Commercial Market Parity",
-        strengths: ["Automated packaging line and cold chain warehousing"],
-        weaknesses: ["Higher distribution overhead to peripheral rural blocks"],
-        positioning: "Win local village market share through fresher stock and direct relationships.",
-        businessImpact: "Direct benchmark for regional retail pricing and packaging standards.",
-      },
-      {
-        id: "comp-gen-10",
-        name: `State Industrial Mega Processing & Logistics Park`,
-        type: "Direct", sectorType: "Private Sector", ownership: "Private Corporate",
-        facilityType: "Corporate Plant", source: "State Industrial Development Corporation (SIDC)",
-        location: `18.8 km South-West (${locationName})`, distanceKm: 18.8, position: [lat - 0.116, lon - 0.105],
-        pricing: "Corporate Contract Pricing",
-        strengths: ["Multi-acre automated warehousing", "National export contracts"],
-        weaknesses: ["Zero focus on small-scale hyper-local sales", "High minimum batch volumes"],
-        positioning: "Dominate the high-margin retail consumer niche.",
-        businessImpact: "Dominates industrial contract processing across 20km zone.",
-      },
-    ];
-  }, [competitorRadar, data?.competitors, isHealthcare, category, locationName, centerCoords]);
-
-  // ── Stats ─────────────────────────────────────────────────────────────────
-
-  const allCompetitors = [...rawCompetitors10km, ...rawCompetitors20km];
-
-  const totalGovt = allCompetitors.filter(isCompetitorGovt).length;
-  const totalPvt = allCompetitors.length - totalGovt;
-  const totalDirect = allCompetitors.filter((c) => !c.type?.toLowerCase().includes("indirect")).length;
-  const totalIndirect = allCompetitors.length - totalDirect;
+  const totalGovt = resolved.totalGovt;
+  const totalPvt = resolved.totalPvt;
+  const totalDirect = resolved.totalDirect;
+  const totalIndirect = resolved.totalIndirect;
 
   const populationReach = useMemo(() => {
     const density = getAuthoritativeCensusDensity({ name: locationName }, { name: locationName });
@@ -914,7 +624,7 @@ export const CompetitionCard = ({
   }, [locationName]);
 
   const isLiveData = !!competitorRadar?.within10km?.length || !!competitorRadar?.within20km?.length;
-  const isGeminiEnriched = competitorRadar?.aiEnriched === "gemini-enriched";
+  const isAiEnriched = competitorRadar?.aiEnriched === "gemini-enriched" || competitorRadar?.aiEnriched === "ai-enriched";
 
   // ── Top 5–6 High-Strength Competitors Radar & Deep Analysis ──
   const topRankedCompetitors = useMemo(() => {
@@ -950,9 +660,9 @@ export const CompetitionCard = ({
                   <span className="flex items-center gap-1 text-emerald-700 font-bold">
                     <CheckCircle2 className="w-3 h-3" /> Live OSM Data
                   </span>
-                  {isGeminiEnriched && (
+                  {isAiEnriched && (
                     <span className="flex items-center gap-1 text-purple-700 font-bold">
-                      <Sparkles className="w-3 h-3" /> Gemini-Enriched
+                      <Sparkles className="w-3 h-3" /> AI-Enriched
                     </span>
                   )}
                   {competitorRadar?.fetchedAt && (
@@ -1151,9 +861,9 @@ export const CompetitionCard = ({
               <span className="px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 font-semibold flex items-center gap-1">
                 <Globe className="w-3 h-3" /> OpenStreetMap (Overpass API) — Live Web Scraping
               </span>
-              {isGeminiEnriched && (
+              {isAiEnriched && (
                 <span className="px-2.5 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-800 font-semibold flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> Gemini AI Model — Strategic Enrichment
+                  <Sparkles className="w-3 h-3" /> Neural AI Engine — Strategic Enrichment
                 </span>
               )}
             </>

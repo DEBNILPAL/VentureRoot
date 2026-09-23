@@ -13,6 +13,7 @@ import { LocationAutocompleteInput, SelectedLocation } from "@/components/ui/Loc
 import { StateAutocompleteInput } from "@/components/ui/StateAutocompleteInput";
 import { resolveCoordinatesForLocation } from "@/services/location-search.service";
 import { getUserScopeKey } from "@/lib/data/businesses";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 
 const DynamicRadiusMap = dynamic(() => import("@/components/maps/RadiusMap"), {
   ssr: false,
@@ -194,6 +195,24 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
 
   const formValues = watch();
 
+  const getCategoryName = (catId?: string) => {
+    if (!catId) return "-";
+    const matched = categories.find(
+      (c) =>
+        c.id === catId ||
+        c.slug?.toLowerCase() === catId.toLowerCase() ||
+        c.name?.toLowerCase() === catId.toLowerCase()
+    );
+    if (matched?.name) return matched.name;
+    // If it's a slug or readable key
+    if (!catId.includes("-") || catId.length < 20) {
+      return catId.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+    return "Enterprise";
+  };
+
+  const selectedCategoryName = getCategoryName(formValues.categoryId);
+
   // Synchronously auto-resolve coordinates whenever user types or selects state/district/block/village
   useEffect(() => {
     if (!formValues.district && !formValues.state) return;
@@ -271,11 +290,13 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
 
           const updatedList = existingList.map((biz: any) => {
             if (biz.id === businessId) {
+              const catDisplayName = getCategoryName(data.categoryId) || biz.category;
               return {
                 ...biz,
                 id: businessId, // Business ID strictly preserved and locked
                 name: payload.name || biz.name,
-                category: data.categoryId,
+                category: catDisplayName,
+                categoryId: data.categoryId,
                 location: {
                   ...biz.location,
                   state: data.state || "",
@@ -345,10 +366,17 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
 
       // Generate normalized venture object
       const fallbackId = `biz_${Date.now().toString(36)}`;
+      const categoryDisplayName = getCategoryName(data.categoryId);
+      const businessDisplayName =
+        (data as any).name ||
+        createdBusiness?.name ||
+        `${categoryDisplayName} Venture`;
+
       const resolvedBiz = {
         id: createdBusiness?.id || fallbackId,
-        name: (data as any).name || `${(data.categoryId || "Agro").charAt(0).toUpperCase() + (data.categoryId || "agro").slice(1)} Venture`,
-        category: data.categoryId || "Agro-Processing",
+        name: businessDisplayName,
+        category: categoryDisplayName,
+        categoryId: data.categoryId,
         location: {
           state: data.state || "",
           district: data.district || "",
@@ -403,7 +431,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
   if (isLoadingExisting) {
     return (
       <div className="w-full min-h-[380px] bg-white rounded-2xl border border-slate-200 p-12 flex flex-col items-center justify-center gap-3">
-        <div className="w-9 h-9 border-3 border-[#1E6702] border-t-transparent rounded-full animate-spin" />
+        <PrismFluxLoader size={38} speed={4} />
         <p className="text-sm font-semibold text-slate-600">Loading business details for editing...</p>
       </div>
     );
@@ -412,33 +440,33 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
   return (
     <div className="w-full flex flex-col items-center">
       
-      <div className="w-full bg-[#FEFEF4] rounded-xl shadow-[0_4px_24px_rgb(0,0,0,0.05)] border border-gray-900/8 overflow-hidden flex flex-col mb-20 transition-all duration-300">
+      <div className="w-full bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-[0_8px_30px_-6px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.02)] border border-slate-200/80 overflow-hidden flex flex-col mb-20 transition-all duration-300">
         
         {/* Dark Header */}
-        <div className="w-full bg-[#81cc87] px-5 py-6 sm:px-10 sm:py-12 relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center text-[#f9faeb]">
+        <div className="w-full bg-gradient-to-r from-[#173809] to-[#1E6702] px-5 py-6 sm:px-10 sm:py-10 relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center text-white">
           <div className="z-10 mb-4 md:mb-0">
-            <h1 className="font-heading text-[24px] sm:text-[32px] font-bold text-[#f9faeb] tracking-tight leading-tight">
+            <h1 className="font-heading text-[24px] sm:text-[32px] font-bold text-white tracking-tight leading-tight">
               {isEditMode ? "Edit Enterprise Details" : "Start a New Enterprise"}
             </h1>
-            <p className="font-sans text-[13px] sm:text-[14px] text-[#f9faeb]/70 font-medium mt-0.5">
+            <p className="font-sans text-[13px] sm:text-[14px] text-emerald-100/80 font-medium mt-0.5">
               {isEditMode
                 ? "Update your enterprise parameters, location, and capital"
                 : "Complete the 6 steps to get started"}
             </p>
             {isEditMode && businessId && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/20 text-[#f9faeb] text-xs font-semibold backdrop-blur-xs border border-white/20 mt-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold backdrop-blur-xs border border-white/20 mt-3">
                 <Lock className="w-3.5 h-3.5 opacity-80" />
                 <span>Enterprise ID: <strong className="font-mono">{businessId}</strong> (Locked)</span>
               </div>
             )}
           </div>
           
-          <div className="z-10 hidden md:flex flex-col md:items-end opacity-90 border-l-2 border-[#f9faeb]/10 pl-6">
+          <div className="z-10 hidden md:flex flex-col md:items-end opacity-90 border-l-2 border-white/10 pl-6">
             <div className="flex items-center gap-3 mb-2">
-              <Leaf className="w-7 h-7 text-[#f9faeb]" />
-              <span className="font-heading italic text-[25px] text-[#f9faeb]">Ideas grow brighter here</span>
+              <Leaf className="w-7 h-7 text-emerald-300" />
+              <span className="font-heading italic text-[25px] text-white">Ideas grow brighter here</span>
             </div>
-            <p className="font-sans text-[11px] tracking-wider text-[#f9faeb]/50 uppercase font-bold">Poal: Rural Ideas. Real Opportunities.</p>
+            <p className="font-sans text-[11px] tracking-wider text-emerald-200/70 uppercase font-bold">Rural Ideas. Real Opportunities.</p>
           </div>
         </div>
 
@@ -452,7 +480,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
         <div className="flex flex-col lg:flex-row p-4 sm:p-6 lg:p-10 gap-6 lg:gap-10">
 
           {/* MOBILE COMPACT STEPPER (Hidden on Desktop) */}
-          <div className="lg:hidden w-full bg-[#fcfbf7] rounded-2xl p-4 border border-gray-200/60 shadow-xs">
+          <div className="lg:hidden w-full bg-slate-50/80 rounded-2xl p-4 border border-slate-200/70 shadow-xs">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 {currentStep > 1 && (
@@ -466,7 +494,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                     <ArrowLeft className="w-3.5 h-3.5" />
                   </button>
                 )}
-                <span className="text-xs font-bold text-[#81cc87] uppercase tracking-wider">
+                <span className="text-xs font-bold text-[#1E6702] uppercase tracking-wider">
                   Step {currentStep} of 6
                 </span>
               </div>
@@ -484,7 +512,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
           
           {/* DESKTOP SIDEBAR: Stepper (Hidden on Mobile) */}
           <div className="hidden lg:block w-[300px] shrink-0">
-            <div className="bg-[#fcfbf7] rounded-3xl p-6 md:p-8 flex flex-col relative h-full">
+            <div className="bg-slate-50/80 rounded-2xl sm:rounded-3xl p-6 md:p-8 flex flex-col relative h-full border border-slate-200/70">
               
               {/* Vertical connecting line */}
               <div className="absolute left-[51px] md:left-[59px] top-[60px] bottom-[160px] w-0.5 bg-gray-200 z-0"></div>
@@ -518,7 +546,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                       </div>
                       <div className="flex flex-col pt-1">
                         <span className={`font-sans text-[14px] font-bold transition-colors duration-300
-                          ${isActive ? 'text-gray-900' : isCompleted ? 'text-gray-700 hover:text-[#1E6702]' : 'text-gray-500'}
+                          ${isActive ? 'text-[#173809]' : isCompleted ? 'text-slate-700 hover:text-[#1E6702]' : 'text-slate-400'}
                         `}>
                           {step.label}
                         </span>
@@ -536,7 +564,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
               {/* Bottom Footer Banner */}
               <div className="mt-auto pt-12">
                 <div className="bg-[#f9faeb] p-4 rounded-2xl flex items-start gap-3 border border-[#81cc87]/10">
-                  <Leaf className="w-5 h-5 text-[#81cc87] shrink-0 mt-0.5" />
+                  <Leaf className="w-5 h-5 text-[#1E6702] shrink-0 mt-0.5" />
                   <div className="flex flex-col">
                     <span className="font-sans text-[14px] font-bold text-[#81cc87]">Building stronger</span>
                     <span className="font-sans text-[14px] font-bold text-[#81cc87] mb-1">rural businesses</span>
@@ -574,7 +602,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                </div>
                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                  <div 
-                   className="h-full bg-[#81cc87] transition-all duration-500 ease-out rounded-full"
+                   className="h-full bg-[#1E6702] transition-all duration-500 ease-out rounded-full"
                    style={{ width: `${progressPercentage}%` }}
                  ></div>
                </div>
@@ -597,7 +625,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                       <label className="block font-sans text-[14px] font-bold text-gray-800 mb-2">{t("business.wizard.cat")}</label>
                       <select
                         {...register("categoryId")}
-                        className="w-full rounded-xl border border-gray-200 p-4 bg-white focus:bg-white focus:border-[#81cc87] focus:ring-1 focus:ring-[#81cc87] transition-all outline-none font-sans text-[14px] font-medium"
+                        className="w-full rounded-xl border border-gray-200 p-4 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium"
                       >
                         <option value="">{t("business.wizard.selectCat")}</option>
                         {categories.length > 0 ? (
@@ -622,9 +650,9 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                       {errors.categoryId && <p className="text-red-500 font-sans text-[12px] mt-2 font-medium">{errors.categoryId.message}</p>}
                     </div>
 
-                    <div className="bg-[#f9faeb] rounded-xl p-4 flex gap-3 items-start border border-[#81cc87]/10">
-                      <Info className="w-5 h-5 text-[#81cc87] shrink-0 mt-0.5" />
-                      <p className="font-sans text-[14px] text-[#81cc87] font-medium leading-relaxed">
+                    <div className="bg-emerald-50/70 rounded-xl p-4 flex gap-3 items-start border border-emerald-200/60">
+                      <Info className="w-5 h-5 text-[#1E6702] shrink-0 mt-0.5" />
+                      <p className="font-sans text-[14px] text-emerald-950 font-medium leading-relaxed">
                         Choose the category that matches your primary business activity.<br/>
                         This helps us provide more accurate scheme recommendations and market insights.
                       </p>
@@ -675,7 +703,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                           {...register("district")}
                           type="text"
                           placeholder="e.g. Pune"
-                          className="w-full rounded-xl border border-gray-200 p-3.5 bg-white focus:bg-white focus:border-[#81cc87] focus:ring-1 focus:ring-[#81cc87] transition-all outline-none font-sans text-[14px] font-medium"
+                          className="w-full rounded-xl border border-gray-200 p-3.5 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium"
                         />
                         {errors.district && <p className="text-red-500 font-sans text-[12px] mt-1.5 font-medium">{errors.district.message}</p>}
                       </div>
@@ -688,7 +716,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                           {...register("block")}
                           type="text"
                           placeholder="e.g. Haveli"
-                          className="w-full rounded-xl border border-gray-200 p-3.5 bg-white focus:bg-white focus:border-[#81cc87] focus:ring-1 focus:ring-[#81cc87] transition-all outline-none font-sans text-[14px] font-medium"
+                          className="w-full rounded-xl border border-gray-200 p-3.5 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium"
                         />
                         {errors.block && <p className="text-red-500 font-sans text-[12px] mt-1.5 font-medium">{errors.block.message}</p>}
                       </div>
@@ -701,7 +729,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                           {...register("village")}
                           type="text"
                           placeholder="e.g. Wagholi"
-                          className="w-full rounded-xl border border-gray-200 p-3.5 bg-white focus:bg-white focus:border-[#81cc87] focus:ring-1 focus:ring-[#81cc87] transition-all outline-none font-sans text-[14px] font-medium"
+                          className="w-full rounded-xl border border-gray-200 p-3.5 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium"
                         />
                         {errors.village && <p className="text-red-500 font-sans text-[12px] mt-1.5 font-medium">{errors.village.message}</p>}
                       </div>
@@ -730,9 +758,9 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                       </div>
                     </div>
                     
-                    <div className="bg-[#f9faeb] rounded-xl p-4 flex gap-3 items-start border border-[#81cc87]/10">
-                      <Info className="w-5 h-5 text-[#81cc87] shrink-0 mt-0.5" />
-                      <p className="font-sans text-[14px] text-[#81cc87] font-medium leading-relaxed">
+                    <div className="bg-emerald-50/70 rounded-xl p-4 flex gap-3 items-start border border-emerald-200/60">
+                      <Info className="w-5 h-5 text-[#1E6702] shrink-0 mt-0.5" />
+                      <p className="font-sans text-[14px] text-emerald-950 font-medium leading-relaxed">
                         Location data is critical to discovering local grants, finding localized competitors, and understanding the surrounding demographic market.
                       </p>
                     </div>
@@ -750,15 +778,15 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                           {...register("availableMargin", { valueAsNumber: true })}
                           type="number"
                           min="0"
-                          className="w-full rounded-xl border border-gray-200 p-4 pl-8 bg-white focus:bg-white focus:border-[#81cc87] focus:ring-1 focus:ring-[#81cc87] transition-all outline-none font-sans text-[14px] font-medium"
+                          className="w-full rounded-xl border border-gray-200 p-4 pl-8 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium"
                         />
                       </div>
                       {errors.availableMargin && <p className="text-red-500 font-sans text-[12px] mt-2 font-medium">{errors.availableMargin.message}</p>}
                     </div>
 
-                    <div className="bg-[#f9faeb] rounded-xl p-4 flex gap-3 items-start border border-[#81cc87]/10">
-                      <Info className="w-5 h-5 text-[#81cc87] shrink-0 mt-0.5" />
-                      <p className="font-sans text-[14px] text-[#81cc87] font-medium leading-relaxed">
+                    <div className="bg-emerald-50/70 rounded-xl p-4 flex gap-3 items-start border border-emerald-200/60">
+                      <Info className="w-5 h-5 text-[#1E6702] shrink-0 mt-0.5" />
+                      <p className="font-sans text-[14px] text-emerald-950 font-medium leading-relaxed">
                         State exactly how much capital you currently have on hand. We will use this to calculate loan requirements and match you with subsidies.
                       </p>
                     </div>
@@ -774,14 +802,14 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                         {...register("existingResources")}
                         rows={4}
                         placeholder="e.g., Owned land, basic shed, water connection..."
-                        className="w-full rounded-xl border border-gray-200 p-4 bg-white focus:bg-white focus:border-[#81cc87] focus:ring-1 focus:ring-[#81cc87] transition-all outline-none font-sans text-[14px] font-medium resize-none"
+                        className="w-full rounded-xl border border-gray-200 p-4 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium resize-none"
                       ></textarea>
                       {errors.existingResources && <p className="text-red-500 font-sans text-[12px] mt-2 font-medium">{errors.existingResources.message}</p>}
                     </div>
 
-                    <div className="bg-[#f9faeb] rounded-xl p-4 flex gap-3 items-start border border-[#81cc87]/10">
-                      <Info className="w-5 h-5 text-[#81cc87] shrink-0 mt-0.5" />
-                      <p className="font-sans text-[14px] text-[#81cc87] font-medium leading-relaxed">
+                    <div className="bg-emerald-50/70 rounded-xl p-4 flex gap-3 items-start border border-emerald-200/60">
+                      <Info className="w-5 h-5 text-[#1E6702] shrink-0 mt-0.5" />
+                      <p className="font-sans text-[14px] text-emerald-950 font-medium leading-relaxed">
                         List all physical assets you currently own. This drastically changes the feasibility analysis for new businesses.
                       </p>
                     </div>
@@ -799,15 +827,15 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                           {...register("expectedRevenue", { valueAsNumber: true })}
                           type="number"
                           min="0"
-                          className="w-full rounded-xl border border-gray-200 p-4 pl-8 bg-white focus:bg-white focus:border-[#81cc87] focus:ring-1 focus:ring-[#81cc87] transition-all outline-none font-sans text-[14px] font-medium"
+                          className="w-full rounded-xl border border-gray-200 p-4 pl-8 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium"
                         />
                       </div>
                       {errors.expectedRevenue && <p className="text-red-500 font-sans text-[12px] mt-2 font-medium">{errors.expectedRevenue.message}</p>}
                     </div>
                     
-                    <div className="bg-[#f9faeb] rounded-xl p-4 flex gap-3 items-start border border-[#81cc87]/10">
-                      <Info className="w-5 h-5 text-[#81cc87] shrink-0 mt-0.5" />
-                      <p className="font-sans text-[14px] text-[#81cc87] font-medium leading-relaxed">
+                    <div className="bg-emerald-50/70 rounded-xl p-4 flex gap-3 items-start border border-emerald-200/60">
+                      <Info className="w-5 h-5 text-[#1E6702] shrink-0 mt-0.5" />
+                      <p className="font-sans text-[14px] text-emerald-950 font-medium leading-relaxed">
                         Provide a realistic estimate of monthly revenue based on your planned production capacity.
                       </p>
                     </div>
@@ -817,11 +845,11 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                 {/* STEP 6 */}
                 {currentStep === 6 && (
                   <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-                    <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                    <div className="bg-slate-50/80 p-6 rounded-2xl border border-slate-200/80">
                       <dl className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
                         <div>
                           <dt className="font-sans text-[12px] text-gray-500 font-medium mb-1">{t("business.wizard.cat")}</dt>
-                          <dd className="font-sans text-[18px] font-bold text-gray-900 capitalize">{formValues.categoryId || "-"}</dd>
+                          <dd className="font-sans text-[18px] font-bold text-gray-900">{selectedCategoryName}</dd>
                         </div>
                         <div>
                           <dt className="font-sans text-[12px] text-gray-500 font-medium mb-1">Location</dt>
@@ -831,11 +859,11 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                         </div>
                         <div>
                           <dt className="font-sans text-[12px] text-gray-500 font-medium mb-1">{t("business.wizard.availMargin")}</dt>
-                          <dd className="font-sans text-[20px] font-bold text-[#81cc87]">₹{new Intl.NumberFormat('en-IN').format(formValues.availableMargin || 0)}</dd>
+                          <dd className="font-sans text-[20px] font-bold text-[#1E6702]">₹{new Intl.NumberFormat('en-IN').format(formValues.availableMargin || 0)}</dd>
                         </div>
                         <div>
                           <dt className="font-sans text-[12px] text-gray-500 font-medium mb-1">{t("business.wizard.revenue")}</dt>
-                          <dd className="font-sans text-[20px] font-bold text-[#81cc87]">₹{new Intl.NumberFormat('en-IN').format(formValues.expectedRevenue || 0)} <span className="font-sans text-[14px] text-gray-500 font-medium">/mo</span></dd>
+                          <dd className="font-sans text-[20px] font-bold text-[#1E6702]">₹{new Intl.NumberFormat('en-IN').format(formValues.expectedRevenue || 0)} <span className="font-sans text-[14px] text-gray-500 font-medium">/mo</span></dd>
                         </div>
                         <div className="md:col-span-2 pt-4 border-t border-gray-200">
                           <dt className="font-sans text-[12px] text-gray-500 font-medium mb-2">{t("business.wizard.resources")}</dt>
@@ -874,7 +902,7 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#81cc87] text-[#f9faeb] hover:bg-[#81cc87]/90 shadow-lg shadow-[#81cc87]/20 transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#1E6702] hover:bg-[#155201] text-white shadow-md shadow-[#1E6702]/20 transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2 cursor-pointer"
                   >
                     Next Step <ArrowRight className="w-4 h-4" />
                   </button>
@@ -882,10 +910,10 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#81cc87] text-[#f9faeb] hover:bg-[#81cc87]/90 shadow-lg shadow-[#81cc87]/20 transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none min-w-[200px] cursor-pointer"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#1E6702] hover:bg-[#155201] text-white shadow-md shadow-[#1E6702]/20 transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none min-w-[200px] cursor-pointer"
                   >
                     {isSubmitting ? (
-                      <div className="w-5 h-5 border-2 border-[#f9faeb]/30 border-t-[#f9faeb] rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
                         {isEditMode ? "Save & Update Business" : "Analyze & Submit"} <ArrowRight className="w-4 h-4" />

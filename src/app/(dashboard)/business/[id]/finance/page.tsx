@@ -11,6 +11,7 @@ import {
 import { useParams } from "next/navigation";
 import apiClient from "@/lib/api/client";
 import { WhatIfSimulator } from "@/features/finance/components/WhatIfSimulator";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 import { useBusinessDetails } from "@/lib/data/businesses";
 import {
   computeFinancialPlan,
@@ -42,7 +43,8 @@ const statusStyle: Record<string, string> = {
 // ── Shared Card wrapper ───────────────────────────────────────────────────────
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] transition-all duration-300 w-full min-w-0 overflow-hidden ${className}`}>
+    <div className={`bg-white/95 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.05),0_2px_4px_rgba(0,0,0,0.02)] transition-all duration-300 w-full min-w-0 overflow-hidden relative ${className}`}>
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/60 to-transparent pointer-events-none" />
       {children}
     </div>
   );
@@ -190,7 +192,7 @@ export default function FinancePage() {
     return (
       <div className="w-full h-full p-8 flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-[#1E6702] border-t-transparent rounded-full animate-spin" />
+          <PrismFluxLoader size={38} speed={4} />
           <p className="font-sans text-sm text-slate-500 font-medium">Loading financial planning...</p>
         </div>
       </div>
@@ -200,7 +202,7 @@ export default function FinancePage() {
   if (!business) {
     return (
       <div className="w-full h-full p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center min-h-[450px]">
-        <div className="max-w-md w-full bg-[#fffff5] rounded-2xl border border-gray-900/10 p-8 shadow-lg text-center flex flex-col items-center gap-4">
+        <div className="max-w-md w-full bg-white/95 rounded-2xl border border-slate-200/80 p-8 shadow-lg text-center flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-[#1E6702]/10 flex items-center justify-center text-[#1E6702]">
             <Compass className="w-8 h-8" />
           </div>

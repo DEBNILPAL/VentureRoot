@@ -128,6 +128,7 @@ Your mission is to provide personalized, realistic, and highly actionable busine
 
 // In-memory rate-limit cooldown tracker for Gemini API
 let geminiRateLimitedUntil = 0;
+let geminiQuotaExhausted = false;
 
 /**
  * Calls Google Gemini REST API directly.
@@ -139,12 +140,12 @@ export async function callGeminiApi({ apiKey, systemInstruction, message, histor
   }
 
   const now = Date.now();
-  if (now < geminiRateLimitedUntil) {
+  if (geminiQuotaExhausted || now < geminiRateLimitedUntil) {
     const remainingSec = Math.ceil((geminiRateLimitedUntil - now) / 1000);
     throw new Error(`Gemini rate limit cooldown active (retry in ${remainingSec}s)`);
   }
 
-  const models = ["gemini-3.6-flash", "gemini-3.6-flash-lite"];
+  const models = ["gemini-2.5-flash", "gemini-1.5-flash"];
 
   const contents = [];
 
@@ -186,7 +187,7 @@ export async function callGeminiApi({ apiKey, systemInstruction, message, histor
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      }, 8000); // 8-second fast timeout per model call
+      }, 3500); // 3.5-second fast timeout per model call
 
       if (res.ok) {
         const data = await res.json();
@@ -256,7 +257,7 @@ export async function chatWithAi({ message, context, history = [] }) {
           sources: [
             `Venture: ${biz?.name || "Business"} (${category}, ${district})`,
             `Promoter Margin: ₹${marginNum.toLocaleString('en-IN')}`,
-            `Powered by Google Gemini (${geminiResult.model})`,
+            `Powered by Autonomous AI Engine (${geminiResult.model})`,
           ],
           type: "FACT",
           confidence: 96,
@@ -320,7 +321,7 @@ export async function chatWithAi({ message, context, history = [] }) {
       `1. Register your business on the free **Udyam portal** to unlock MSME priority lending rates.\n` +
       `2. Prepare a 1-page Project Profile highlighting your promoter margin of ₹${marginNum.toLocaleString('en-IN')}.\n` +
       `3. Inquire at your local Lead District Bank (LDB) or District Industries Centre (DIC) for PMEGP sponsorship.\n\n` +
-      `*💡 Note: To enable live real-time conversational responses powered by Google Gemini, add your \`GEMINI_API_KEY\` to \`.env.local\` or click the 🔑 API Key button above.*`,
+      `*💡 Note: To enable live real-time conversational responses powered by AI Intelligence, add your API key to \`.env.local\` or click the 🔑 API Key button above.*`,
     confidence: "MEDIUM",
     fallback: true,
     evidence: {

@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 import { useBusinessesComparison } from "@/lib/data/businesses";
 import { useProfile } from "@/lib/data/users";
 import { DeleteBusinessModal } from "@/features/business/components/DeleteBusinessModal";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 
 const EASE_OUT_EXPO = [0.22, 1, 0.36, 1] as const;
 
@@ -22,7 +23,7 @@ export default function MyBusinessPage() {
   if (isLoading) {
     return (
       <div className="w-full min-h-[60vh] flex flex-col items-center justify-center p-6 gap-3">
-        <div className="w-9 h-9 border-3 border-[#1E6702] border-t-transparent rounded-full animate-spin" />
+        <PrismFluxLoader size={38} speed={4} />
         <p className="text-sm font-semibold text-slate-600">Retrieving your registered ventures...</p>
       </div>
     );
@@ -74,7 +75,10 @@ export default function MyBusinessPage() {
               ).toFixed(1);
               const marginAmt = Number(biz.availableMargin || 0);
               const revenueAmt = Number(biz.expectedRevenue || 0);
-              const categoryName = biz.category?.name || biz.category || "Agro & Rural Enterprise";
+              let categoryName = biz.category?.name || (typeof biz.category === "string" ? biz.category : "") || "Agro & Rural Enterprise";
+              if (categoryName.length > 25 && categoryName.includes("-")) {
+                categoryName = "Rural Enterprise";
+              }
               const locationStr = biz.location?.district
                 ? `${biz.location.district}, ${biz.location.state || ""}`
                 : biz.location?.state || "Local District";

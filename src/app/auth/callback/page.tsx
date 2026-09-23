@@ -8,6 +8,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { authApi } from "@/features/auth/api/authApi";
 import { AlertCircle, ArrowRight } from "lucide-react";
 import { getSafeRedirectUrl } from "@/lib/security/redirect";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 
 export default function AuthCallbackPage() {
   return (
@@ -15,7 +16,7 @@ export default function AuthCallbackPage() {
       fallback={
         <div className="flex w-full min-h-screen items-center justify-center bg-[#FFFBE7]">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-8 h-8 border-3 border-[#1E6702]/30 border-t-[#1E6702] rounded-full animate-spin" />
+            <PrismFluxLoader size={36} speed={4} />
             <p className="font-sans text-sm text-[#200813]/70 font-medium">
               Connecting with Google...
             </p>
@@ -180,7 +181,7 @@ function AuthCallbackContent() {
 
         {status === "processing" && (
           <div className="flex flex-col items-center py-6">
-            <div className="w-10 h-10 border-3 border-[#1E6702]/30 border-t-[#1E6702] rounded-full animate-spin mb-4" />
+            <PrismFluxLoader size={38} speed={4} className="mb-4" />
             <h2 className="font-heading text-xl font-medium text-[#200813]">
               Authenticating with Google
             </h2>

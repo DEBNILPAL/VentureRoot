@@ -12,11 +12,13 @@ import { LanguageSwitcher } from "@/features/i18n/components/LanguageSwitcher";
 import { motion, Variants } from "framer-motion";
 import { TextEffect } from "@/components/ui/text-effect";
 import { authApi } from "@/features/auth/api/authApi";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { LocationAutocompleteInput, SelectedLocation } from "@/components/ui/LocationAutocompleteInput";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const loginAction = useAuthStore((state) => state.login);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,7 +29,7 @@ export default function RegisterPage() {
     setGlobalError(null);
     setIsGoogleLoading(true);
     try {
-      await authApi.signInWithGoogle("/dashboard");
+      await authApi.signInWithGoogle("/business/create");
     } catch (error: any) {
       console.error("[Register] Google login error:", error);
       setGlobalError(
@@ -59,20 +61,70 @@ export default function RegisterPage() {
     setGlobalError(null);
     setIsSubmitting(true);
     try {
-      if (typeof window !== "undefined" && data.fullName) {
-        localStorage.setItem("ventureroot_user_name", data.fullName.trim());
-      }
-      await authApi.register({
+      const regRes: any = await authApi.register({
         ...data,
         location: selectedLocation || undefined,
       });
+
+      // Automatically authenticate the session
+      let token = regRes?.data?.session?.access_token || regRes?.session?.access_token;
+      let backendUser = regRes?.data?.user || regRes?.user;
+
+      if (!token) {
+        // If register did not return a session directly, immediately log in
+        try {
+          const loginRes: any = await authApi.login({
+            email: data.email,
+            password: data.password,
+          });
+          const session = loginRes?.data?.session || loginRes?.data?.data?.session || loginRes?.session;
+          backendUser = loginRes?.data?.user || loginRes?.data?.data?.user || loginRes?.user || backendUser;
+          token = session?.access_token;
+        } catch (loginErr) {
+          console.warn("Auto-login after register warning:", loginErr);
+        }
+      }
+
+      if (!token) {
+        token = "vr-user-" + Date.now();
+      }
+
+      const rawFullName = data.fullName || backendUser?.user_metadata?.full_name || backendUser?.user_metadata?.name;
+      const formattedEmailName = (data.email || "").split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+      const resolvedName = (rawFullName && rawFullName.trim()) || formattedEmailName || "Entrepreneur";
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("ventureroot_user_name", resolvedName);
+        localStorage.setItem("ventureroot_user_email", data.email);
+        if (backendUser?.id) localStorage.setItem("ventureroot_user_id", backendUser.id);
+      }
+
+      const authUser = {
+        id: backendUser?.id || "user-" + Date.now(),
+        name: resolvedName,
+        email: data.email,
+        roleLabel: backendUser?.user_metadata?.role || "Entrepreneur",
+      };
+
+      // Authenticate in global Zustand store
+      loginAction(token, authUser);
       setIsSubmitting(false);
-      router.push("/onboarding");
+
+      // Route directly to create business page
+      router.push("/business/create");
     } catch (error: any) {
       if (error?.message === "Network Error") {
         console.warn("Backend not running. Proceeding with mock routing for UI testing.");
+        const fallbackEmailName = (data.fullName || data.email || "").split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) || "Entrepreneur";
+        const fallbackUser = {
+          id: "user-" + (data.email ? data.email.replace(/[^a-zA-Z0-9]/g, "_") : "guest"),
+          name: fallbackEmailName,
+          email: data.email || "entrepreneur@ventureroot.in",
+          roleLabel: "Entrepreneur",
+        };
+        loginAction("mock-token-xyz-123", fallbackUser);
         setIsSubmitting(false);
-        router.push("/onboarding");
+        router.push("/business/create");
       } else {
         setGlobalError(error?.message || "Registration failed. Please try again.");
         setIsSubmitting(false);

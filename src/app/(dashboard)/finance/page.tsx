@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useBusinessesComparison } from "@/lib/data/businesses";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 
 const EASE_OUT_EXPO = [0.22, 1, 0.36, 1] as const;
 
@@ -17,7 +18,7 @@ export default function FinanceHubPage() {
   if (isLoading) {
     return (
       <div className="w-full min-h-[60vh] flex flex-col items-center justify-center p-6 gap-3">
-        <div className="w-9 h-9 border-3 border-[#1E6702] border-t-transparent rounded-full animate-spin" />
+        <PrismFluxLoader size={38} speed={4} />
         <p className="text-sm font-semibold text-slate-600">Retrieving your registered ventures...</p>
       </div>
     );

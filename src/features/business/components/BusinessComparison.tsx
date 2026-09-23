@@ -253,7 +253,7 @@ const BusinessSelector = ({
       {selected.map((b) => (
         <div key={b.id} className="relative">
           <div
-            className="flex items-center gap-2 bg-[#234670] text-[#f9faeb] rounded-xl px-3.5 py-2 font-sans text-[13px] font-bold shadow-xs cursor-pointer select-none hover:bg-[#1a3556] transition-colors"
+            className="flex items-center gap-2 bg-[#1E6702] text-white rounded-xl px-3.5 py-2 font-sans text-[13px] font-bold shadow-xs cursor-pointer select-none hover:bg-[#155201] transition-colors"
             onClick={() => setOpenDropdown(openDropdown === b.id ? null : b.id)}
           >
             <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: b.dot }} />
@@ -433,9 +433,9 @@ export const BusinessComparison = () => {
       </div>
 
       {/* ── RADAR COMPARISON CHART ───────────────────────────────── */}
-      <div className="bg-[#fffff5] rounded-2xl border border-gray-900/10 shadow-xs p-4 sm:p-6 transition-all duration-300">
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.05),0_2px_4px_rgba(0,0,0,0.02)] p-4 sm:p-6 transition-all duration-300">
         <div className="flex items-center gap-2 mb-4">
-          <BarChart2 className="w-5 h-5 text-[#234670]" />
+          <BarChart2 className="w-5 h-5 text-[#1E6702]" />
           <span className="font-heading text-base sm:text-[18px] font-bold text-gray-900 tracking-tight">Multi-Dimensional Viability Spider Matrix</span>
           <span className="font-sans text-[12px] text-gray-500 font-medium ml-2 hidden md:inline">
             Visual comparison across feasibility, demand, competitive moat, and capital efficiency.
@@ -470,7 +470,7 @@ export const BusinessComparison = () => {
                 </div>
               ))}
             </div>
-            <div className="mt-2 bg-[#f9faeb] rounded-xl p-3 sm:p-3.5 border border-[#81cc87]/20 flex items-center gap-3">
+            <div className="mt-2 bg-emerald-50/70 rounded-xl p-3 sm:p-3.5 border border-emerald-200/60 flex items-center gap-3">
               <Compass className="w-4 h-4 text-[#1E6702] shrink-0" />
               <p className="font-sans text-[11px] sm:text-[12px] text-slate-700 leading-snug break-words">
                 Radar chart compares primary candidate <strong className="text-gray-900">{activeBiz[0]?.name}</strong> (Green) directly against <strong className="text-gray-900">{activeBiz[1]?.name || "Sector Benchmark"}</strong> (Secondary).

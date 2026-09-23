@@ -196,7 +196,7 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
       estimated_monthly_profit: `₹${Number(operations.monthlyProfit || Math.round((operations.expectedRevenue || 120000) * 0.22)).toLocaleString("en-IN")}/month`,
       break_even_horizon: `${operations.breakEvenMonths || 6} Months`,
       debt_service_coverage_ratio: `${operations.dscr || 1.85}x`,
-      catchment_population_10km: `${Number(reach.radius10km || 48200).toLocaleString("en-IN")} residents (Census 2011 PCA)`,
+      catchment_population_10km: `${Number(reach.radius10km || 48200).toLocaleString("en-IN")} residents (Demographic Catchment)`,
       critical_operational_risk: primaryRisk?.title || "Raw Material & Price Fluctuation",
       risk_mitigation_plan: primaryRisk?.mitigationAdvisory || "Maintain 45-day inventory buffer stock and forward contracts.",
     };
@@ -596,10 +596,10 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
                   <BookOpen className="w-5 h-5 text-[#141411]" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-sans text-[14px] font-bold text-gray-900">RAG + Gemini Compliance Engine</p>
+                  <p className="font-sans text-[14px] font-bold text-gray-900">RAG + AI Compliance Engine</p>
                   <p className="font-sans text-[13px] text-gray-500 leading-snug mt-0.5">
                     Retrieves authoritative Indian business regulations from the VentureRoot knowledge base and cross-checks
-                    this report&apos;s ML predictions using a Gemini 2.5 Flash agentic verifier.
+                    this report&apos;s ML predictions using an autonomous AI agentic verifier.
                   </p>
                 </div>
               </div>
@@ -635,7 +635,7 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
                 {[80, 60, 90, 55].map((w, i) => (
                   <div key={i} className="h-5 bg-gray-200 rounded-lg animate-pulse" style={{ width: `${w}%` }} />
                 ))}
-                <p className="font-sans text-[13px] text-gray-500 italic mt-2">Retrieving regulation chunks and calling Gemini agent...</p>
+                <p className="font-sans text-[13px] text-gray-500 italic mt-2">Retrieving regulation chunks and running AI compliance verifier...</p>
               </div>
             )}
 
@@ -688,7 +688,7 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
                     </div>
                   </div>
 
-                  {/* Full Gemini verification report — formatted professionally */}
+                  {/* Full AI verification report — formatted professionally */}
                   <VerificationReportFormatter
                     reportText={verifyResult.verification_report}
                     verdict={verifyResult.verdict}
@@ -736,7 +736,7 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
                 </div>
                 <p className="font-sans text-[15px] font-bold text-gray-700 mb-1">Verification Not Yet Run</p>
                 <p className="font-sans text-[13px] text-gray-500 max-w-md">
-                  Click <strong>Run Verification</strong> above to trigger the RAG + Gemini regulatory compliance
+                  Click <strong>Run Verification</strong> above to trigger the RAG + AI regulatory compliance
                   engine and get an authoritative verdict for this report.
                 </p>
               </div>

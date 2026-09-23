@@ -15,13 +15,11 @@ export default function DashboardLayout({
     <ProtectedRoute>
       <div className="flex flex-col min-h-screen bg-[#f4fce8] relative">
         <DashboardBackground />
-        <div className="flex-1 flex flex-col relative z-10 w-full mx-auto pb-20 md:pb-0">
-          <TopNav />
-          <main className="flex-1 w-full relative z-10 flex flex-col justify-between">
-            <div className="flex-1 w-full">{children}</div>
-            <DashboardFooter />
-          </main>
-        </div>
+        <TopNav />
+        <main className="flex-1 w-full relative z-10 flex flex-col justify-between pb-20 md:pb-0">
+          <div className="flex-1 w-full">{children}</div>
+          <DashboardFooter />
+        </main>
         <MobileBottomNav />
       </div>
     </ProtectedRoute>

@@ -5,6 +5,7 @@ import { Report } from "@/features/reports/types";
 import Link from "next/link";
 import { ArrowLeft, FileText } from "lucide-react";
 import { getReportDetails } from "@/lib/data/reports";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 
 export default function ReportDetailPage({
   params,
@@ -38,7 +39,7 @@ export default function ReportDetailPage({
     return (
       <div className="w-full min-h-screen flex items-center justify-center bg-[#81cc87]/10">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-emerald-700 border-t-transparent rounded-full animate-spin" />
+          <PrismFluxLoader size={38} speed={4} />
           <p className="font-sans text-sm font-semibold text-slate-700">Synthesizing Detailed Project Report (DPR)...</p>
         </div>
       </div>

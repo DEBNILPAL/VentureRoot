@@ -57,7 +57,7 @@ export async function generateTailoredRoadmapAndCompetitors({
 
       if (geminiResult && geminiResult.phases && geminiResult.phases.length === 5) {
         return {
-          source: "gemini-3.6-flash",
+          source: "autonomous-ai-engine",
           roadmap: geminiResult,
           actionItems: geminiResult.actionItems || buildFallbackActionItems(business, geminiResult),
           competitorInsights: geminiResult.competitorInsights || buildFallbackCompetitorInsights(category, district, competitors),
@@ -304,6 +304,7 @@ Respond with ONLY a raw JSON object matching this structure (no markdown fences,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(4000),
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {

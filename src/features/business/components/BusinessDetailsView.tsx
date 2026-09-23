@@ -12,6 +12,7 @@ import { useBusinessDetails } from "@/lib/data/businesses";
 import { useParams, useRouter } from "next/navigation";
 import { DashboardBackground } from "@/components/layout/DashboardBackground";
 import { DeleteBusinessModal } from "@/features/business/components/DeleteBusinessModal";
+import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 import { getDynamicBusinessResources } from "@/services/business-resources.service";
 import { calculateFinancialTrajectory } from "@/services/financial-trajectory.service";
@@ -53,8 +54,14 @@ export const BusinessDetailsView = () => {
       const normalized: BusinessDetails = {
         ...fetchedBusiness,
         id: fetchedBusiness.id,
-        name: fetchedBusiness.name || "Business Venture",
-        category: (fetchedBusiness.category as any)?.name || fetchedBusiness.category || "General Enterprise",
+        name: (typeof fetchedBusiness.name === "string" && fetchedBusiness.name.length > 30 && fetchedBusiness.name.includes("-"))
+          ? "Rural Enterprise Venture"
+          : (fetchedBusiness.name || "Business Venture"),
+        category: (fetchedBusiness.category as any)?.name || 
+          (typeof fetchedBusiness.category === "string" && fetchedBusiness.category.length > 25 && fetchedBusiness.category.includes("-")
+            ? "Rural Enterprise"
+            : fetchedBusiness.category) || 
+          "General Enterprise",
         description: fetchedBusiness.description || "Enterprise details and feasibility analysis.",
         status: (fetchedBusiness.status as any) || "Draft",
         location: fetchedBusiness.location || { state: "Local", district: "Region" },
@@ -102,7 +109,7 @@ export const BusinessDetailsView = () => {
     return (
       <div className="w-full h-full p-8 flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-[#1E6702] border-t-transparent rounded-full animate-spin" />
+          <PrismFluxLoader size={38} speed={4} />
           <p className="font-sans text-sm text-slate-500 font-medium">Loading venture details...</p>
         </div>
       </div>
@@ -112,7 +119,7 @@ export const BusinessDetailsView = () => {
   if (!business) {
     return (
       <div className="w-full h-full p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center min-h-[450px]">
-        <div className="max-w-md w-full bg-[#fffff5] rounded-2xl border border-gray-900/10 p-8 shadow-lg text-center flex flex-col items-center gap-4">
+        <div className="max-w-md w-full bg-white/95 rounded-2xl border border-slate-200/80 p-8 shadow-lg text-center flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-[#1E6702]/10 flex items-center justify-center text-[#1E6702]">
             <Compass className="w-8 h-8" />
           </div>
@@ -191,7 +198,7 @@ export const BusinessDetailsView = () => {
               </button>
             </div>
           </div>
-          <p className="font-sans text-[14px] text-[#402a03]/80 font-medium mt-0.5">
+          <p className="font-sans text-[14px] text-slate-600 font-medium mt-0.5">
             {business.description || "A small-scale commercial dairy farm focusing on high-yield buffalo milk production for local cooperative supply."}
           </p>
         </div>
@@ -202,168 +209,170 @@ export const BusinessDetailsView = () => {
           {/* LEFT: BUSINESS SNAPSHOT */}
           <div className="lg:col-span-2 flex flex-col gap-4">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-sans text-[11px] font-bold uppercase tracking-wider text-black-500">
-                Business Snapshot <span className="text-black mx-1">•</span> Key operational parameters
-              </h2>
-              <span className="font-sans text-[11px] font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-md">Live Model</span>
+              <div className="flex items-center gap-2">
+                <h2 className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight">
+                  Business Snapshot
+                </h2>
+                <span className="text-xs text-slate-400 hidden sm:inline">•</span>
+                <span className="text-xs text-slate-600 hidden sm:inline font-normal">
+                  Key operational parameters
+                </span>
+              </div>
+              <span className="font-sans text-[11px] font-bold text-[#1E6702] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
+                Live Model
+              </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-              {/* Capital Card */}
-              <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-5 flex flex-col relative overflow-hidden transition-all duration-300">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-orange-400"></div>
-                <div className="flex items-center justify-between mb-6 mt-1">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-full bg-orange-50 text-orange-600"><IndianRupee className="w-4 h-4" /></div>
-                    <span className="font-heading text-[20px] font-bold text-slate-800 tracking-tight">Capital</span>
-                  </div>
-                  <span className="font-sans text-[11px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded tracking-wider">FUNDED</span>
-                </div>
-                <div className="flex flex-col gap-6">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-sans text-[12px] font-medium text-slate-500">Available equity</span>
-                      <span className="font-sans text-[12px] font-bold text-orange-600">Self-funded</span>
+              {/* Capital Card (Pure White Signature Card) */}
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.09)]">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/60 to-transparent pointer-events-none" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center justify-center shrink-0">
+                      <IndianRupee className="w-4 h-4" />
                     </div>
-                    <span className="font-sans text-[24px] font-bold text-slate-900 tracking-tight">₹{business.capital.availableMargin?.toLocaleString('en-IN') || "1,50,000"}</span>
+                    <span className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight">Capital</span>
                   </div>
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-sans text-[12px] font-medium text-slate-500">Expected investment</span>
-                      <span className="font-sans text-[14px] font-bold text-slate-800 tracking-tight">₹{business.capital.expectedInvestment?.toLocaleString('en-IN') || "8,00,000"}</span>
-                    </div>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="font-sans text-[11px] text-slate-400 font-medium">18.75% covered</span>
-                      <span className="font-sans text-[11px] text-slate-400 font-medium">₹6.5L debt gap</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Operations Card */}
-              <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-5 flex flex-col relative overflow-hidden transition-all duration-300">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-[#402a03]"></div>
-                <div className="flex items-center justify-between mb-6 mt-1">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-full bg-[#402a03]/10 text-[#402a03]"><Activity className="w-4 h-4" /></div>
-                    <span className="font-heading text-[20px] font-bold text-slate-800 tracking-tight">Operations</span>
-                  </div>
-                  <span className="font-sans text-[11px] font-bold text-[#402a03] bg-[#402a03]/10 px-2 py-0.5 rounded border border-[#402a03]/20 tracking-wider">+12% baseline</span>
-                </div>
-                <div className="flex flex-col gap-6">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-sans text-[12px] font-medium text-slate-500">Target monthly revenue</span>
-                    </div>
-                    <span className="font-sans text-[24px] font-bold text-slate-900 tracking-tight">₹{business.operations.expectedRevenue?.toLocaleString('en-IN') || "45,000"}</span>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-sans text-[12px] font-medium text-slate-500">Production volume</span>
-                    </div>
-                    <span className="font-sans text-[14px] font-bold text-slate-800">{business.operations.productionQuantity || "30"} units / day</span>
-                    <span className="font-sans text-[12px] text-slate-400 font-medium block mt-1">
-                      {business.category} capacity for ₹{Number(business.operations.expectedRevenue || 50000).toLocaleString('en-IN')}/mo target
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Resources Card - Dynamic Multi-Tab Module */}
-              <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-5 flex flex-col relative overflow-hidden transition-all duration-300">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-600"></div>
-                <div className="flex items-center justify-between mb-4 mt-1">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-full bg-emerald-50 text-emerald-700"><Layers className="w-4 h-4" /></div>
-                    <span className="font-heading text-[18px] font-bold text-slate-800 tracking-tight">Resources & Assets</span>
-                  </div>
-                  <span className="font-sans text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 tracking-wider">
-                    {business.category} Model
+                  <span className="font-sans text-[10.5px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60 tracking-wider">
+                    FUNDED
                   </span>
                 </div>
 
-                {/* Resource Category Tabs */}
-                <div className="flex items-center gap-1.5 mb-4 bg-slate-100/70 p-1 rounded-lg">
-                  {[
-                    { id: "land", label: t("biz.landFacility") || "Land & Facility" },
-                    { id: "equipments", label: t("biz.machinery") || "Machinery" },
-                    { id: "growth", label: t("biz.growthResources") || "Growth Resources" },
-                  ].map(({ id, label }) => (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setResourceTab(id as typeof resourceTab)}
-                      className={`flex-1 py-1 px-1.5 rounded-md text-[11px] font-bold transition-all ${
-                        resourceTab === id
-                          ? "bg-white text-slate-900 shadow-xs"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
+                <div className="flex flex-col gap-4 my-auto">
+                  <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 flex flex-col gap-1">
+                    <div className="flex justify-between items-center">
+                      <span className="font-sans text-[12px] font-medium text-slate-500">Available equity</span>
+                      <span className="font-sans text-[11px] font-bold text-amber-700 bg-amber-100/60 px-2 py-0.5 rounded-md">Self-funded</span>
+                    </div>
+                    <span className="font-heading text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight">
+                      ₹{business.capital.availableMargin?.toLocaleString('en-IN') || "1,50,000"}
+                    </span>
+                  </div>
+
+                  {(() => {
+                    const margin = business.capital.availableMargin || 0;
+                    const investment = business.capital.expectedInvestment || margin;
+                    const debtGap = Math.max(0, investment - margin);
+                    const coverage = investment > 0 ? Math.min(100, Math.round((margin / investment) * 100)) : 100;
+                    const debtGapLabel = debtGap >= 100000 ? `₹${(debtGap / 100000).toFixed(1)}L debt gap` : debtGap > 0 ? `₹${debtGap.toLocaleString('en-IN')} gap` : "Fully funded";
+                    return (
+                      <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 flex flex-col gap-1.5">
+                        <div className="flex justify-between items-center">
+                          <span className="font-sans text-[12px] font-medium text-slate-500">Expected investment</span>
+                          <span className="font-sans text-[13px] font-bold text-slate-800">
+                            ₹{investment.toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center pt-1 border-t border-slate-200/60 text-[11.5px]">
+                          <span className="font-semibold text-emerald-700">{coverage}% covered</span>
+                          <span className="font-medium text-slate-500">{debtGapLabel}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
-                {/* Tab 1: Land & Facility */}
-                {resourceTab === "land" && (
-                  <div className="flex flex-col gap-3 text-xs animate-in fade-in duration-200">
-                    <div>
-                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Required Area</span>
-                      <span className="font-bold text-slate-900 text-[13px]">{dynamicResources?.land.requiredArea}</span>
+                <div className="pt-3 border-t border-slate-100 mt-2">
+                  <p className="font-sans text-[11px] text-slate-500 leading-relaxed font-medium">
+                    Initial equity margin provided during venture onboarding.
+                  </p>
+                </div>
+              </div>
+
+              {/* Operations Card (Balanced Spacing & Clean Typography) */}
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.09)]">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/60 to-transparent pointer-events-none" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#1E6702] border border-emerald-200/60 flex items-center justify-center shrink-0">
+                      <Activity className="w-4 h-4" />
                     </div>
-                    <div>
-                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Estimated Land Valuation / Lease</span>
-                      <span className="font-bold text-emerald-700 text-[12.5px]">{dynamicResources?.land.valuation}</span>
+                    <span className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight">Operations</span>
+                  </div>
+                  <span className="font-sans text-[10.5px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60 tracking-wider">
+                    +12% baseline
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-4 my-auto">
+                  <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 flex flex-col gap-1">
+                    <span className="font-sans text-[12px] font-medium text-slate-500">Target Monthly Revenue</span>
+                    <span className="font-heading text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight">
+                      ₹{business.operations.expectedRevenue?.toLocaleString('en-IN') || "45,000"}
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 flex flex-col gap-1.5">
+                    <div className="flex justify-between items-center">
+                      <span className="font-sans text-[12px] font-medium text-slate-500">Production Volume</span>
+                      <span className="font-sans text-[13px] font-bold text-slate-800">
+                        {business.operations.productionQuantity || "30"} units / day
+                      </span>
                     </div>
-                    <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Tenure & Regulatory Norm</span>
-                      <p className="text-[11px] text-slate-700 leading-relaxed font-medium">
-                        {dynamicResources?.land.tenureType} • {dynamicResources?.land.zoning}
+                    <div className="pt-1 border-t border-slate-200/60 text-[11.5px] text-slate-500 flex justify-between items-center">
+                      <span>Model Capacity</span>
+                      <span className="font-medium text-slate-700">₹{((Number(business.operations.expectedRevenue || 45000) * 12) / 100000).toFixed(1)}L/yr run-rate</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 mt-2">
+                  <p className="font-sans text-[11px] text-slate-500 leading-relaxed font-medium">
+                    Operational throughput calculated for {business.category || "enterprise"} targets.
+                  </p>
+                </div>
+              </div>
+
+              {/* Resources Card - User Declared Assets (Clean, Spacious & Readable) */}
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.09)]">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/60 to-transparent pointer-events-none" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60 flex items-center justify-center shrink-0">
+                      <Layers className="w-4 h-4" />
+                    </div>
+                    <span className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight">Resources & Assets</span>
+                  </div>
+                  <span className="font-sans text-[10.5px] font-bold text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200/60 tracking-wider">
+                    Declared Input
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-4 my-auto">
+                  <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-sans text-[12px] font-medium text-slate-500">Your Declared Assets</span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E6702] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                        <Check className="w-3 h-3" /> Recorded
+                      </span>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-2xs">
+                      <p className="font-sans text-[13.5px] font-semibold text-slate-800 leading-relaxed whitespace-pre-wrap break-words">
+                        {business.resources?.existingResources || (business as any).existingResources || "Owned workspace, primary tools, and basic utility access declared during setup."}
                       </p>
                     </div>
                   </div>
-                )}
 
-                {/* Tab 2: Core Machinery & Equipment */}
-                {resourceTab === "equipments" && (
-                  <div className="flex flex-col gap-2 max-h-[170px] overflow-y-auto pr-1 text-xs animate-in fade-in duration-200">
-                    <div className="flex items-center justify-between pb-1 mb-1 border-b border-slate-100">
-                      <span className="text-[10.5px] font-bold text-slate-500">Core Machinery</span>
-                      <span className="text-[11px] font-black text-slate-900">Total ₹{dynamicResources?.totalEquipmentCost.toLocaleString('en-IN')}</span>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2.5 bg-slate-50/80 rounded-lg border border-slate-100 flex flex-col gap-0.5">
+                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">Sector</span>
+                      <span className="font-bold text-slate-800 text-[12px] truncate">{business.category}</span>
                     </div>
-                    {dynamicResources?.equipments.map((eq: any, i: number) => (
-                      <div key={i} className="p-2 bg-slate-50/80 rounded-lg border border-slate-100 flex items-center justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <span className="font-bold text-slate-800 text-[11px] block truncate">{eq.name}</span>
-                          <span className={`text-[9.5px] font-semibold px-1.5 py-0.2 rounded-full border inline-block ${
-                            eq.priority === "Essential" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-blue-50 text-blue-700 border-blue-200"
-                          }`}>
-                            {eq.priority}
-                          </span>
-                        </div>
-                        <span className="font-bold text-[11px] text-slate-900 shrink-0">₹{eq.estimatedCost.toLocaleString('en-IN')}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Tab 3: Growth & Scaling Resources */}
-                {resourceTab === "growth" && (
-                  <div className="flex flex-col gap-2.5 text-xs animate-in fade-in duration-200">
-                    <div>
-                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Human Capital Needed</span>
-                      <span className="text-slate-800 text-[11.5px] font-medium leading-relaxed">{dynamicResources?.growthResources.humanCapital}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">3-Phase Power & Utilities</span>
-                      <span className="text-slate-800 text-[11.5px] font-medium leading-relaxed">{dynamicResources?.growthResources.powerAndUtilities}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Working Capital Buffer</span>
-                      <span className="text-emerald-700 text-[11.5px] font-bold">{dynamicResources?.growthResources.workingCapitalReserve}</span>
+                    <div className="p-2.5 bg-slate-50/80 rounded-lg border border-slate-100 flex flex-col gap-0.5">
+                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">Status</span>
+                      <span className="font-bold text-emerald-700 text-[12px] flex items-center gap-1">
+                        <Check className="w-3 h-3 text-[#1E6702]" /> In Project Report
+                      </span>
                     </div>
                   </div>
-                )}
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 mt-2">
+                  <p className="font-sans text-[11px] text-slate-500 leading-relaxed font-medium">
+                    Self-reported physical assets and equipment entered during setup.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -371,15 +380,21 @@ export const BusinessDetailsView = () => {
           {/* RIGHT: LOCATION */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-sans text-[11px] font-bold uppercase tracking-wider text-black-500">
-                Location <span className="text-black mx-1">•</span> Regional Cluster
-              </h2>
-              <span className="font-sans text-[11px] font-bold text-slate-700 bg-slate-200/60 px-2.5 py-0.5 rounded-md border border-slate-300/40">
+              <div className="flex items-center gap-2">
+                <h2 className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight">
+                  Location
+                </h2>
+                <span className="text-xs text-slate-400 hidden sm:inline">•</span>
+                <span className="text-xs text-slate-600 hidden sm:inline font-normal">
+                  Regional Cluster
+                </span>
+              </div>
+              <span className="font-sans text-[11px] font-bold text-[#1E6702] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
                 {business.location.district || "Target District"} Cluster
               </span>
             </div>
-            <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-5 sm:p-6 flex flex-col h-full justify-between transition-all duration-300 relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-[#1E6702]"></div>
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col h-full justify-between transition-all duration-300 relative overflow-hidden hover:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.09)]">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/60 to-transparent pointer-events-none" />
               <div className="flex flex-col gap-3.5 pt-1">
                 <div className="flex items-center justify-between py-1">
                   <span className="font-sans text-[13px] text-slate-500 font-medium">State</span>
@@ -426,9 +441,15 @@ export const BusinessDetailsView = () => {
           {/* LEFT: FINANCIAL TRAJECTORY */}
           <div className="lg:col-span-2 flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-              <h2 className="font-sans text-[11px] font-bold uppercase tracking-wider text-black-500">
-                Financial Trajectory <span className="text-black mx-1">•</span> Revenue, Costs & Operating Drag
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight">
+                  Financial Trajectory
+                </h2>
+                <span className="text-xs text-slate-400 hidden sm:inline">•</span>
+                <span className="text-xs text-slate-600 hidden sm:inline font-normal">
+                  Revenue, Costs & Operating Drag
+                </span>
+              </div>
               {/* Scenario Toggle */}
               <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg self-start sm:self-auto">
                 <button
@@ -456,7 +477,8 @@ export const BusinessDetailsView = () => {
               </div>
             </div>
 
-            <div className="bg-[#fffff5] rounded-xl border border-gray-900/8 shadow-[0_4px_24px_rgb(0,0,0,0.05)] p-5 sm:p-6 flex flex-col h-full justify-between transition-all duration-300">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col h-full justify-between transition-all duration-300 relative overflow-hidden group hover:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.09)]">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/60 to-transparent pointer-events-none" />
               <div className="flex flex-col xl:flex-row gap-6 xl:gap-8 h-full items-stretch">
 
                 {/* Area Chart */}
@@ -513,7 +535,7 @@ export const BusinessDetailsView = () => {
                 <div className="w-full xl:w-[320px] 2xl:w-[340px] shrink-0 flex flex-col justify-between min-w-0 pt-4 xl:pt-0 border-t xl:border-t-0 border-slate-100">
                   <div>
                     <div className="flex justify-between items-center mb-1">
-                      <h3 className="font-heading text-[18px] font-bold text-slate-900 tracking-tight">Outlay Breakdown</h3>
+                      <h3 className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight">Outlay Breakdown</h3>
                       <span className="font-sans text-[12px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">Total {financialTrajectory?.totalCostLakhs}</span>
                     </div>
                     <p className="font-sans text-[11.5px] text-slate-500 mb-3">Capital expenditure & launch operating reserves</p>
@@ -555,56 +577,66 @@ export const BusinessDetailsView = () => {
           {/* RIGHT: NEXT STEPS (PASTEL) */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-sans text-[11px] font-bold uppercase tracking-wider text-black-500">
-                Next Steps
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight">
+                  Next Steps
+                </h2>
+                <span className="text-xs text-slate-400 hidden sm:inline">•</span>
+                <span className="text-xs text-slate-600 hidden sm:inline font-normal">
+                  Recommended actions
+                </span>
+              </div>
               <span className="font-sans text-[11px] font-medium text-slate-500">3 Workstreams</span>
             </div>
 
             <div className="flex flex-col gap-3 h-full">
               {/* Compare */}
-              <Link href={`/business/compare`} className="group flex items-center justify-between p-4 rounded-2xl transition-all shadow-sm bg-[#234670] hover:bg-[#234670]/90 flex-1">
-                <div className="flex items-center gap-4">
-                  <div className="p-2.5 bg-[#f2f5d0]/10 rounded-xl group-hover:scale-110 transition-transform">
-                    <BarChart2 className="w-5 h-5 text-[#f2f5d0]" />
+              <Link href={`/business/compare`} className="group flex items-center justify-between p-4 rounded-2xl transition-all shadow-xs hover:shadow-md bg-white/95 backdrop-blur-sm border border-slate-200/80 hover:border-blue-200 flex-1 relative overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/40 to-transparent pointer-events-none" />
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-xl group-hover:scale-105 transition-transform">
+                    <BarChart2 className="w-5 h-5 text-blue-700" />
                   </div>
                   <div className="flex flex-col text-left gap-0.5">
-                    <span className="font-sans text-[16px] font-bold text-[#f2f5d0]">Compare</span>
-                    <span className="font-sans text-[12px] text-[#f2f5d0]/80 font-medium">Compare multiple businesses</span>
+                    <span className="font-heading text-[15px] font-bold text-slate-900 group-hover:text-[#173809] transition-colors">Compare</span>
+                    <span className="font-sans text-[12px] text-slate-500 font-medium">Compare multiple businesses</span>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-[#f2f5d0]/50 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#1E6702] group-hover:translate-x-1 transition-all" />
               </Link>
 
               {/* Reports */}
-              <Link href={business?.id ? `/reports/${business.id}` : `/reports`} className="group flex items-center justify-between p-4 rounded-2xl transition-all shadow-sm bg-[#301608] hover:bg-[#301608]/90 flex-1">
-                <div className="flex items-center gap-4">
-                  <div className="p-2.5 bg-[#f9fadc]/10 rounded-xl group-hover:scale-110 transition-transform">
-                    <FileText className="w-5 h-5 text-[#f9fadc]" />
+              <Link href={business?.id ? `/reports/${business.id}` : `/reports`} className="group flex items-center justify-between p-4 rounded-2xl transition-all shadow-xs hover:shadow-md bg-white/95 backdrop-blur-sm border border-slate-200/80 hover:border-amber-200 flex-1 relative overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/40 to-transparent pointer-events-none" />
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 bg-amber-50 text-amber-700 border border-amber-200/60 rounded-xl group-hover:scale-105 transition-transform">
+                    <FileText className="w-5 h-5 text-amber-700" />
                   </div>
                   <div className="flex flex-col text-left gap-0.5">
-                    <span className="font-sans text-[16px] font-bold text-[#f9fadc]">Get Reports</span>
-                    <span className="font-sans text-[12px] text-[#f9fadc]/80 font-medium">Detailed Project Report (DPR) ready</span>
+                    <span className="font-heading text-[15px] font-bold text-slate-900 group-hover:text-[#173809] transition-colors">Get Reports</span>
+                    <span className="font-sans text-[12px] text-slate-500 font-medium">Detailed Project Report (DPR) ready</span>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-[#f9fadc]/50 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#1E6702] group-hover:translate-x-1 transition-all" />
               </Link>
 
               {/* Roadmap */}
-              <Link href={`/business/${business.id}/roadmap`} className="group flex items-center justify-between p-4 rounded-2xl transition-all shadow-sm bg-[#5f9ea0] hover:bg-[#5f9ea0]/90 flex-1">
-                <div className="flex items-center gap-4">
-                  <div className="p-2.5 bg-[#eff5df]/20 rounded-xl group-hover:scale-110 transition-transform">
-                    <Compass className="w-5 h-5 text-[#eff5df]" />
+              <Link href={`/business/${business.id}/roadmap`} className="group flex items-center justify-between p-4 rounded-2xl transition-all shadow-xs hover:shadow-md bg-white/95 backdrop-blur-sm border border-slate-200/80 hover:border-emerald-200 flex-1 relative overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/40 to-transparent pointer-events-none" />
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 bg-emerald-50 text-[#1E6702] border border-emerald-200/60 rounded-xl group-hover:scale-105 transition-transform">
+                    <Compass className="w-5 h-5 text-[#1E6702]" />
                   </div>
                   <div className="flex flex-col text-left gap-0.5">
-                    <span className="font-sans text-[16px] font-bold text-[#eff5df]">Roadmap</span>
-                    <span className="font-sans text-[12px] text-[#eff5df]/80 font-medium">Phase 1 of 4 in progress</span>
+                    <span className="font-heading text-[15px] font-bold text-slate-900 group-hover:text-[#173809] transition-colors">Roadmap</span>
+                    <span className="font-sans text-[12px] text-slate-500 font-medium">Phase 1 of 4 in progress</span>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-[#eff5df]/50 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#1E6702] group-hover:translate-x-1 transition-all" />
               </Link>
             </div>
           </div>
+                
 
         </div>
       </div>

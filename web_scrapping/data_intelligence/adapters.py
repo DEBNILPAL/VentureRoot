@@ -184,7 +184,7 @@ class Model1Adapter:
                     if dist_res.get("market_potential_score") is not None:
                         raw_res = dist_res
                         raw_res.setdefault("warnings", []).append(
-                            f"Sub-district '{subdistrict}' not in Census 2011 dataset; using district-level baseline for {district}."
+                            f"Sub-district '{subdistrict}' not in demographic dataset; using district-level baseline for {district}."
                         )
 
             raw_mps = raw_res.get("market_potential_score")

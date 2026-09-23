@@ -11,7 +11,7 @@ function getFinanceEngineUrl() {
   return url.trim().replace(/\/+$/, "");
 }
 
-const FINANCE_TIMEOUT_MS = Number(process.env.FINANCE_TIMEOUT_MS) || 45000;
+const FINANCE_TIMEOUT_MS = Number(process.env.FINANCE_TIMEOUT_MS) || 2500;
 
 /**
  * Fetch wrapper with AbortController timeout
