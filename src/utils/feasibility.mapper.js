@@ -1492,7 +1492,7 @@ function mapPricing(m1, m2, m3, business) {
 /**
  * Map Model 1 & Model 2 signals → BusinessLocationFit
  */
-function mapBusinessLocationFit(m1, m2, businessCategory, location, business) {
+function mapBusinessLocationFit(m1, m2, businessCategory, location, business, competition = null, competitorRadar = null) {
   const cat = m2?.selected_category_analysis;
   const score = Math.round(
     cat?.opportunity_score ??
@@ -1513,8 +1513,10 @@ function mapBusinessLocationFit(m1, m2, businessCategory, location, business) {
   const isDairy = catLower.includes("dairy") || catLower.includes("milk") || catLower.includes("chilling");
 
   const compScore = cat?.competition_score ?? 50;
-  const compCount = cat?.observed_competitor_count ?? 4;
-  const isHighComp = compScore >= 65 || compCount >= 8;
+  const radarTotal = competitorRadar?.total ?? ((competitorRadar?.within10km?.length || 0) + (competitorRadar?.within20km?.length || 0));
+  const modelCompCount = competition?.competitors?.length || 0;
+  const compCount = radarTotal > 0 ? radarTotal : (modelCompCount > 0 ? modelCompCount : (cat?.observed_competitor_count ?? 0));
+  const isHighComp = compScore >= 65 || compCount >= 5;
 
   let status = "GOOD_FIT";
   let statusLabel = "Good Fit";
@@ -1560,8 +1562,8 @@ function mapBusinessLocationFit(m1, m2, businessCategory, location, business) {
 
     // Strictly align explanation with actual competition data to prevent contradiction
     if (isHighComp) {
-      explanation = `High competitor concentration in ${locStr} makes customer acquisition costly and may pressure profit margins.`;
-      supportingFactors = ["⚠ High Competition", "⚠ Pricing Pressure", "⚠ Crowded Local Market"];
+      explanation = `High competitor concentration (${compCount} active commercial competitors in 20km trade zone) combined with limited discretionary spending in ${locStr} makes customer acquisition challenging and pressures margins.`;
+      supportingFactors = [`⚠ ${compCount} Active Competitors`, "⚠ Pricing Pressure", "⚠ Crowded Trade Zone"];
     } else {
       explanation = `Relatively low local consumer demand and limited purchasing power for ${businessCategory} in ${locStr} may make profitability challenging.`;
       if (cat?.risk_factors?.length) {
@@ -1582,10 +1584,9 @@ function mapBusinessLocationFit(m1, m2, businessCategory, location, business) {
     if (topAlt && topAlt.category) {
       const altScore = Math.round(topAlt.opportunity_score ?? 80);
       const altRank = topAlt.rank || 1;
-      const altPos = topAlt.positive_factors?.[0] || "higher local demand and favorable market density";
       alternativeSuggestion = {
         category: topAlt.category,
-        reason: `Ranks #${altRank} in ${locStr} (${altScore}/100 viability) with ${altPos.toLowerCase()}.`,
+        reason: `Ranks #${altRank} in ${locStr} (${altScore}/100 viability) with lower competitive crowding and stronger essential commodity absorption.`,
       };
     } else {
       alternativeSuggestion = {
@@ -1611,21 +1612,24 @@ function mapBusinessLocationFit(m1, m2, businessCategory, location, business) {
  *
  * @param {{ model1, model2, model3, census, location, businessCategory }} mlResult
  * @param {object} business Business record from DB
+ * @param {object} [competitorRadar] Real-time / resolved competitor radar
  * @returns {import("@/features/feasibility/types").FeasibilityData}
  */
-export function mapMlPredictionToFeasibility(mlResult, business) {
+export function mapMlPredictionToFeasibility(mlResult, business, competitorRadar = null) {
   const { model1: m1, model2: m2, model3: m3, census } = mlResult || {};
   const businessCategory = mlResult?.businessCategory || business?.category?.name || business?.category || "Retail";
   const loc = mlResult?.location || business?.location;
+
+  const competition = mapCompetition(m2, businessCategory, business);
 
   return {
     status: "SUCCESS",
     market: mapMarket(m1, census, businessCategory, loc, business),
     opportunity: mapOpportunity(m1, m2, businessCategory),
-    competition: mapCompetition(m2, businessCategory, business),
+    competition,
     swot: mapSWOT(m1, m2, businessCategory),
     risks: mapRisks(m1, m2, businessCategory, business),
     pricing: mapPricing(m1, m2, m3, business),
-    businessLocationFit: mapBusinessLocationFit(m1, m2, businessCategory, loc, business),
+    businessLocationFit: mapBusinessLocationFit(m1, m2, businessCategory, loc, business, competition, competitorRadar),
   };
 }

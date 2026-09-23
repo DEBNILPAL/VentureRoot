@@ -22,8 +22,8 @@ import { resolveCoordinatesForLocation } from "@/services/location-search.servic
 // In-memory cache for fast sub-millisecond retrieval
 const feasibilityMemoryCache = new Map();
 
-// Persistent on-disk directory for enterprise predictability
-const PERSISTENCE_DIR = path.resolve(process.cwd(), "src/data/persisted_feasibility");
+// Persistent runtime cache directory outside of src (git-ignored)
+const PERSISTENCE_DIR = path.resolve(process.cwd(), ".cache/persisted_feasibility");
 
 function ensurePersistenceDir() {
   if (!fs.existsSync(PERSISTENCE_DIR)) {
@@ -119,10 +119,13 @@ export async function getFeasibilityContext({
   let mlStatus = mlResult ? "SUCCESS" : "ML_ERROR";
   let mlError = mlSettled.status === "rejected" ? (mlSettled.reason?.message || "ML pipeline offline") : null;
 
-  // 3. If live ML models produced a result, use it directly (top priority)
+  // 3. Resolve competitor radar (fetched in parallel with ML models)
+  const competitorRadar = radarSettled.status === "fulfilled" ? radarSettled.value : null;
+
+  // 4. If live ML models produced a result, use it directly (top priority)
   let feasibilityData = null;
   if (mlResult) {
-    feasibilityData = mapMlPredictionToFeasibility(mlResult, data.business);
+    feasibilityData = mapMlPredictionToFeasibility(mlResult, data.business, competitorRadar);
   } else {
     // If ML is offline, check if we previously stored a verified prediction for this venture
     const existingPersisted = getPersistedFeasibility(businessId);
@@ -140,15 +143,36 @@ export async function getFeasibilityContext({
           location: data.business?.location,
           businessCategory: category,
         },
-        data.business
+        data.business,
+        competitorRadar
       );
     }
   }
 
-  // 4. Attach Competitor Radar
-  const competitorRadar = radarSettled.status === "fulfilled" ? radarSettled.value : null;
-  if (competitorRadar && feasibilityData) {
-    feasibilityData.competitorRadar = competitorRadar;
+  // 5. Attach Competitor Radar and harmonize Location Fit
+  const activeRadar = competitorRadar || feasibilityData?.competitorRadar;
+  if (activeRadar && feasibilityData) {
+    feasibilityData.competitorRadar = activeRadar;
+
+    // Harmonize BusinessLocationFit with active radar counts to guarantee zero contradiction
+    if (feasibilityData.businessLocationFit) {
+      const radarCount = (activeRadar.within10km?.length || 0) + (activeRadar.within20km?.length || 0);
+      if (radarCount >= 5 && feasibilityData.businessLocationFit.status === "POOR_FIT") {
+        feasibilityData.businessLocationFit.explanation = `High competitor concentration (${radarCount} active commercial competitors in 20km trade zone) combined with limited discretionary spending in ${district} makes customer acquisition challenging and pressures margins.`;
+        feasibilityData.businessLocationFit.supportingFactors = [
+          `⚠ ${radarCount} Active Competitors`,
+          "⚠ Market Saturation",
+          "⚠ Pricing Pressure",
+        ];
+        if (feasibilityData.businessLocationFit.alternativeSuggestion?.reason) {
+          feasibilityData.businessLocationFit.alternativeSuggestion.reason =
+            feasibilityData.businessLocationFit.alternativeSuggestion.reason.replace(
+              /with moderate to low existing competition density in area\.?/i,
+              "with lower competitive crowding and stronger essential commodity absorption."
+            );
+        }
+      }
+    }
   }
 
   // 5. Attach Finance Calculation

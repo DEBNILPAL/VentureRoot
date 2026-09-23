@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Crosshair,
   Target,
+  AlertCircle,
   Layers,
   Users,
 } from "lucide-react";
@@ -72,6 +73,22 @@ export function YourOpportunityCard({
     opportunity?.observations?.[0] ||
     null;
 
+  // Dynamic assessment of opportunity vs competitive risk
+  const rankMatch = summaryText?.match(/ranks #(\d+)/i);
+  const scoreMatch =
+    summaryText?.match(/score of ([\d.]+)\/100/i) ||
+    summaryText?.match(/([\d.]+)%?\s*\/\s*100/);
+  const parsedScore = scoreMatch ? parseFloat(scoreMatch[1]) : null;
+  const parsedRank = rankMatch ? parseInt(rankMatch[1], 10) : null;
+
+  // Low opportunity threshold: score < 50 or bottom rank (> 5)
+  const isLowOpportunity =
+    (parsedScore !== null && parsedScore < 50) ||
+    (parsedRank !== null && parsedRank > 5);
+
+  const cardTitle = isLowOpportunity ? "Competitive Assessment" : "Your Opportunity";
+  const CardIcon = isLowOpportunity ? Target : Crosshair;
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-2xl border border-emerald-100/50 p-5 sm:p-6 animate-pulse h-full flex flex-col gap-3">
@@ -100,14 +117,30 @@ export function YourOpportunityCard({
         {/* Card Title & Zone Badge */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#1E6702] border border-emerald-200/60 flex items-center justify-center shrink-0">
-              <Crosshair className="w-4 h-4" />
+            <div
+              className={`w-8 h-8 rounded-xl ${
+                isLowOpportunity
+                  ? "bg-amber-50 text-amber-800 border-amber-200/80"
+                  : "bg-emerald-50 text-[#1E6702] border-emerald-200/60"
+              } border flex items-center justify-center shrink-0`}
+            >
+              <CardIcon className="w-4 h-4" />
             </div>
-            <h3 className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight">
-              Your Opportunity
+            <h3
+              className={`font-heading text-lg sm:text-xl font-bold ${
+                isLowOpportunity ? "text-slate-900" : "text-[#173809]"
+              } tracking-tight`}
+            >
+              {cardTitle}
             </h3>
           </div>
-          <span className="font-sans text-[10.5px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60 tracking-wider">
+          <span
+            className={`font-sans text-[10.5px] font-bold ${
+              isLowOpportunity
+                ? "text-amber-900 bg-amber-50 border-amber-200/80"
+                : "text-emerald-800 bg-emerald-50 border-emerald-200/60"
+            } px-2.5 py-0.5 rounded-full border tracking-wider`}
+          >
             {allCompetitors.length} Total Verified
           </span>
         </div>
@@ -124,12 +157,28 @@ export function YourOpportunityCard({
         )}
 
         {/* Catchment Competitors — 100% Synced Single-Source with Feasibility Page */}
-        <div className="flex flex-col gap-2.5 bg-[#F0FDF4] rounded-xl p-3.5 sm:p-4 border border-emerald-100/60">
+        <div
+          className={`flex flex-col gap-2.5 ${
+            isLowOpportunity
+              ? "bg-slate-50/80 border-slate-200/80"
+              : "bg-[#F0FDF4] border-emerald-100/60"
+          } rounded-xl p-3.5 sm:p-4 border`}
+        >
           <div className="flex items-center justify-between mb-0.5">
-            <span className="text-[12.5px] font-bold text-[#173809]">
+            <span
+              className={`text-[12.5px] font-bold ${
+                isLowOpportunity ? "text-slate-900" : "text-[#173809]"
+              }`}
+            >
               Nearby Competitors
             </span>
-            <span className="text-[11px] font-semibold text-emerald-800 bg-white px-2 py-0.5 rounded-md border border-emerald-200/70 shadow-2xs">
+            <span
+              className={`text-[11px] font-semibold ${
+                isLowOpportunity
+                  ? "text-slate-700 border-slate-200"
+                  : "text-emerald-800 border-emerald-200/70"
+              } bg-white px-2 py-0.5 rounded-md border shadow-2xs`}
+            >
               {allCompetitors.length} Total Verified
             </span>
           </div>
@@ -137,18 +186,40 @@ export function YourOpportunityCard({
           {/* Symmetrical Catchment Zone Cards */}
           <div className="grid grid-cols-2 gap-2.5 text-xs">
             {/* 10 km Primary Catchment */}
-            <div className="p-3 bg-white rounded-xl border border-emerald-200/70 flex flex-col gap-1 shadow-2xs">
+            <div
+              className={`p-3 bg-white rounded-xl border ${
+                isLowOpportunity ? "border-amber-200/70" : "border-emerald-200/70"
+              } flex flex-col gap-1 shadow-2xs`}
+            >
               <div className="flex items-center justify-between">
-                <span className="text-[10.5px] font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                <span
+                  className={`text-[10.5px] font-bold uppercase tracking-wider ${
+                    isLowOpportunity ? "text-amber-800" : "text-emerald-800"
+                  } flex items-center gap-1.5`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      isLowOpportunity ? "bg-amber-500" : "bg-emerald-500"
+                    } shrink-0`}
+                  />
                   10 km Catchment
                 </span>
               </div>
               <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-2xl font-black text-emerald-950 tabular-nums">
+                <span
+                  className={`text-2xl font-black ${
+                    isLowOpportunity ? "text-slate-900" : "text-emerald-950"
+                  } tabular-nums`}
+                >
                   {raw10km.length}
                 </span>
-                <span className="text-[11.5px] font-semibold text-emerald-700">competitors</span>
+                <span
+                  className={`text-[11.5px] font-semibold ${
+                    isLowOpportunity ? "text-slate-600" : "text-emerald-700"
+                  }`}
+                >
+                  competitors
+                </span>
               </div>
               <span className="text-[10.5px] text-slate-500 font-medium">Core service radius</span>
             </div>
@@ -172,7 +243,11 @@ export function YourOpportunityCard({
           </div>
 
           {/* Quick Sub-Stats Sync Badges — Exact same counts as Feasibility page pills */}
-          <div className="grid grid-cols-4 gap-1 pt-1.5 border-t border-emerald-200/50 text-[10.5px] text-slate-600 font-medium text-center">
+          <div
+            className={`grid grid-cols-4 gap-1 pt-1.5 border-t ${
+              isLowOpportunity ? "border-slate-200/60" : "border-emerald-200/50"
+            } text-[10.5px] text-slate-600 font-medium text-center`}
+          >
             <span className="bg-white/90 py-1 px-1 rounded border border-sky-200 text-sky-800 font-bold truncate">
               🏛️ {totalGovt} Govt
             </span>
@@ -188,15 +263,23 @@ export function YourOpportunityCard({
           </div>
         </div>
 
-        {/* Demand Signal */}
-        {localDemandInsight && (
+        {/* Demand / Risk Signal */}
+        {isLowOpportunity ? (
+          <div className="flex items-start gap-2 bg-amber-50/80 px-3 py-2 rounded-xl border border-amber-200/80">
+            <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
+            <p className="text-[11.5px] text-amber-950 font-medium leading-snug">
+              {opportunity?.demandOpportunity ? `${opportunity.demandOpportunity} — ` : ""}
+              {allCompetitors.length} active competitors in catchment zone require strong differentiation.
+            </p>
+          </div>
+        ) : localDemandInsight ? (
           <div className="flex items-start gap-2 bg-emerald-50/60 px-3 py-2 rounded-xl border border-emerald-100/60">
             <TrendingUp className="w-3.5 h-3.5 text-[#1E6702] shrink-0 mt-0.5" />
             <p className="text-[11.5px] text-emerald-950 font-medium leading-snug">
               {localDemandInsight}
             </p>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Primary CTA */}
