@@ -21,7 +21,33 @@ export async function POST(request) {
       .trim()
       .slice(0, 4000); // Safety limit for single speech generation
 
-    // 1. Check for ElevenLabs API Key
+    // 1. If language is not English, ensure spoken text is translated into the target regional language
+    const normLang = (language || "en").toLowerCase().slice(0, 2);
+    let textToSynthesize = sanitizedText;
+
+    if (normLang !== "en") {
+      const latinChars = (sanitizedText.match(/[a-zA-Z]/g) || []).length;
+      // If the text contains substantial English/Latin words, translate it to native script
+      if (latinChars > 8) {
+        try {
+          const trUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${normLang}&dt=t&q=${encodeURIComponent(sanitizedText.slice(0, 1500))}`;
+          const trRes = await fetch(trUrl, {
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+          });
+          if (trRes.ok) {
+            const trData = await trRes.json();
+            const translated = trData?.[0]?.map((item) => item[0]).join("")?.trim();
+            if (translated && translated.length > 2) {
+              textToSynthesize = translated;
+            }
+          }
+        } catch (trErr) {
+          console.warn("[voice/tts] Translation before TTS failed:", trErr.message);
+        }
+      }
+    }
+
+    // 2. Check for ElevenLabs API Key
     const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
     let targetVoiceId = voiceId || process.env.ELEVENLABS_VOICE_ID || "EXAVITQu4vr4xnSDxMaL"; // Sarah (premade voice compatible with free tier)
     if (targetVoiceId === "21m00Tcm4TlvDq8ikWAM") {
@@ -39,7 +65,7 @@ export async function POST(request) {
               "xi-api-key": elevenLabsKey.trim(),
             },
             body: JSON.stringify({
-              text: sanitizedText,
+              text: textToSynthesize,
               model_id: "eleven_multilingual_v2", // Multilingual v2 supports Hindi, Bengali, Tamil, etc.
               voice_settings: {
                 stability: 0.5,
@@ -63,7 +89,7 @@ export async function POST(request) {
                 "xi-api-key": elevenLabsKey.trim(),
               },
               body: JSON.stringify({
-                text: sanitizedText,
+                text: textToSynthesize,
                 model_id: "eleven_multilingual_v2",
                 voice_settings: {
                   stability: 0.5,
@@ -94,7 +120,7 @@ export async function POST(request) {
       }
     }
 
-    // 2. Check for OpenAI API Key (TTS-1)
+    // 3. Check for OpenAI API Key (TTS-1)
     const openAiKey = process.env.OPENAI_API_KEY;
     if (openAiKey && openAiKey.trim().length > 5) {
       try {
@@ -106,7 +132,7 @@ export async function POST(request) {
           },
           body: JSON.stringify({
             model: "tts-1",
-            input: sanitizedText,
+            input: textToSynthesize,
             voice: "alloy",
           }),
         });
@@ -129,12 +155,56 @@ export async function POST(request) {
       }
     }
 
-    // 3. Fallback: Instruct client to invoke browser Web Speech API (window.speechSynthesis)
+    // 4. Free High-Fidelity Regional Speech Audio Stream (Google Multilingual TTS)
+    // Supports Bengali (bn), Hindi (hi), Tamil (ta), Telugu (te), Marathi (mr), Punjabi (pa), English (en)
+    try {
+      const segments = textToSynthesize.match(/[^.!?।\n]+[.!?।\n]?/g) || [textToSynthesize];
+      const audioBuffers = [];
+
+      for (const seg of segments.slice(0, 10)) {
+        const q = seg.trim();
+        if (!q) continue;
+
+        // Split into chunks under 180 chars to adhere to Google TTS limits
+        const subSegments = q.length > 180 ? (q.match(/.{1,180}(\s|$)/g) || [q]) : [q];
+        for (const sub of subSegments) {
+          const cleanSub = sub.trim();
+          if (!cleanSub) continue;
+
+          const gttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanSub)}&tl=${normLang}&client=tw-ob`;
+          const gttsRes = await fetch(gttsUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            },
+          });
+
+          if (gttsRes.ok) {
+            const buf = await gttsRes.arrayBuffer();
+            audioBuffers.push(Buffer.from(buf));
+          }
+        }
+      }
+
+      if (audioBuffers.length > 0) {
+        const combined = Buffer.concat(audioBuffers);
+        return new NextResponse(combined, {
+          status: 200,
+          headers: {
+            "Content-Type": "audio/mpeg",
+            "Cache-Control": "public, max-age=3600",
+          },
+        });
+      }
+    } catch (gttsErr) {
+      console.warn("[voice/tts] Google native regional TTS failed, falling back to browser SpeechSynthesis:", gttsErr.message);
+    }
+
+    // 5. Fallback: Instruct client to invoke browser Web Speech API (window.speechSynthesis)
     return NextResponse.json({
       fallback: "browser_tts",
-      sanitizedText,
-      language,
-      message: "No cloud TTS key configured; fallback to browser native multilingual speech synthesis",
+      sanitizedText: textToSynthesize,
+      language: normLang,
+      message: "Fallback to browser native multilingual speech synthesis",
     });
   } catch (error) {
     console.error("[voice/tts] Internal error:", error);

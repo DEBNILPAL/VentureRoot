@@ -13,18 +13,31 @@ interface ChatWindowProps {
   initialQuery?: string;
 }
 
+const REGIONAL_CODE_MAP: Record<string, string> = {
+  bn: "bn-IN",
+  hi: "hi-IN",
+  ta: "ta-IN",
+  te: "te-IN",
+  mr: "mr-IN",
+  pa: "pa-IN",
+  en: "en-IN",
+};
+
 export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
   const { data: businesses } = useBusinessesComparison();
   const appLanguage = useUIStore((s) => s.language);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>("");
-  const [selectedLanguage, setSelectedLanguage] = useState<string>(appLanguage || "auto");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(
+    appLanguage ? (REGIONAL_CODE_MAP[appLanguage] || appLanguage) : "auto"
+  );
 
   // Keep selected language in sync with global switcher
   useEffect(() => {
     if (appLanguage) {
-      setSelectedLanguage(appLanguage);
+      setSelectedLanguage(REGIONAL_CODE_MAP[appLanguage] || appLanguage);
     }
   }, [appLanguage]);
+
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -192,19 +205,24 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
     stopAudioPlayback();
     setAudioLoadingIndex(index);
 
+    const activeLang =
+      selectedLanguage !== "auto"
+        ? selectedLanguage
+        : (REGIONAL_CODE_MAP[appLanguage] || "en-IN");
+
     try {
       const response = await fetch("/api/v1/voice/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           text: content,
-          language: selectedLanguage !== "auto" ? selectedLanguage : "hi-IN",
+          language: activeLang,
         }),
       });
 
       const contentType = response.headers.get("content-type");
 
-      // Cloud TTS audio stream returned (ElevenLabs / OpenAI)
+      // Cloud TTS audio stream returned (ElevenLabs / OpenAI / Google Regional Stream)
       if (contentType && contentType.includes("audio")) {
         const audioBlob = await response.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
@@ -234,13 +252,11 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
         const textToSpeak = data.sanitizedText || content.replace(/[*_#`]/g, " ");
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
 
-        const targetLang = selectedLanguage !== "auto" ? selectedLanguage : "hi-IN";
-        utterance.lang = targetLang;
+        utterance.lang = activeLang;
 
-        // Try to pick a voice matching the language
         const voices = window.speechSynthesis.getVoices();
-        const prefix = targetLang.split("-")[0];
-        const matchingVoice = voices.find((v) => v.lang.startsWith(prefix));
+        const prefix = activeLang.split("-")[0];
+        const matchingVoice = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith(prefix));
         if (matchingVoice) {
           utterance.voice = matchingVoice;
         }
@@ -524,7 +540,11 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
       <div className="p-3 sm:p-4 border-t border-slate-200 bg-white w-full min-w-0">
         {showVoiceRecorder ? (
           <VoiceRecorder
-            defaultLanguage={selectedLanguage !== "auto" ? selectedLanguage : "hi-IN"}
+            defaultLanguage={
+              selectedLanguage !== "auto"
+                ? selectedLanguage
+                : (REGIONAL_CODE_MAP[appLanguage] || "bn-IN")
+            }
             onTranscriptConfirm={(transcript, lang) => {
               setShowVoiceRecorder(false);
               sendQuery(transcript, lang);

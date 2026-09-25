@@ -40,11 +40,16 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   const currentLang = SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
 
   const handleSelect = (code: Language) => {
+    if (code === language) {
+      setIsOpen(false);
+      return;
+    }
+
     setLanguage(code);
     setIsOpen(false);
 
     if (typeof window !== "undefined") {
-      // Store user preference in clean, standards-compliant cookie
+      // Store user preference in clean, standards-compliant cookie across ALL pages
       document.cookie = `ventureroot_locale=${code}; path=/; max-age=31536000; SameSite=Lax`;
       document.documentElement.lang = code;
 
@@ -62,7 +67,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         }
       }
 
-      // If Google Translate combo is loaded in DOM, synchronize it quietly and dispatch change
+      // If Google Translate combo is loaded in DOM, synchronize it quietly
       const combo = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
       if (combo) {
         combo.value = code;
@@ -70,6 +75,9 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
           combo.dispatchEvent(new Event("change"));
         } catch (_) {}
       }
+
+      // Automatically reload page so all dynamic texts, charts, and content render in the selected language site-wide
+      window.location.href = window.location.href;
     }
   };
 
