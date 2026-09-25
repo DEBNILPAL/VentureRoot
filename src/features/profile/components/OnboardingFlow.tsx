@@ -13,6 +13,7 @@ import { profileApi } from "../api/profileApi";
 
 import { useLocationSearch } from "@/lib/data/locations";
 import { StateAutocompleteInput } from "@/components/ui/StateAutocompleteInput";
+import { CascadingLocationFields } from "@/components/ui/CascadingLocationFields";
 
 const DynamicRadiusMap = dynamic(() => import("@/components/maps/RadiusMap"), {
   ssr: false,
@@ -314,50 +315,39 @@ export const OnboardingFlow = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <StateAutocompleteInput
-                  label={t("business.state") || "State"}
-                  required
-                  value={watch("location.state")}
-                  onChange={(val) => setValue("location.state", val, { shouldValidate: true })}
-                  error={errors.location?.state?.message}
-                  placeholder="Type state name (e.g. Maharashtra, Gujarat, Punjab)..."
-                  inputClassName="p-3.5 bg-gray-50/50"
-                />
-              </div>
+            <CascadingLocationFields
+              stateValue={watch("location.state")}
+              districtValue={watch("location.district")}
+              blockValue={watch("location.block")}
+              villageValue={watch("location.village")}
+              onStateChange={(val) => {
+                setValue("location.state", val, { shouldValidate: true });
+                setValue("location.district", "");
+                setValue("location.block", "");
+                setValue("location.village", "");
+              }}
+              onDistrictChange={(val) => {
+                setValue("location.district", val, { shouldValidate: true });
+                setValue("location.block", "");
+                setValue("location.village", "");
+              }}
+              onBlockChange={(val) => setValue("location.block", val, { shouldValidate: true })}
+              onVillageChange={(val) => setValue("location.village", val, { shouldValidate: true })}
+              onLocationResolved={(loc) => {
+                if (loc.lat && loc.lon) {
+                  setSelectedCoordinates([loc.lat, loc.lon]);
+                }
+                if (loc.formatted) {
+                  setAutoFilledBadge(loc.formatted);
+                }
+              }}
 
-              <div>
-                <label className="block font-sans text-[14px] font-medium text-[#200813]/80 mb-1.5">{t("business.district")} <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  {...register("location.district")}
-                  className="w-full rounded-xl bg-gray-50/50 border border-black/5 p-3.5 font-sans text-[14px] transition-all outline-none focus:ring-4 focus:ring-[#1E6702]/10 focus:border-[#1E6702] focus:bg-white text-[#200813] font-medium shadow-sm"
-                  placeholder="e.g. Pune"
-                />
-                {errors.location?.district && <p className="text-red-500 font-sans text-[12px] mt-1.5 font-medium">{errors.location.district.message}</p>}
-              </div>
+              stateError={errors.location?.state?.message}
+              districtError={errors.location?.district?.message}
+              blockError={errors.location?.block?.message}
+              villageError={errors.location?.village?.message}
+            />
 
-              <div>
-                <label className="block font-sans text-[14px] font-medium text-[#200813]/80 mb-1.5">{t("business.block")}</label>
-                <input
-                  type="text"
-                  {...register("location.block")}
-                  className="w-full rounded-xl bg-gray-50/50 border border-black/5 p-3.5 font-sans text-[14px] transition-all outline-none focus:ring-4 focus:ring-[#1E6702]/10 focus:border-[#1E6702] focus:bg-white text-[#200813] font-medium shadow-sm"
-                  placeholder={t("onboarding.optional") as string}
-                />
-              </div>
-
-              <div>
-                <label className="block font-sans text-[14px] font-medium text-[#200813]/80 mb-1.5">{t("business.village")}</label>
-                <input
-                  type="text"
-                  {...register("location.village")}
-                  className="w-full rounded-xl bg-gray-50/50 border border-black/5 p-3.5 font-sans text-[14px] transition-all outline-none focus:ring-4 focus:ring-[#1E6702]/10 focus:border-[#1E6702] focus:bg-white text-[#200813] font-medium shadow-sm"
-                  placeholder={t("onboarding.optional") as string}
-                />
-              </div>
-            </div>
           </div>
         )}
 

@@ -11,6 +11,7 @@ import { businessApi } from "../api/businessApi";
 import dynamic from "next/dynamic";
 import { LocationAutocompleteInput, SelectedLocation } from "@/components/ui/LocationAutocompleteInput";
 import { StateAutocompleteInput } from "@/components/ui/StateAutocompleteInput";
+import { CascadingLocationFields } from "@/components/ui/CascadingLocationFields";
 import { resolveCoordinatesForLocation } from "@/services/location-search.service";
 import { getUserScopeKey } from "@/lib/data/businesses";
 import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
@@ -681,59 +682,39 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                       />
                     </div>
 
-                    {/* Manual / Verified Location Fields */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <StateAutocompleteInput
-                          label={t("business.wizard.state") || "State"}
-                          required
-                          value={formValues.state}
-                          onChange={(val) => setValue("state", val, { shouldValidate: true })}
-                          error={errors.state?.message}
-                          placeholder="Type state name (e.g. Maharashtra, Gujarat, Punjab)..."
-                          inputClassName="p-3.5"
-                        />
-                      </div>
+                    {/* Manual / Verified Cascading Location Fields */}
+                    <CascadingLocationFields
+                      stateValue={formValues.state}
+                      districtValue={formValues.district}
+                      blockValue={formValues.block}
+                      villageValue={formValues.village}
+                      onStateChange={(val) => {
+                        setValue("state", val, { shouldValidate: true });
+                        setValue("district", "");
+                        setValue("block", "");
+                        setValue("village", "");
+                      }}
+                      onDistrictChange={(val) => {
+                        setValue("district", val, { shouldValidate: true });
+                        setValue("block", "");
+                        setValue("village", "");
+                      }}
+                      onBlockChange={(val) => setValue("block", val, { shouldValidate: true })}
+                      onVillageChange={(val) => setValue("village", val, { shouldValidate: true })}
+                      onLocationResolved={(loc) => {
+                        if (loc.lat && loc.lon) {
+                          setMapCenter([loc.lat, loc.lon]);
+                        }
+                        if (loc.formatted) {
+                          setLocationLabel(loc.formatted);
+                        }
+                      }}
+                      stateError={errors.state?.message}
+                      districtError={errors.district?.message}
+                      blockError={errors.block?.message}
+                      villageError={errors.village?.message}
+                    />
 
-                      <div>
-                        <label className="block font-sans text-[14px] font-bold text-gray-800 mb-2">
-                          {t("business.wizard.district")} <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          {...register("district")}
-                          type="text"
-                          placeholder="e.g. Pune"
-                          className="w-full rounded-xl border border-gray-200 p-3.5 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium"
-                        />
-                        {errors.district && <p className="text-red-500 font-sans text-[12px] mt-1.5 font-medium">{errors.district.message}</p>}
-                      </div>
-
-                      <div>
-                        <label className="block font-sans text-[14px] font-bold text-gray-800 mb-2">
-                          {t("business.wizard.block")} / Taluka
-                        </label>
-                        <input
-                          {...register("block")}
-                          type="text"
-                          placeholder="e.g. Haveli"
-                          className="w-full rounded-xl border border-gray-200 p-3.5 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium"
-                        />
-                        {errors.block && <p className="text-red-500 font-sans text-[12px] mt-1.5 font-medium">{errors.block.message}</p>}
-                      </div>
-
-                      <div>
-                        <label className="block font-sans text-[14px] font-bold text-gray-800 mb-2">
-                          {t("business.wizard.village")} / Town
-                        </label>
-                        <input
-                          {...register("village")}
-                          type="text"
-                          placeholder="e.g. Wagholi"
-                          className="w-full rounded-xl border border-gray-200 p-3.5 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium"
-                        />
-                        {errors.village && <p className="text-red-500 font-sans text-[12px] mt-1.5 font-medium">{errors.village.message}</p>}
-                      </div>
-                    </div>
 
                     {/* OpenStreetMap Interactive Preview Pin */}
                     <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm">

@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  isValidIndianState,
+  validateDistrictForState,
+  validateLocalityText,
+} from "@/lib/data/indiaLocations";
 
 export const profileSchema = z.object({
   // Basic Profile
@@ -8,10 +13,46 @@ export const profileSchema = z.object({
 
   // Location
   location: z.object({
-    state: z.string().min(1, "State is required"),
+    state: z.string().min(1, "State is required").refine(
+      (val) => isValidIndianState(val),
+      { message: "Please select a valid Indian State or Union Territory" }
+    ),
     district: z.string().min(1, "District is required"),
     block: z.string().optional().or(z.literal("")),
     village: z.string().optional().or(z.literal("")),
+  }).superRefine((loc, ctx) => {
+    if (loc.state && loc.district) {
+      const distValidation = validateDistrictForState(loc.state, loc.district);
+      if (!distValidation.valid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            distValidation.errorMessage ||
+            `Invalid district "${loc.district}" for ${loc.state}`,
+          path: ["district"],
+        });
+      }
+    }
+    if (loc.block) {
+      const bCheck = validateLocalityText(loc.block, "Block / Taluka");
+      if (!bCheck.valid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: bCheck.errorMessage || "Invalid block name",
+          path: ["block"],
+        });
+      }
+    }
+    if (loc.village) {
+      const vCheck = validateLocalityText(loc.village, "Village / Town");
+      if (!vCheck.valid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: vCheck.errorMessage || "Invalid village name",
+          path: ["village"],
+        });
+      }
+    }
   }),
 
   // Financial Background

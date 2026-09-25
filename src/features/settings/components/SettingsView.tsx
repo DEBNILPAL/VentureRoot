@@ -28,6 +28,7 @@ import { useProfile } from "@/lib/data/users";
 import { profileApi } from "@/features/profile/api/profileApi";
 import { LocationAutocompleteInput, SelectedLocation } from "@/components/ui/LocationAutocompleteInput";
 import { StateAutocompleteInput } from "@/components/ui/StateAutocompleteInput";
+import { CascadingLocationFields } from "@/components/ui/CascadingLocationFields";
 
 type SettingsTab = "account" | "location" | "preferences" | "notifications" | "security";
 
@@ -402,39 +403,59 @@ export const SettingsView = () => {
                   </div>
                 </div>
 
-                {/* State & District Direct Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
-                  <StateAutocompleteInput
-                    label="State / Union Territory"
-                    value={baseLocation.state}
-                    onChange={(val) =>
+                {/* Verified Cascading Location Setup */}
+                <div className="pt-1">
+                  <CascadingLocationFields
+                    stateValue={baseLocation.state}
+                    districtValue={baseLocation.district}
+                    blockValue={baseLocation.block}
+                    villageValue={baseLocation.village}
+                    onStateChange={(val) => {
                       setBaseLocation((prev) => ({
                         ...prev,
                         state: val,
-                        label: `${prev.district || "Anand"}, ${val}`,
-                      }))
-                    }
-                    placeholder="Type state initials or name (e.g. Gujarat, Maharashtra)..."
+                        district: "",
+                        block: "",
+                        village: "",
+                        label: val,
+                      }));
+                    }}
+                    onDistrictChange={(val) => {
+                      setBaseLocation((prev) => ({
+                        ...prev,
+                        district: val,
+                        block: "",
+                        village: "",
+                        label: val ? `${val}, ${prev.state}` : prev.state,
+                      }));
+                    }}
+                    onBlockChange={(val) => {
+                      setBaseLocation((prev) => ({
+                        ...prev,
+                        block: val,
+                      }));
+                    }}
+                    onVillageChange={(val) => {
+                      setBaseLocation((prev) => ({
+                        ...prev,
+                        village: val,
+                      }));
+                    }}
+                    onLocationResolved={(loc) => {
+                      setBaseLocation((prev) => ({
+                        ...prev,
+                        state: loc.state,
+                        district: loc.district,
+                        block: loc.block,
+                        village: loc.village,
+                        lat: loc.lat ?? prev.lat,
+                        lon: loc.lon ?? prev.lon,
+                        label: loc.formatted || `${loc.district}, ${loc.state}`,
+                      }));
+                    }}
                   />
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                      District / Cluster
-                    </label>
-                    <input
-                      type="text"
-                      value={baseLocation.district}
-                      onChange={(e) =>
-                        setBaseLocation((prev) => ({
-                          ...prev,
-                          district: e.target.value,
-                          label: `${e.target.value}, ${prev.state}`,
-                        }))
-                      }
-                      placeholder="e.g. Anand, Pune, Nagpur"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#1E6702] focus:ring-2 focus:ring-[#1E6702]/10 shadow-xs"
-                    />
-                  </div>
                 </div>
+
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>

@@ -30,6 +30,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { profileApi } from "@/features/profile/api/profileApi";
 import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 import { StateAutocompleteInput } from "@/components/ui/StateAutocompleteInput";
+import { CascadingLocationFields } from "@/components/ui/CascadingLocationFields";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 
 // --- Framer Motion Variants matching dashboard style ---
@@ -644,56 +645,57 @@ export const ProfileView = () => {
         >
           <SectionHeading icon={MapPin} label="Base Location" iconClass="bg-orange-50 text-orange-600" />
           {isEditing ? (
-            <>
-              <div className="flex flex-col gap-1.5 w-full">
-                <label className={classes.profileLabel}>State / UT</label>
-                <StateAutocompleteInput
-                  value={currentProfile.location?.state || ""}
-                  onChange={(val) =>
-                    setProfile({
-                      ...currentProfile,
-                      location: { ...(currentProfile.location || {}), state: val },
-                    })
-                  }
-                  placeholder="Type state initials or name..."
-                  inputClassName="bg-white border-gray-900/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800"
-                />
-              </div>
-              <InputField
-                label="District"
-                value={currentProfile.location?.district || ""}
-                onChange={(v: any) =>
+            <div className="w-full">
+              <CascadingLocationFields
+                stateValue={currentProfile.location?.state || ""}
+                districtValue={currentProfile.location?.district || ""}
+                blockValue={currentProfile.location?.block || ""}
+                villageValue={currentProfile.location?.village || ""}
+                onStateChange={(val) =>
                   setProfile({
                     ...currentProfile,
-                    location: { ...(currentProfile.location || {}), district: v },
+                    location: {
+                      ...(currentProfile.location || {}),
+                      state: val,
+                      district: "",
+                      block: "",
+                      village: "",
+                    },
                   })
                 }
-                editable={true}
-              />
-              <InputField
-                label="Block / Taluka"
-                value={currentProfile.location?.block || ""}
-                onChange={(v: any) =>
+                onDistrictChange={(val) =>
                   setProfile({
                     ...currentProfile,
-                    location: { ...(currentProfile.location || {}), block: v },
+                    location: {
+                      ...(currentProfile.location || {}),
+                      district: val,
+                      block: "",
+                      village: "",
+                    },
                   })
                 }
-                editable={true}
-              />
-              <InputField
-                label="Village"
-                value={currentProfile.location?.village || ""}
-                onChange={(v: any) =>
+                onBlockChange={(val) =>
                   setProfile({
                     ...currentProfile,
-                    location: { ...(currentProfile.location || {}), village: v },
+                    location: {
+                      ...(currentProfile.location || {}),
+                      block: val,
+                    },
                   })
                 }
-                editable={true}
+                onVillageChange={(val) =>
+                  setProfile({
+                    ...currentProfile,
+                    location: {
+                      ...(currentProfile.location || {}),
+                      village: val,
+                    },
+                  })
+                }
               />
-            </>
+            </div>
           ) : (
+
             <>
               <InputField label="State" value={currentProfile.location?.state || "Gujarat"} editable={false} />
               <InputField label="District" value={currentProfile.location?.district || "Anand"} editable={false} />
