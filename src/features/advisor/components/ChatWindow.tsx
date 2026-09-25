@@ -7,6 +7,7 @@ import { ChatMessage, advisorApi } from "../api/advisorApi";
 import { VoiceRecorder, REGIONAL_LANGUAGES } from "@/features/voice/components/VoiceRecorder";
 import { useBusinessesComparison } from "@/lib/data/businesses";
 import { FormattedChatMessage } from "./FormattedChatMessage";
+import { useUIStore } from "@/stores/useUIStore";
 
 interface ChatWindowProps {
   initialQuery?: string;
@@ -14,8 +15,16 @@ interface ChatWindowProps {
 
 export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
   const { data: businesses } = useBusinessesComparison();
+  const appLanguage = useUIStore((s) => s.language);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>("");
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("auto");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(appLanguage || "auto");
+
+  // Keep selected language in sync with global switcher
+  useEffect(() => {
+    if (appLanguage) {
+      setSelectedLanguage(appLanguage);
+    }
+  }, [appLanguage]);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {

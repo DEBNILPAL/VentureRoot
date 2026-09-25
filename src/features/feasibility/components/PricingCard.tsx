@@ -4,6 +4,7 @@ import React from "react";
 import { IndianRupee, CheckCircle2, ArrowRight, TrendingUp, Globe, Sparkles, Scale } from "lucide-react";
 import { PricingAnalysis } from "../types";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 
 export const PricingCard = ({ data }: { data?: PricingAnalysis }) => {
   const { t } = useTranslation();
@@ -174,7 +175,7 @@ export const PricingCard = ({ data }: { data?: PricingAnalysis }) => {
             {data.pricingFactors.map((factor, idx) => (
               <li key={idx} className="flex items-start gap-2.5 font-sans text-[13.5px] text-gray-800 font-medium">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                <span>{factor}</span>
+                <DynamicText as="span" text={factor} />
               </li>
             ))}
           </ul>
@@ -191,7 +192,7 @@ export const PricingCard = ({ data }: { data?: PricingAnalysis }) => {
             {data.observations.map((obs, idx) => (
               <li key={idx} className="flex items-start gap-2 font-sans text-[13px] text-gray-700 font-medium">
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                <span className="leading-relaxed">{obs}</span>
+                <DynamicText as="span" className="leading-relaxed" text={obs} />
               </li>
             ))}
           </ul>

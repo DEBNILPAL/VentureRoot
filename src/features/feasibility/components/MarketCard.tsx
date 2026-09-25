@@ -4,6 +4,7 @@ import React from "react";
 import { Users, TrendingUp, Target, MapPin } from "lucide-react";
 import { MarketAnalysis } from "../types";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 import { LocationIntelligenceMap } from "@/features/location/components/LocationIntelligenceMap";
 
 export const MarketCard = ({
@@ -92,13 +93,13 @@ export const MarketCard = ({
         {/* Customer Segments */}
         <div>
           <div className="font-sans text-[16px] font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <Target className="w-5 h-5 text-vr-teal" /> Customer Segments
+            <Target className="w-5 h-5 text-vr-teal" /> {t("feasi.custSeg") || "Customer Segments"}
           </div>
           <ul className="flex flex-col gap-2.5">
             {(data.customerSegments || []).map((segment, idx) => (
               <li key={idx} className="flex items-start gap-2.5 font-sans text-[14px] text-gray-800 font-medium">
                 <span className="w-2 h-2 rounded-full bg-vr-teal mt-1.5 shrink-0" />
-                {segment}
+                <DynamicText as="span" text={segment} />
               </li>
             ))}
           </ul>
@@ -107,13 +108,13 @@ export const MarketCard = ({
         {/* Market Trends */}
         <div>
           <div className="font-sans text-[16px] font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-indigo-500" /> Market Trends
+            <TrendingUp className="w-5 h-5 text-indigo-500" /> {t("feasi.trends") || "Market Trends"}
           </div>
           <ul className="flex flex-col gap-2.5">
             {(data.marketTrends || []).map((trend, idx) => (
               <li key={idx} className="flex items-start gap-2.5 font-sans text-[14px] text-gray-800 font-medium">
                 <span className="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 shrink-0" />
-                {trend}
+                <DynamicText as="span" text={trend} />
               </li>
             ))}
           </ul>

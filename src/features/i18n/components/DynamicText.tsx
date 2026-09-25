@@ -5,7 +5,8 @@ import { useUIStore } from "@/stores/useUIStore";
 import { useDynamicTranslation } from "../services/translateService";
 
 interface DynamicTextProps {
-  text: string;
+  text?: string | number | null;
+  children?: React.ReactNode;
   as?: React.ElementType;
   className?: string;
   fallback?: React.ReactNode;
@@ -16,12 +17,17 @@ interface DynamicTextProps {
  */
 export const DynamicText: React.FC<DynamicTextProps> = ({
   text,
+  children,
   as: Component = "span",
   className = "",
   fallback,
 }) => {
   const language = useUIStore((s) => s.language);
-  const { translated, isLoading } = useDynamicTranslation(text, language);
+  const rawText = typeof text === "string" 
+    ? text 
+    : (typeof children === "string" ? children : (text != null ? String(text) : ""));
+  
+  const { translated, isLoading } = useDynamicTranslation(rawText, language);
 
   if (isLoading && fallback) {
     return <>{fallback}</>;
@@ -29,7 +35,8 @@ export const DynamicText: React.FC<DynamicTextProps> = ({
 
   return (
     <Component className={className}>
-      {translated}
+      {translated || rawText}
     </Component>
   );
 };
+

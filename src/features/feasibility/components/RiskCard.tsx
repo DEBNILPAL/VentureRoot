@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { RiskItem } from "../types";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 
 export const RiskCard = ({ data }: { data?: RiskItem[] }) => {
   const { t } = useTranslation();
@@ -388,7 +389,9 @@ const RiskItemComponent = ({ risk }: { risk: RiskItem }) => {
                 </span>
               )}
             </div>
-            <h4 className="font-sans text-[16px] font-bold text-gray-900 leading-snug">{risk.title}</h4>
+            <h4 className="font-sans text-[16px] font-bold text-gray-900 leading-snug">
+              <DynamicText text={risk.title} />
+            </h4>
           </div>
         </div>
 
@@ -404,13 +407,15 @@ const RiskItemComponent = ({ risk }: { risk: RiskItem }) => {
             <Zap className="w-3.5 h-3.5 text-amber-600" />
             {t("feasi.financialExposure") || "Financial Margin Exposure"}:
           </span>
-          <span className="font-black text-rose-700">{risk.financialExposure}</span>
+          <span className="font-black text-rose-700">
+            <DynamicText text={risk.financialExposure} />
+          </span>
         </div>
       )}
 
       {/* Analytical Diagnosis */}
       <p className="font-sans text-[13.5px] text-gray-800 font-medium leading-relaxed pl-2">
-        {risk.explanation}
+        <DynamicText text={risk.explanation} />
       </p>
 
       {/* Impact and Mitigation Advisory Panels */}
@@ -421,7 +426,7 @@ const RiskItemComponent = ({ risk }: { risk: RiskItem }) => {
               {t("feasi.impact") || "Potential Operational Impact"}
             </span>
             <p className="font-sans text-[12px] text-slate-800 font-medium leading-relaxed">
-              {risk.potentialImpact}
+              <DynamicText text={risk.potentialImpact} />
             </p>
           </div>
         )}
@@ -433,7 +438,7 @@ const RiskItemComponent = ({ risk }: { risk: RiskItem }) => {
               {t("feasi.mitigationPlaybook") || "Actionable Mitigation Playbook"}
             </span>
             <p className="font-sans text-[12px] text-emerald-950 font-medium leading-relaxed">
-              {risk.mitigationAdvisory}
+              <DynamicText text={risk.mitigationAdvisory} />
             </p>
           </div>
         )}

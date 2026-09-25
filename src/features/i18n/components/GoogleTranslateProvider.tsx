@@ -83,12 +83,17 @@ export const GoogleTranslateProvider = () => {
     document.documentElement.lang = lang;
 
     const hostname = window.location.hostname;
+    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
     if (lang === "en") {
       document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname};`;
+      if (!isLocalhost) {
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname};`;
+      }
     } else {
       document.cookie = `googtrans=/en/${lang}; path=/; max-age=31536000; SameSite=Lax;`;
-      document.cookie = `googtrans=/en/${lang}; path=/; domain=${hostname}; max-age=31536000; SameSite=Lax;`;
+      if (!isLocalhost) {
+        document.cookie = `googtrans=/en/${lang}; path=/; domain=${hostname}; max-age=31536000; SameSite=Lax;`;
+      }
     }
 
     // Check if the combo element is available in the DOM

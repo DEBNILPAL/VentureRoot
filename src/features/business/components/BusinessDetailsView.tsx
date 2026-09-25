@@ -17,6 +17,7 @@ import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 import { getDynamicBusinessResources } from "@/services/business-resources.service";
 import { calculateFinancialTrajectory } from "@/services/financial-trajectory.service";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 
 export interface BusinessDetails {
   id: string;
@@ -200,7 +201,7 @@ export const BusinessDetailsView = () => {
             </div>
           </div>
           <p className="font-sans text-[14px] text-slate-600 font-medium mt-0.5">
-            {business.description || "A small-scale commercial dairy farm focusing on high-yield buffalo milk production for local cooperative supply."}
+            <DynamicText text={business.description || "A small-scale commercial dairy farm focusing on high-yield buffalo milk production for local cooperative supply."} />
           </p>
         </div>
 
@@ -357,7 +358,7 @@ export const BusinessDetailsView = () => {
                       </div>
                       <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-2xs">
                         <p className="font-sans text-[13.5px] font-semibold text-slate-800 leading-relaxed whitespace-pre-wrap break-words">
-                          {business.resources.existingResources}
+                          <DynamicText text={business.resources.existingResources} />
                         </p>
                       </div>
                     </div>

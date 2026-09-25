@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import apiClient from "@/lib/api/client";
 import { computeFinancialPlan, autoSelectScheme } from "@/features/finance/schemeEngine";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 
 interface SupportAvailableCardProps {
   businessId?: string;
@@ -204,10 +205,10 @@ export function SupportAvailableCard({
       {schemeData ? (
         <div>
           <h4 className="text-sm font-bold text-slate-800 leading-snug">
-            {schemeData.name}
+            <DynamicText text={schemeData.name} />
           </h4>
           <p className="text-[13px] text-slate-500 leading-relaxed mt-1">
-            {schemeData.statusMsg || "A government loan matched to your business."}
+            <DynamicText text={schemeData.statusMsg || "A government loan matched to your business."} />
           </p>
         </div>
       ) : (

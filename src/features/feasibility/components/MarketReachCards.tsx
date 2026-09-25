@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Users, ArrowRight, Compass, MapPin, Target } from "lucide-react";
 import { MarketReachMetrics } from "../types";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 
 interface MarketReachCardsProps {
   data?: MarketReachMetrics | null;
@@ -215,7 +216,7 @@ export function MarketReachCards({
           {/* Plain-Language Explanation Capsule */}
           <div className="pt-2 mt-auto">
             <p className="text-xs text-slate-700 leading-relaxed font-normal bg-white/80 p-3 rounded-xl border border-rose-100/80 shadow-2xs">
-              {data.tam.explanation}
+              <DynamicText text={data.tam.explanation} />
             </p>
           </div>
         </motion.div>
@@ -268,7 +269,7 @@ export function MarketReachCards({
           {/* Plain-Language Explanation Capsule */}
           <div className="pt-2 mt-auto">
             <p className="text-xs text-slate-700 leading-relaxed font-normal bg-white/80 p-3 rounded-xl border border-blue-100/80 shadow-2xs">
-              {data.sam.explanation}
+              <DynamicText text={data.sam.explanation} />
             </p>
           </div>
         </motion.div>
@@ -321,7 +322,7 @@ export function MarketReachCards({
           {/* Plain-Language Explanation Capsule */}
           <div className="pt-2 mt-auto">
             <p className="text-xs text-slate-700 leading-relaxed font-normal bg-white/80 p-3 rounded-xl border border-emerald-100/80 shadow-2xs">
-              {data.som.explanation}
+              <DynamicText text={data.som.explanation} />
             </p>
           </div>
         </motion.div>

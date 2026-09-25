@@ -12,6 +12,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { BusinessLocationFit } from "../types";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 
 interface BusinessLocationFitPanelProps {
   data?: BusinessLocationFit | null;
@@ -112,7 +113,7 @@ export function BusinessLocationFitPanel({
       {/* Explanation */}
       {data.explanation && (
         <p className="text-[13px] sm:text-sm text-slate-600 leading-relaxed">
-          {data.explanation}
+          <DynamicText text={data.explanation} />
         </p>
       )}
 
@@ -131,7 +132,7 @@ export function BusinessLocationFitPanel({
                 key={idx}
                 className={`px-2.5 py-1 rounded-lg text-xs font-medium ${chipClass}`}
               >
-                {factor}
+                <DynamicText text={factor} />
               </span>
             );
           })}
@@ -142,7 +143,9 @@ export function BusinessLocationFitPanel({
       {data.warning && (
         <div className="flex items-start gap-2.5 bg-amber-50/50 px-3.5 py-2.5 rounded-xl text-xs text-amber-800 leading-relaxed">
           <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-          <span>{data.warning}</span>
+          <span>
+            <DynamicText text={data.warning} />
+          </span>
         </div>
       )}
 
@@ -151,9 +154,11 @@ export function BusinessLocationFitPanel({
           <Sparkles className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
           <span>
             <span className="font-semibold">Try: </span>
-            <span className="font-semibold">{data.alternativeSuggestion.category}</span>
+            <span className="font-semibold">
+              <DynamicText text={data.alternativeSuggestion.category} />
+            </span>
             {data.alternativeSuggestion.reason && (
-              <span> — {data.alternativeSuggestion.reason}</span>
+              <span> — <DynamicText text={data.alternativeSuggestion.reason} /></span>
             )}
           </span>
         </div>

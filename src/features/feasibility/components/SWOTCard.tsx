@@ -4,6 +4,7 @@ import React from "react";
 import { ListTree, ArrowUpRight, ArrowDownRight, Flame, ShieldCheck } from "lucide-react";
 import { SWOTAnalysis } from "../types";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 
 export const SWOTCard = ({ data }: { data?: SWOTAnalysis }) => {
   const { t } = useTranslation();
@@ -50,7 +51,7 @@ export const SWOTCard = ({ data }: { data?: SWOTAnalysis }) => {
               {data.strengths.map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2 font-sans text-[12px] font-medium text-slate-700">
                   <ArrowUpRight className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
-                  <span className="leading-snug">{item}</span>
+                  <DynamicText as="span" className="leading-snug" text={item} />
                 </li>
               ))}
             </ul>
@@ -65,7 +66,7 @@ export const SWOTCard = ({ data }: { data?: SWOTAnalysis }) => {
               {data.weaknesses.map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2 font-sans text-[12px] font-medium text-slate-700">
                   <ArrowDownRight className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                  <span className="leading-snug">{item}</span>
+                  <DynamicText as="span" className="leading-snug" text={item} />
                 </li>
               ))}
             </ul>
@@ -87,7 +88,7 @@ export const SWOTCard = ({ data }: { data?: SWOTAnalysis }) => {
               {data.opportunities.map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2 font-sans text-[12px] font-medium text-slate-700">
                   <ShieldCheck className="w-4 h-4 text-purple-600 mt-0.5 shrink-0" />
-                  <span className="leading-snug">{item}</span>
+                  <DynamicText as="span" className="leading-snug" text={item} />
                 </li>
               ))}
             </ul>
@@ -102,7 +103,7 @@ export const SWOTCard = ({ data }: { data?: SWOTAnalysis }) => {
               {data.threats.map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2 font-sans text-[12px] font-medium text-slate-700">
                   <Flame className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" />
-                  <span className="leading-snug">{item}</span>
+                  <DynamicText as="span" className="leading-snug" text={item} />
                 </li>
               ))}
             </ul>

@@ -49,12 +49,17 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       document.documentElement.lang = code;
 
       const hostname = window.location.hostname;
+      const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
       if (code === "en") {
         document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname};`;
+        if (!isLocalhost) {
+          document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${hostname};`;
+        }
       } else {
         document.cookie = `googtrans=/en/${code}; path=/; max-age=31536000; SameSite=Lax;`;
-        document.cookie = `googtrans=/en/${code}; path=/; domain=${hostname}; max-age=31536000; SameSite=Lax;`;
+        if (!isLocalhost) {
+          document.cookie = `googtrans=/en/${code}; path=/; domain=${hostname}; max-age=31536000; SameSite=Lax;`;
+        }
       }
 
       // If Google Translate combo is loaded in DOM, synchronize it quietly and dispatch change

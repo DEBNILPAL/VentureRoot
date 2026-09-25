@@ -4,6 +4,7 @@ import React from "react";
 import { Lightbulb, CheckCircle2 } from "lucide-react";
 import { OpportunityAnalysis } from "../types";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 
 export const OpportunityCard = ({ data }: { data?: OpportunityAnalysis }) => {
   const { t } = useTranslation();
@@ -26,7 +27,7 @@ export const OpportunityCard = ({ data }: { data?: OpportunityAnalysis }) => {
       {/* Summary */}
       {data.summary && (
         <p className="font-sans text-[14px] text-gray-800 font-medium leading-relaxed">
-          {data.summary}
+          <DynamicText text={data.summary} />
         </p>
       )}
 
@@ -34,10 +35,10 @@ export const OpportunityCard = ({ data }: { data?: OpportunityAnalysis }) => {
       {data.unmetNeed && (
         <div className="bg-amber-50 rounded-xl border border-amber-100 p-4">
           <h4 className="font-sans text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-2">
-            Unmet Need
+            {t("feasi.unmet") || "Unmet Need"}
           </h4>
           <p className="font-sans text-[14px] text-gray-800 font-medium">
-            {data.unmetNeed}
+            <DynamicText text={data.unmetNeed} />
           </p>
         </div>
       )}
@@ -46,13 +47,13 @@ export const OpportunityCard = ({ data }: { data?: OpportunityAnalysis }) => {
       {data.keyDrivers && data.keyDrivers.length > 0 && (
         <div className="flex flex-col gap-3">
           <h4 className="font-sans text-[12px] font-bold text-gray-900 uppercase tracking-wide">
-            Key Drivers
+            {t("feasi.drivers") || "Key Drivers"}
           </h4>
           <ul className="flex flex-col gap-2.5">
             {data.keyDrivers.map((driver, idx) => (
               <li key={idx} className="flex items-start gap-2.5 font-sans text-[14px] text-gray-800 font-medium">
                 <CheckCircle2 className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                <span className="leading-snug">{driver}</span>
+                <DynamicText as="span" className="leading-snug" text={driver} />
               </li>
             ))}
           </ul>
@@ -63,10 +64,10 @@ export const OpportunityCard = ({ data }: { data?: OpportunityAnalysis }) => {
       {data.localBusinessOpportunity && (
         <div className="bg-slate-50 rounded-xl border border-slate-100 p-4">
           <h4 className="font-sans text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
-            Local Business Opportunity
+            {t("business.compare.localOpp") || "Local Business Opportunity"}
           </h4>
           <p className="font-sans text-[14px] text-gray-800 font-medium leading-relaxed">
-            {data.localBusinessOpportunity}
+            <DynamicText text={data.localBusinessOpportunity} />
           </p>
         </div>
       )}

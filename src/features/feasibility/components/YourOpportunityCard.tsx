@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { OpportunityAnalysis, CompetitionAnalysis } from "../types";
 import { resolveCatchmentCompetitors } from "../utils/competitorResolver";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 
 interface YourOpportunityCardProps {
   opportunity?: OpportunityAnalysis | null;
@@ -268,7 +269,11 @@ export function YourOpportunityCard({
           <div className="flex items-start gap-2 bg-amber-50/80 px-3 py-2 rounded-xl border border-amber-200/80">
             <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
             <p className="text-[11.5px] text-amber-950 font-medium leading-snug">
-              {opportunity?.demandOpportunity ? `${opportunity.demandOpportunity} — ` : ""}
+              {opportunity?.demandOpportunity ? (
+                <>
+                  <DynamicText text={opportunity.demandOpportunity} /> —{" "}
+                </>
+              ) : ""}
               {allCompetitors.length} active competitors in catchment zone require strong differentiation.
             </p>
           </div>
@@ -276,7 +281,7 @@ export function YourOpportunityCard({
           <div className="flex items-start gap-2 bg-emerald-50/60 px-3 py-2 rounded-xl border border-emerald-100/60">
             <TrendingUp className="w-3.5 h-3.5 text-[#1E6702] shrink-0 mt-0.5" />
             <p className="text-[11.5px] text-emerald-950 font-medium leading-snug">
-              {localDemandInsight}
+              <DynamicText text={localDemandInsight} />
             </p>
           </div>
         ) : null}

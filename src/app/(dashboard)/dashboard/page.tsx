@@ -20,6 +20,7 @@ import { YourOpportunityCard } from "@/features/feasibility/components/YourOppor
 import { SupportAvailableCard } from "@/features/feasibility/components/SupportAvailableCard";
 import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 import { resolveCoordinatesForLocation } from "@/services/location-search.service";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 
 // --- Framer Motion Variants ---
 const EASE_OUT_EXPO = [0.22, 1, 0.36, 1] as [number, number, number, number];
@@ -149,16 +150,16 @@ export default function DashboardPage() {
                   </span>
                   <span className="text-slate-300">•</span>
                   <span className="text-xs font-semibold text-slate-700 bg-stone-100/80 border border-stone-200/60 px-2 py-0.5 rounded-md">
-                    {rawCategory}
+                    <DynamicText text={rawCategory} />
                   </span>
                 </div>
                 <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#173809] tracking-tight leading-tight">
-                  {businessName}
+                  <DynamicText text={businessName} />
                 </h1>
                 <div className="text-slate-600 text-xs sm:text-sm font-medium mt-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
                   <span className="inline-flex items-center gap-1 text-slate-700 font-semibold">
                     <MapPin className="w-3.5 h-3.5 text-[#1E6702] shrink-0" />
-                    {businessLocationStr}
+                    <DynamicText text={businessLocationStr} />
                   </span>
                 </div>
               </>
@@ -175,7 +176,7 @@ export default function DashboardPage() {
                 <div className="text-slate-600 text-xs sm:text-sm font-medium mt-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
                   <span className="inline-flex items-center gap-1 text-slate-700 font-semibold">
                     <MapPin className="w-3.5 h-3.5 text-[#1E6702] shrink-0" />
-                    {locationStr}
+                    <DynamicText text={locationStr} />
                   </span>
                   <span className="text-slate-300">•</span>
                   <span className="text-slate-500">

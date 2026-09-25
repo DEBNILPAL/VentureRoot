@@ -12,6 +12,7 @@ import { CompetitionAnalysis } from "../types";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 import { getAuthoritativeCensusDensity } from "@/utils/feasibility.mapper";
 import { resolveCatchmentCompetitors } from "../utils/competitorResolver";
+import { DynamicText } from "@/features/i18n/components/DynamicText";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -424,7 +425,7 @@ const TopRankedCompetitorCard = ({ comp }: { comp: Competitor }) => {
           <span>Why This Is a Major Competitor (Market Analysis)</span>
         </div>
         <p className="text-[12.5px] text-slate-700 font-medium leading-relaxed">
-          {comp.whyMajorCompetitor}
+          <DynamicText text={comp.whyMajorCompetitor} />
         </p>
       </div>
 
@@ -435,7 +436,7 @@ const TopRankedCompetitorCard = ({ comp }: { comp: Competitor }) => {
           <span>Recommended Strategic Playbook & Countermeasure</span>
         </div>
         <p className="text-[12.5px] text-emerald-950 font-medium leading-relaxed">
-          {comp.strategicCountermeasure}
+          <DynamicText text={comp.strategicCountermeasure} />
         </p>
       </div>
 
@@ -445,13 +446,17 @@ const TopRankedCompetitorCard = ({ comp }: { comp: Competitor }) => {
           {comp.strengths?.length ? (
             <div className="flex items-start gap-1.5 text-slate-600">
               <span className="font-bold text-slate-800 shrink-0">Key Strength:</span>
-              <span className="line-clamp-1 font-medium text-slate-600">{comp.strengths[0]}</span>
+              <span className="line-clamp-1 font-medium text-slate-600">
+                <DynamicText text={comp.strengths[0]} />
+              </span>
             </div>
           ) : null}
           {comp.weaknesses?.length ? (
             <div className="flex items-start gap-1.5 text-slate-600">
               <span className="font-bold text-slate-800 shrink-0">Vulnerability:</span>
-              <span className="line-clamp-1 font-medium text-slate-600">{comp.weaknesses[0]}</span>
+              <span className="line-clamp-1 font-medium text-slate-600">
+                <DynamicText text={comp.weaknesses[0]} />
+              </span>
             </div>
           ) : null}
         </div>
@@ -696,7 +701,7 @@ export const CompetitionCard = ({
       {/* ── Overview ── */}
       {data?.overview && (
         <p className="font-sans text-[14px] text-gray-800 font-medium leading-relaxed bg-slate-50/80 p-4 rounded-2xl border border-slate-100">
-          {data.overview}
+          <DynamicText text={data.overview} />
         </p>
       )}
 
