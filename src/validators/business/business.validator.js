@@ -24,7 +24,7 @@ const locationFieldsSchema = z.object({
 });
 
 
-export const createBusinessSchema = z
+export const baseBusinessSchema = z
   .object({
     categoryId: z
       .string()
@@ -65,21 +65,20 @@ export const createBusinessSchema = z
     longitude: z.coerce.number().nullish(),
     lat: z.coerce.number().nullish(),
     lon: z.coerce.number().nullish(),
-  })
-  .refine(
-    (data) => {
-      return !data.village || data.block;
-    },
-    {
-      message:
-        "Block is required when village is provided",
-      path: ["block"],
-    }
-  );
+  });
 
+export const createBusinessSchema = baseBusinessSchema.refine(
+  (data) => {
+    return !data.village || data.block;
+  },
+  {
+    message:
+      "Block is required when village is provided",
+    path: ["block"],
+  }
+);
 
-export const updateBusinessSchema =
-  createBusinessSchema;
+export const updateBusinessSchema = baseBusinessSchema.partial();
 
 
 export const businessIdSchema = z

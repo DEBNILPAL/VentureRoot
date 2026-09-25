@@ -2,19 +2,19 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { 
-  Sparkles, 
-  TrendingUp, 
-  Building2, 
-  MapPin, 
-  IndianRupee, 
-  ShieldCheck, 
-  Scale, 
-  Target, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Printer, 
-  Layers, 
+import {
+  Sparkles,
+  TrendingUp,
+  Building2,
+  MapPin,
+  IndianRupee,
+  ShieldCheck,
+  Scale,
+  Target,
+  AlertTriangle,
+  CheckCircle2,
+  Printer,
+  Layers,
   ArrowRight,
   RefreshCw,
   Info,
@@ -458,8 +458,8 @@ export default function AnalysisPage() {
   const isHealthcare = Boolean(
     category &&
     (category.toLowerCase().includes("health") ||
-     category.toLowerCase().includes("hospital") ||
-     category.toLowerCase().includes("clinic"))
+      category.toLowerCase().includes("hospital") ||
+      category.toLowerCase().includes("clinic"))
   );
 
   // Section 2: Location
@@ -546,7 +546,7 @@ export default function AnalysisPage() {
             }
           }
         }
-      } catch (_) {}
+      } catch (_) { }
     }, 500);
 
     return () => clearTimeout(timer);
@@ -675,8 +675,8 @@ export default function AnalysisPage() {
           Array.isArray(rawPos) && rawPos.length >= 2 && typeof rawPos[0] === "number" && typeof rawPos[1] === "number" && rawPos[0] !== 0
             ? [rawPos[0], rawPos[1]]
             : comp.lat && comp.lon && !isNaN(Number(comp.lat)) && !isNaN(Number(comp.lon))
-            ? [Number(comp.lat), Number(comp.lon)]
-            : [
+              ? [Number(comp.lat), Number(comp.lon)]
+              : [
                 centerCoords[0] + (idx % 2 === 0 ? 0.014 : -0.016) * (idx + 1),
                 centerCoords[1] + (idx % 2 === 0 ? 0.013 : -0.015) * (idx + 1),
               ];
@@ -693,12 +693,12 @@ export default function AnalysisPage() {
         const markerType = isGovt && isHospital
           ? "govt_hospital"
           : !isGovt && isHospital
-          ? "pvt_hospital"
-          : isGovt
-          ? "govt_sector"
-          : isIndirect
-          ? "indirect"
-          : "direct";
+            ? "pvt_hospital"
+            : isGovt
+              ? "govt_sector"
+              : isIndirect
+                ? "indirect"
+                : "direct";
 
         return {
           id: comp.id || `comp-${idx + 1}`,
@@ -1063,7 +1063,7 @@ export default function AnalysisPage() {
       <div className="bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.05),0_2px_4px_rgba(0,0,0,0.02)] relative overflow-hidden">
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/60 to-transparent pointer-events-none" />
         <form onSubmit={handleGenerateAnalysis} className="space-y-6 sm:space-y-8">
-          
+
           {/* SECTION 1: Target Project & Identity */}
           <div>
             <div className="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-slate-100">
@@ -1532,13 +1532,12 @@ export default function AnalysisPage() {
                 return (
                   <div
                     key={idx}
-                    className={`flex items-center gap-2.5 text-xs transition-colors duration-300 ${
-                      isDone
+                    className={`flex items-center gap-2.5 text-xs transition-colors duration-300 ${isDone
                         ? "text-emerald-800 font-semibold"
                         : isCurrent
-                        ? "text-[#1E6702] font-bold"
-                        : "text-slate-400"
-                    }`}
+                          ? "text-[#1E6702] font-bold"
+                          : "text-slate-400"
+                      }`}
                   >
                     {isDone ? (
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -1561,7 +1560,7 @@ export default function AnalysisPage() {
       {/* ========================================================================= */}
       {reportData && (
         <div id="analysis-report-section" className="space-y-8 animate-in fade-in duration-500">
-          
+
           {/* Executive Header Card */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
@@ -1678,11 +1677,10 @@ export default function AnalysisPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`py-3 px-4 text-left border-b-2 transition-all whitespace-nowrap ${
-                  activeTab === tab.id
+                className={`py-3 px-4 text-left border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id
                     ? "border-[#1E6702] text-[#1E6702] bg-white rounded-t-xl"
                     : "border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300"
-                }`}
+                  }`}
               >
                 <div>{tab.label}</div>
                 <div className="text-[10px] font-normal text-slate-400">{tab.desc}</div>
@@ -1820,15 +1818,14 @@ export default function AnalysisPage() {
                         key={id}
                         type="button"
                         onClick={() => setAnalysisCompFilter(id as any)}
-                        className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                          analysisCompFilter === id ? active : `bg-white ${inactive}`
-                        }`}
+                        className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${analysisCompFilter === id ? active : `bg-white ${inactive}`
+                          }`}
                       >
                         {label}
                       </button>
                     ))}
                   </div>
-              </div>
+                </div>
               </div>
 
               {/* ── Population reach & Competitor counts summary (10 km Catchment & 10–20 km District) ── */}
@@ -1895,11 +1892,10 @@ export default function AnalysisPage() {
                         key={r}
                         type="button"
                         onClick={() => setAnalysisCatchmentRadius(r)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                          analysisCatchmentRadius === r
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${analysisCatchmentRadius === r
                             ? "bg-[#1E6702] text-white shadow-xs"
                             : "text-slate-600 hover:text-slate-900 hover:bg-white"
-                        }`}
+                          }`}
                       >
                         {r} km
                       </button>
@@ -1918,6 +1914,18 @@ export default function AnalysisPage() {
                     showCatchmentCircles={true}
                     showLabels={true}
                     hideTopBadge={false}
+                    onReload={() => {
+                      const loc = resolveCoordinatesForLocation({
+                        state,
+                        district,
+                        subdistrict,
+                        village,
+                        address: locationLabel,
+                      });
+                      if (loc && !isNaN(loc.lat) && !isNaN(loc.lon)) {
+                        setCenterCoords([loc.lat, loc.lon]);
+                      }
+                    }}
                   />
                 </div>
 
@@ -1981,12 +1989,12 @@ export default function AnalysisPage() {
                         const listToRender = rawRankings.length > 0
                           ? rawRankings
                           : [
-                              { rank: 1, category: "Dairy Farming & Processing", score: 86, competition: "Moderate", status: "High Viability" },
-                              { rank: 2, category: "Food Processing & Milling", score: 82, competition: "Low", status: "High Viability" },
-                              { rank: 3, category: "Retail Kirana & Daily Needs", score: 79, competition: "High", status: "Moderate Viability" },
-                              { rank: 4, category: "Cold Storage & Warehousing", score: 75, competition: "Low", status: "Strong Potential" },
-                              { rank: 5, category: "Poultry Farming", score: 72, competition: "Moderate", status: "Moderate Viability" },
-                            ];
+                            { rank: 1, category: "Dairy Farming & Processing", score: 86, competition: "Moderate", status: "High Viability" },
+                            { rank: 2, category: "Food Processing & Milling", score: 82, competition: "Low", status: "High Viability" },
+                            { rank: 3, category: "Retail Kirana & Daily Needs", score: 79, competition: "High", status: "Moderate Viability" },
+                            { rank: 4, category: "Cold Storage & Warehousing", score: 75, competition: "Low", status: "Strong Potential" },
+                            { rank: 5, category: "Poultry Farming", score: 72, competition: "Moderate", status: "Moderate Viability" },
+                          ];
 
                         return listToRender.map((row: any, i: number) => {
                           const userCat = (category || reportData.business?.category || "").toLowerCase();
@@ -2020,13 +2028,12 @@ export default function AnalysisPage() {
                               </td>
                               <td className="py-2.5 px-4">{row.competition || "Moderate"}</td>
                               <td className="py-2.5 px-4">
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                                  scoreVal >= 75
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${scoreVal >= 75
                                     ? "bg-emerald-100 text-emerald-800"
                                     : scoreVal >= 60
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "bg-slate-100 text-slate-700"
-                                }`}>
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-slate-100 text-slate-700"
+                                  }`}>
                                   {row.status || (scoreVal >= 75 ? "High Viability" : "Moderate Viability")}
                                 </span>
                               </td>
@@ -2091,12 +2098,12 @@ export default function AnalysisPage() {
                                         </div>
                                         <h5 className="font-bold text-[13px] text-gray-900 leading-snug">{comp.name || comp.title}</h5>
                                         <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 flex-wrap">
-                                          <span>{comp.location || `${(comp.distanceKm || (idx+1)*1.2).toFixed(1)} km away`}</span>
+                                          <span>{comp.location || `${(comp.distanceKm || (idx + 1) * 1.2).toFixed(1)} km away`}</span>
                                           {comp.facilityType && <span className="px-1.5 py-0.5 bg-slate-100 rounded-full font-semibold">{comp.facilityType}</span>}
                                         </div>
                                       </div>
                                       <div className={`shrink-0 w-12 h-12 rounded-xl border-2 flex flex-col items-center justify-center ${isGovt ? "border-sky-200 bg-sky-50" : "border-purple-200 bg-purple-50"}`}>
-                                        <span className={`text-base font-black leading-none ${isGovt ? "text-sky-700" : "text-purple-700"}`}>{(comp.distanceKm || (idx+1)*1.2).toFixed(1)}</span>
+                                        <span className={`text-base font-black leading-none ${isGovt ? "text-sky-700" : "text-purple-700"}`}>{(comp.distanceKm || (idx + 1) * 1.2).toFixed(1)}</span>
                                         <span className="text-[8px] font-bold text-slate-500 uppercase">km</span>
                                       </div>
                                     </div>
@@ -2108,11 +2115,11 @@ export default function AnalysisPage() {
                                       <div className="grid grid-cols-2 gap-2 text-[11px]">
                                         <div>
                                           <span className="text-[9px] font-bold uppercase text-teal-700 block mb-1">Strengths</span>
-                                          <ul className="space-y-0.5 text-slate-600">{(comp.strengths || []).slice(0,2).map((s: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-teal-500">•</span>{s}</li>)}</ul>
+                                          <ul className="space-y-0.5 text-slate-600">{(comp.strengths || []).slice(0, 2).map((s: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-teal-500">•</span>{s}</li>)}</ul>
                                         </div>
                                         <div>
                                           <span className="text-[9px] font-bold uppercase text-red-600 block mb-1">Weaknesses</span>
-                                          <ul className="space-y-0.5 text-slate-600">{(comp.weaknesses || []).slice(0,2).map((w: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-red-400">•</span>{w}</li>)}</ul>
+                                          <ul className="space-y-0.5 text-slate-600">{(comp.weaknesses || []).slice(0, 2).map((w: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-red-400">•</span>{w}</li>)}</ul>
                                         </div>
                                       </div>
                                     ) : null}
@@ -2195,11 +2202,11 @@ export default function AnalysisPage() {
                                       <div className="grid grid-cols-2 gap-2 text-[11px]">
                                         <div>
                                           <span className="text-[9px] font-bold uppercase text-teal-700 block mb-1">Strengths</span>
-                                          <ul className="space-y-0.5 text-slate-600">{(comp.strengths || []).slice(0,2).map((s: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-teal-500">•</span>{s}</li>)}</ul>
+                                          <ul className="space-y-0.5 text-slate-600">{(comp.strengths || []).slice(0, 2).map((s: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-teal-500">•</span>{s}</li>)}</ul>
                                         </div>
                                         <div>
                                           <span className="text-[9px] font-bold uppercase text-red-600 block mb-1">Weaknesses</span>
-                                          <ul className="space-y-0.5 text-slate-600">{(comp.weaknesses || []).slice(0,2).map((w: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-red-400">•</span>{w}</li>)}</ul>
+                                          <ul className="space-y-0.5 text-slate-600">{(comp.weaknesses || []).slice(0, 2).map((w: string, i: number) => <li key={i} className="flex items-start gap-1"><span className="text-red-400">•</span>{w}</li>)}</ul>
                                         </div>
                                       </div>
                                     ) : null}
@@ -2420,11 +2427,11 @@ export default function AnalysisPage() {
                       {(pricingObj?.observations && pricingObj.observations.length > 0
                         ? pricingObj.observations
                         : [
-                            `Benchmark APMC market: ${mandiName} (Rate in ₹/${cleanUnit})`,
-                            `90% Conformal price interval: ₹${minPrice} – ₹${maxPrice} / ${cleanUnit}`,
-                            `Recommended target selling price: ₹${expectedPrice} / ${cleanUnit}`,
-                            "Local agrarian market supply buffers moderate seasonal peak price fluctuations."
-                          ]
+                          `Benchmark APMC market: ${mandiName} (Rate in ₹/${cleanUnit})`,
+                          `90% Conformal price interval: ₹${minPrice} – ₹${maxPrice} / ${cleanUnit}`,
+                          `Recommended target selling price: ₹${expectedPrice} / ${cleanUnit}`,
+                          "Local agrarian market supply buffers moderate seasonal peak price fluctuations."
+                        ]
                       ).map((obs: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
                           <div className="w-1.5 h-1.5 rounded-full bg-[#1E6702] mt-1.5 shrink-0" />
@@ -2443,11 +2450,11 @@ export default function AnalysisPage() {
                       {(pricingObj?.pricingFactors && pricingObj.pricingFactors.length > 0
                         ? pricingObj.pricingFactors
                         : [
-                            "Daily APMC arrivals volume and mandi clearing rate",
-                            "Rural purchasing power index from HCES 2023-24 survey benchmarks",
-                            "Local value-addition premium over raw farmgate produce",
-                            "Transportation and cold-chain radius from district aggregation centers"
-                          ]
+                          "Daily APMC arrivals volume and mandi clearing rate",
+                          "Rural purchasing power index from HCES 2023-24 survey benchmarks",
+                          "Local value-addition premium over raw farmgate produce",
+                          "Transportation and cold-chain radius from district aggregation centers"
+                        ]
                       ).map((factor: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
@@ -2723,93 +2730,93 @@ export default function AnalysisPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                   {((isHealthcare || (reportData?.business?.category || "").toLowerCase().includes("health") || (reportData?.business?.category || "").toLowerCase().includes("hospital"))
                     ? [
-                        {
-                          title: "1. Clinical Establishments Act",
-                          badge: "Mandatory",
-                          badgeColor: "bg-emerald-100 text-emerald-800",
-                          desc: "Mandatory registration with District Chief Medical Officer (CDMO). Requires minimum bed count, nurse-to-patient ratio, and clinical premises layout verification.",
-                          turnaround: "Turnaround: 30–45 Days",
-                        },
-                        {
-                          title: "2. Bio-Medical Waste Authorization",
-                          badge: "Statutory",
-                          badgeColor: "bg-red-100 text-red-800",
-                          desc: "State Pollution Control Board (SPCB) authorization under BMW Rules. Mandatory tie-up with common biomedical waste treatment and incineration facility.",
-                          turnaround: "Turnaround: 15–20 Days",
-                        },
-                        {
-                          title: "3. AERB Radiation Clearance",
-                          badge: "Diagnostic",
-                          badgeColor: "bg-blue-100 text-blue-800",
-                          desc: "Atomic Energy Regulatory Board (AERB) site and layout approval for diagnostic X-ray, CT scanner, and dental radiography installations.",
-                          turnaround: "Turnaround: 20–30 Days",
-                        },
-                        {
-                          title: "4. 24x7 Retail Drug License (20/21)",
-                          badge: "Pharmacy",
-                          badgeColor: "bg-amber-100 text-amber-800",
-                          desc: "State FDA Form 20 and 21 license for in-house emergency hospital pharmacy with registered pharmacist appointment and temperature-controlled storage.",
-                          turnaround: "Turnaround: 15–25 Days",
-                        },
-                        {
-                          title: "5. Fire Safety & NBC Evacuation NOC",
-                          badge: "Safety",
-                          badgeColor: "bg-slate-200 text-slate-800",
-                          desc: "Local Municipal / Fire Directorate NOC for emergency ramp access, smoke dampers, fire hydrants, and independent hospital escape stairways.",
-                          turnaround: "Turnaround: 10–15 Days",
-                        },
-                        {
-                          title: "6. NABH Entry-Level Certification",
-                          badge: "Accreditation",
-                          badgeColor: "bg-emerald-100 text-emerald-800",
-                          desc: "Quality Council of India accreditation unlocking higher PM-JAY and private health insurance TPA cashless reimbursement tariffs.",
-                          turnaround: "Turnaround: 60–90 Days",
-                        },
-                      ]
+                      {
+                        title: "1. Clinical Establishments Act",
+                        badge: "Mandatory",
+                        badgeColor: "bg-emerald-100 text-emerald-800",
+                        desc: "Mandatory registration with District Chief Medical Officer (CDMO). Requires minimum bed count, nurse-to-patient ratio, and clinical premises layout verification.",
+                        turnaround: "Turnaround: 30–45 Days",
+                      },
+                      {
+                        title: "2. Bio-Medical Waste Authorization",
+                        badge: "Statutory",
+                        badgeColor: "bg-red-100 text-red-800",
+                        desc: "State Pollution Control Board (SPCB) authorization under BMW Rules. Mandatory tie-up with common biomedical waste treatment and incineration facility.",
+                        turnaround: "Turnaround: 15–20 Days",
+                      },
+                      {
+                        title: "3. AERB Radiation Clearance",
+                        badge: "Diagnostic",
+                        badgeColor: "bg-blue-100 text-blue-800",
+                        desc: "Atomic Energy Regulatory Board (AERB) site and layout approval for diagnostic X-ray, CT scanner, and dental radiography installations.",
+                        turnaround: "Turnaround: 20–30 Days",
+                      },
+                      {
+                        title: "4. 24x7 Retail Drug License (20/21)",
+                        badge: "Pharmacy",
+                        badgeColor: "bg-amber-100 text-amber-800",
+                        desc: "State FDA Form 20 and 21 license for in-house emergency hospital pharmacy with registered pharmacist appointment and temperature-controlled storage.",
+                        turnaround: "Turnaround: 15–25 Days",
+                      },
+                      {
+                        title: "5. Fire Safety & NBC Evacuation NOC",
+                        badge: "Safety",
+                        badgeColor: "bg-slate-200 text-slate-800",
+                        desc: "Local Municipal / Fire Directorate NOC for emergency ramp access, smoke dampers, fire hydrants, and independent hospital escape stairways.",
+                        turnaround: "Turnaround: 10–15 Days",
+                      },
+                      {
+                        title: "6. NABH Entry-Level Certification",
+                        badge: "Accreditation",
+                        badgeColor: "bg-emerald-100 text-emerald-800",
+                        desc: "Quality Council of India accreditation unlocking higher PM-JAY and private health insurance TPA cashless reimbursement tariffs.",
+                        turnaround: "Turnaround: 60–90 Days",
+                      },
+                    ]
                     : [
-                        {
-                          title: "1. Udyam MSME Registration",
-                          badge: "Mandatory",
-                          badgeColor: "bg-emerald-100 text-emerald-800",
-                          desc: "Zero-fee registration on official portal. Unlocks priority sector bank lending, interest rate subventions (1–2%), and PMEGP subsidy eligibility.",
-                          turnaround: "Turnaround: 1–2 Days",
-                        },
-                        {
-                          title: "2. FSSAI Food Safety License",
-                          badge: "Sector Mandatory",
-                          badgeColor: "bg-emerald-100 text-emerald-800",
-                          desc: "Required for all dairy, agro-milling, and food manufacturing units. Register on FoSCoS portal with testing certificate of processing water & premises layout.",
-                          turnaround: "Turnaround: 7–15 Days",
-                        },
-                        {
-                          title: "3. GSTIN Registration",
-                          badge: "Statutory",
-                          badgeColor: "bg-blue-100 text-blue-800",
-                          desc: "Mandatory for B2B transactions and input tax credit claims on machinery purchases. Exempt for fresh unprocessed agricultural commodities under ₹40L turnover.",
-                          turnaround: "Turnaround: 3–5 Days",
-                        },
-                        {
-                          title: "4. Pollution Control Board (SPCB) NOC",
-                          badge: "Consent to Establish",
-                          badgeColor: "bg-amber-100 text-amber-800",
-                          desc: "White/Green category consent for small-scale food processing, dairy chilling, and packaging plants. Requires basic effluent & solid waste management layout.",
-                          turnaround: "Turnaround: 15–30 Days",
-                        },
-                        {
-                          title: "5. Gram Panchayat Trade Permit",
-                          badge: "Local Authority",
-                          badgeColor: "bg-slate-200 text-slate-800",
-                          desc: "Local village Panchayat resolution or municipal ward trade permit authorizing commercial/industrial activity on designated land plot.",
-                          turnaround: "Turnaround: 5–7 Days",
-                        },
-                        {
-                          title: "6. DISCOM 3-Phase Industrial Power",
-                          badge: "Infrastructure",
-                          badgeColor: "bg-slate-200 text-slate-800",
-                          desc: "Dedicated 15–25 HP power load sanction from state electricity distribution company for running chilling compressors, pulverizers, or motors.",
-                          turnaround: "Turnaround: 10–20 Days",
-                        },
-                      ]
+                      {
+                        title: "1. Udyam MSME Registration",
+                        badge: "Mandatory",
+                        badgeColor: "bg-emerald-100 text-emerald-800",
+                        desc: "Zero-fee registration on official portal. Unlocks priority sector bank lending, interest rate subventions (1–2%), and PMEGP subsidy eligibility.",
+                        turnaround: "Turnaround: 1–2 Days",
+                      },
+                      {
+                        title: "2. FSSAI Food Safety License",
+                        badge: "Sector Mandatory",
+                        badgeColor: "bg-emerald-100 text-emerald-800",
+                        desc: "Required for all dairy, agro-milling, and food manufacturing units. Register on FoSCoS portal with testing certificate of processing water & premises layout.",
+                        turnaround: "Turnaround: 7–15 Days",
+                      },
+                      {
+                        title: "3. GSTIN Registration",
+                        badge: "Statutory",
+                        badgeColor: "bg-blue-100 text-blue-800",
+                        desc: "Mandatory for B2B transactions and input tax credit claims on machinery purchases. Exempt for fresh unprocessed agricultural commodities under ₹40L turnover.",
+                        turnaround: "Turnaround: 3–5 Days",
+                      },
+                      {
+                        title: "4. Pollution Control Board (SPCB) NOC",
+                        badge: "Consent to Establish",
+                        badgeColor: "bg-amber-100 text-amber-800",
+                        desc: "White/Green category consent for small-scale food processing, dairy chilling, and packaging plants. Requires basic effluent & solid waste management layout.",
+                        turnaround: "Turnaround: 15–30 Days",
+                      },
+                      {
+                        title: "5. Gram Panchayat Trade Permit",
+                        badge: "Local Authority",
+                        badgeColor: "bg-slate-200 text-slate-800",
+                        desc: "Local village Panchayat resolution or municipal ward trade permit authorizing commercial/industrial activity on designated land plot.",
+                        turnaround: "Turnaround: 5–7 Days",
+                      },
+                      {
+                        title: "6. DISCOM 3-Phase Industrial Power",
+                        badge: "Infrastructure",
+                        badgeColor: "bg-slate-200 text-slate-800",
+                        desc: "Dedicated 15–25 HP power load sanction from state electricity distribution company for running chilling compressors, pulverizers, or motors.",
+                        turnaround: "Turnaround: 10–20 Days",
+                      },
+                    ]
                   ).map((item, i) => (
                     <div key={i} className="p-4 bg-slate-50/80 rounded-xl border border-slate-200/80 space-y-2">
                       <div className="flex items-center justify-between">
@@ -2858,7 +2865,7 @@ export default function AnalysisPage() {
                       <div className="absolute left-1.5 top-1.5 w-4 h-4 rounded-full bg-white border-2 border-[#1E6702] -translate-x-1/2 flex items-center justify-center">
                         <div className="w-1.5 h-1.5 rounded-full bg-[#1E6702]" />
                       </div>
-                      
+
                       <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-200/80 space-y-3">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-slate-200/60 pb-2.5">
                           <div className="flex items-center gap-2">

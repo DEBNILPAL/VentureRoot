@@ -15,6 +15,9 @@ import { CascadingLocationFields } from "@/components/ui/CascadingLocationFields
 import { resolveCoordinatesForLocation } from "@/services/location-search.service";
 import { getUserScopeKey } from "@/lib/data/businesses";
 import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
+import { getDynamicBusinessResources, formatResourceSuggestionsAsText } from "@/services/business-resources.service";
+import { InvalidLocationModal } from "@/components/ui/InvalidLocationModal";
+import { validateBusinessLocationInIndia } from "@/lib/data/indiaLocations";
 
 const DynamicRadiusMap = dynamic(() => import("@/components/maps/RadiusMap"), {
   ssr: false,
@@ -43,12 +46,18 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
+  const [invalidLocationModal, setInvalidLocationModal] = useState<{
+    isOpen: boolean;
+    message?: string;
+    details?: string;
+  }>({ isOpen: false });
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
   const router = useRouter();
 
   const isEditMode = Boolean(businessId);
   const [isLoadingExisting, setIsLoadingExisting] = useState(isEditMode);
   const [existingName, setExistingName] = useState<string>("");
+  const [existingBiz, setExistingBiz] = useState<any>(null);
 
   useEffect(() => {
     businessApi
@@ -77,6 +86,8 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
     mode: "onTouched",
     defaultValues: {
       categoryId: "",
+      name: "",
+      description: "",
       state: "",
       district: "",
       block: "",
@@ -129,6 +140,8 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
         return;
       }
 
+      setExistingBiz(foundBiz);
+
       if (foundBiz.name) {
         setExistingName(foundBiz.name);
       }
@@ -158,6 +171,8 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
 
       reset({
         categoryId: resolvedCatId || "",
+        name: foundBiz.name || "",
+        description: foundBiz.description || "",
         state: st,
         district: dt,
         block: bk,
@@ -239,28 +254,85 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
     if (currentStep === 4) fieldsToValidate = ["existingResources"];
     if (currentStep === 5) fieldsToValidate = ["expectedRevenue"];
 
+    if (currentStep === 2) {
+      const locValidation = validateBusinessLocationInIndia({
+        state: formValues.state,
+        district: formValues.district,
+        block: formValues.block,
+        village: formValues.village,
+        lat: mapCenter[0],
+        lon: mapCenter[1],
+        searchTerm: locationLabel,
+      });
+
+      if (!locValidation.valid) {
+        await trigger(["state", "district", "block", "village"]);
+        setInvalidLocationModal({
+          isOpen: true,
+          message: "Please enter a valid location inside India.",
+          details: locValidation.reason || "Locations outside India or random text (such as 'xyz') cannot be accepted.",
+        });
+        return;
+      }
+    }
+
     const isStepValid = await trigger(fieldsToValidate as any);
+    if (!isStepValid) {
+      if (currentStep === 2) {
+        const firstError = errors.state?.message || errors.district?.message || errors.block?.message || errors.village?.message;
+        setInvalidLocationModal({
+          isOpen: true,
+          message: "Please enter a valid location inside India.",
+          details: firstError || "Please select an official Indian State and District from the dropdown.",
+        });
+      }
+      return;
+    }
+
     if (isStepValid) {
       setCurrentStep((prev) => prev + 1);
     }
   };
 
   const onSubmit = async (data: BusinessFormValues) => {
+    const locValidation = validateBusinessLocationInIndia({
+      state: data.state,
+      district: data.district,
+      block: data.block,
+      village: data.village,
+      lat: mapCenter[0],
+      lon: mapCenter[1],
+    });
+
+    if (!locValidation.valid) {
+      setCurrentStep(2);
+      setInvalidLocationModal({
+        isOpen: true,
+        message: "Please enter a valid location inside India.",
+        details: locValidation.reason || "Locations outside India or random text (such as 'xyz') cannot be accepted.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setGlobalError(null);
     try {
       if (isEditMode && businessId) {
         // Edit mode: strictly update under the existing businessId (ID cannot be modified)
+        const resolvedName = (data as any).name || existingName || existingBiz?.name || "Business Venture";
+        const resolvedDescription = (data as any).description !== undefined ? (data as any).description : existingBiz?.description;
+
         const payload = {
-          categoryId: data.categoryId,
-          state: data.state,
-          district: data.district,
-          block: data.block || undefined,
-          village: data.village || undefined,
-          availableMargin: Number(data.availableMargin),
-          existingResources: data.existingResources || undefined,
-          expectedRevenue: Number(data.expectedRevenue),
-          name: existingName || undefined,
+          categoryId: data.categoryId || existingBiz?.categoryId,
+          state: data.state || existingBiz?.location?.state,
+          district: data.district || existingBiz?.location?.district,
+          block: data.block !== undefined ? data.block : existingBiz?.location?.block,
+          village: data.village !== undefined ? data.village : existingBiz?.location?.village,
+          availableMargin: Number(data.availableMargin ?? existingBiz?.availableMargin ?? 0),
+          existingResources: data.existingResources !== undefined ? data.existingResources : existingBiz?.existingResources,
+          expectedRevenue: Number(data.expectedRevenue ?? existingBiz?.expectedRevenue ?? 0),
+          name: resolvedName,
+          description: resolvedDescription,
           latitude: mapCenter[0],
           longitude: mapCenter[1],
           lat: mapCenter[0],
@@ -274,10 +346,10 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
         }
 
         const finalLoc = resolveCoordinatesForLocation({
-          state: data.state,
-          district: data.district,
-          block: data.block,
-          village: data.village,
+          state: payload.state,
+          district: payload.district,
+          block: payload.block,
+          village: payload.village,
           lat: mapCenter[0],
           lon: mapCenter[1],
         });
@@ -291,40 +363,45 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
 
           const updatedList = existingList.map((biz: any) => {
             if (biz.id === businessId) {
-              const catDisplayName = getCategoryName(data.categoryId) || biz.category;
+              const catDisplayName = getCategoryName(payload.categoryId) || biz.category;
               return {
+                ...existingBiz,
                 ...biz,
                 id: businessId, // Business ID strictly preserved and locked
-                name: payload.name || biz.name,
+                name: payload.name,
+                description: payload.description,
                 category: catDisplayName,
-                categoryId: data.categoryId,
+                categoryId: payload.categoryId,
                 location: {
-                  ...biz.location,
-                  state: data.state || "",
-                  district: data.district || "",
-                  block: data.block || data.district || "",
-                  village: data.village || data.block || data.district || "",
-                  subdistrict: data.block || data.district || "",
+                  ...(biz.location || existingBiz?.location || {}),
+                  state: payload.state || "",
+                  district: payload.district || "",
+                  block: payload.block || payload.district || "",
+                  village: payload.village || payload.block || payload.district || "",
+                  subdistrict: payload.block || payload.district || "",
                   lat: finalLoc.lat,
                   lon: finalLoc.lon,
                   latitude: finalLoc.lat,
                   longitude: finalLoc.lon,
-                  formatted: finalLoc.label || [data.village, data.block, data.district, data.state].filter(Boolean).join(", "),
+                  formatted: finalLoc.label || [payload.village, payload.block, payload.district, payload.state].filter(Boolean).join(", "),
                 },
-                availableMargin: Number(data.availableMargin),
-                expectedRevenue: Number(data.expectedRevenue),
-                existingResources: data.existingResources || "",
+                availableMargin: Number(payload.availableMargin),
+                expectedRevenue: Number(payload.expectedRevenue),
+                existingResources: payload.existingResources || "",
                 capital: {
+                  ...(existingBiz?.capital || {}),
                   ...(biz.capital || {}),
-                  availableMargin: Number(data.availableMargin),
+                  availableMargin: Number(payload.availableMargin),
                 },
                 operations: {
+                  ...(existingBiz?.operations || {}),
                   ...(biz.operations || {}),
-                  expectedRevenue: Number(data.expectedRevenue),
+                  expectedRevenue: Number(payload.expectedRevenue),
                 },
                 resources: {
+                  ...(existingBiz?.resources || {}),
                   ...(biz.resources || {}),
-                  existingResources: data.existingResources || "",
+                  existingResources: payload.existingResources || "",
                 },
                 updatedAt: new Date().toISOString(),
               };
@@ -482,33 +559,59 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
 
           {/* MOBILE COMPACT STEPPER (Hidden on Desktop) */}
           <div className="lg:hidden w-full bg-slate-50/80 rounded-2xl p-4 border border-slate-200/70 shadow-xs">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                {currentStep > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
-                    className="w-7 h-7 rounded-full bg-white border border-gray-200 text-slate-700 flex items-center justify-center cursor-pointer active:scale-95 shadow-xs"
-                    title="Previous Step"
-                    aria-label="Previous Step"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                <span className="text-xs font-bold text-[#1E6702] uppercase tracking-wider">
-                  Step {currentStep} of 6
+            {isEditMode ? (
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Jump to Section to Edit:
                 </span>
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                  {WIZARD_STEPS.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setCurrentStep(s.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                        currentStep === s.id
+                          ? "bg-[#1E6702] text-white shadow-xs"
+                          : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {s.id}. {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <span className="text-xs font-semibold text-gray-800">
-                {WIZARD_STEPS[currentStep - 1].label}
-              </span>
-            </div>
-            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#81cc87] rounded-full transition-all duration-300"
-                style={{ width: `${progressPercentage}%` }}
-              />
-            </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {currentStep > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
+                        className="w-7 h-7 rounded-full bg-white border border-gray-200 text-slate-700 flex items-center justify-center cursor-pointer active:scale-95 shadow-xs"
+                        title="Previous Step"
+                        aria-label="Previous Step"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <span className="text-xs font-bold text-[#1E6702] uppercase tracking-wider">
+                      Step {currentStep} of 6
+                    </span>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-800">
+                    {WIZARD_STEPS[currentStep - 1].label}
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#81cc87] rounded-full transition-all duration-300"
+                    style={{ width: `${progressPercentage}%` }}
+                  />
+                </div>
+              </>
+            )}
           </div>
           
           {/* DESKTOP SIDEBAR: Stepper (Hidden on Mobile) */}
@@ -522,32 +625,33 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                 {WIZARD_STEPS.map((step) => {
                   const isActive = currentStep === step.id;
                   const isCompleted = currentStep > step.id;
+                  const isClickable = isEditMode || isCompleted;
                   
                   return (
                     <div 
                       key={step.id} 
                       onClick={() => {
-                        if (isCompleted) {
+                        if (isClickable) {
                           setCurrentStep(step.id);
                         }
                       }}
                       className={`flex items-start gap-5 relative z-10 transition-all ${
-                        isCompleted ? "cursor-pointer hover:opacity-85 active:scale-98" : ""
+                        isClickable ? "cursor-pointer hover:opacity-85 active:scale-98" : ""
                       }`}
-                      title={isCompleted ? `Go back to ${step.label}` : undefined}
+                      title={isEditMode ? `Edit ${step.label}` : isCompleted ? `Go back to ${step.label}` : undefined}
                     >
                       <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center border-2 transition-all duration-300
                         ${isActive ? 'bg-[#81cc87] border-[#81cc87] text-[#f9faeb] shadow-md' : 
-                          isCompleted ? 'bg-white border-[#81cc87] text-[#81cc87]' : 
+                          isEditMode || isCompleted ? 'bg-white border-[#81cc87] text-[#81cc87]' : 
                           'bg-white border-gray-300 text-gray-400'}
                       `}>
                         <span className="font-sans text-[14px] font-bold">
-                          {isCompleted ? <Check className="w-5 h-5" /> : step.id}
+                          {isCompleted && !isEditMode ? <Check className="w-5 h-5" /> : step.id}
                         </span>
                       </div>
                       <div className="flex flex-col pt-1">
                         <span className={`font-sans text-[14px] font-bold transition-colors duration-300
-                          ${isActive ? 'text-[#173809]' : isCompleted ? 'text-slate-700 hover:text-[#1E6702]' : 'text-slate-400'}
+                          ${isActive ? 'text-[#173809]' : isClickable ? 'text-slate-700 hover:text-[#1E6702]' : 'text-slate-400'}
                         `}>
                           {step.label}
                         </span>
@@ -609,12 +713,39 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                </div>
             </div>
 
-            <h2 className="font-heading text-[25px] font-bold text-[#1a202c] mb-2">
-              {WIZARD_STEPS[currentStep - 1].label}
-            </h2>
-            <p className="font-sans text-[14px] text-gray-500 font-medium mb-8">
-              {WIZARD_STEPS[currentStep - 1].subtitle}.
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="font-heading text-[22px] sm:text-[25px] font-bold text-[#1a202c]">
+                    {WIZARD_STEPS[currentStep - 1].label}
+                  </h2>
+                  {isEditMode && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#1E6702] text-[11px] font-bold border border-emerald-200">
+                      Editable Section
+                    </span>
+                  )}
+                </div>
+                <p className="font-sans text-[13px] sm:text-[14px] text-gray-500 font-medium mt-0.5">
+                  {WIZARD_STEPS[currentStep - 1].subtitle}
+                </p>
+              </div>
+
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={() => handleSubmit(onSubmit)()}
+                  disabled={isSubmitting}
+                  className="self-start sm:self-auto px-5 py-2.5 bg-[#1E6702] hover:bg-[#155201] text-white rounded-xl font-bold text-xs sm:text-sm shadow-md flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                  <span>Save Changes</span>
+                </button>
+              )}
+            </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1">
               
@@ -622,6 +753,18 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                 {/* STEP 1 */}
                 {currentStep === 1 && (
                   <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+                    <div>
+                      <label className="block font-sans text-[14px] font-bold text-gray-800 mb-2">
+                        Enterprise Name
+                      </label>
+                      <input
+                        {...register("name")}
+                        type="text"
+                        placeholder="e.g. Anand Dairy Farm, Rural Bio-Fertilizer..."
+                        className="w-full rounded-xl border border-gray-200 p-4 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium"
+                      />
+                    </div>
+
                     <div>
                       <label className="block font-sans text-[14px] font-bold text-gray-800 mb-2">{t("business.wizard.cat")}</label>
                       <select
@@ -651,11 +794,23 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                       {errors.categoryId && <p className="text-red-500 font-sans text-[12px] mt-2 font-medium">{errors.categoryId.message}</p>}
                     </div>
 
+                    <div>
+                      <label className="block font-sans text-[14px] font-bold text-gray-800 mb-2">
+                        Enterprise Description & Scope
+                      </label>
+                      <textarea
+                        {...register("description")}
+                        rows={3}
+                        placeholder="Brief summary of your venture's operational activities..."
+                        className="w-full rounded-xl border border-gray-200 p-4 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium resize-none"
+                      />
+                    </div>
+
                     <div className="bg-emerald-50/70 rounded-xl p-4 flex gap-3 items-start border border-emerald-200/60">
                       <Info className="w-5 h-5 text-[#1E6702] shrink-0 mt-0.5" />
                       <p className="font-sans text-[14px] text-emerald-950 font-medium leading-relaxed">
-                        Choose the category that matches your primary business activity.<br/>
-                        This helps us provide more accurate scheme recommendations and market insights.
+                        Choose the category and title that matches your business activity.<br/>
+                        Existing operational and financial metrics will remain linked to this enterprise.
                       </p>
                     </div>
                   </div>
@@ -679,6 +834,13 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                       <LocationAutocompleteInput
                         placeholder="Search by location name (e.g. Pune, Anand, Khed, Wagholi)..."
                         onSelect={handleLocationSelect}
+                        onInvalidSearch={(query) => {
+                          setInvalidLocationModal({
+                            isOpen: true,
+                            message: "Please enter a valid location inside India.",
+                            details: `"${query}" is not recognized as a valid location in India. Locations outside India or random text (such as 'xyz') cannot be accepted.`,
+                          });
+                        }}
                       />
                     </div>
 
@@ -735,6 +897,17 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                           radiusInKm={5}
                           businessName="Proposed Business Location"
                           locationLabel={locationLabel}
+                          onReload={() => {
+                            const loc = resolveCoordinatesForLocation({
+                              state: formValues.state,
+                              district: formValues.district,
+                              block: formValues.block,
+                              village: formValues.village,
+                            });
+                            if (loc && !isNaN(loc.lat) && !isNaN(loc.lon)) {
+                              setMapCenter([loc.lat, loc.lon]);
+                            }
+                          }}
                         />
                       </div>
                     </div>
@@ -778,20 +951,96 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                 {currentStep === 4 && (
                   <div className="flex flex-col gap-6 animate-in fade-in duration-300">
                     <div>
-                      <label className="block font-sans text-[14px] font-bold text-gray-800 mb-2">{t("business.wizard.resources")}</label>
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <label className="block font-sans text-[14px] font-bold text-gray-800">
+                          {t("business.wizard.resources")}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const suggested = formatResourceSuggestionsAsText({
+                              category: selectedCategoryName,
+                              businessName: formValues.name,
+                              location: { district: formValues.district, state: formValues.state },
+                              availableMargin: formValues.availableMargin,
+                              expectedRevenue: formValues.expectedRevenue,
+                            });
+                            setValue("existingResources", suggested, { shouldValidate: true });
+                          }}
+                          className="inline-flex items-center gap-1.5 text-[12px] font-bold text-[#1E6702] bg-emerald-50 hover:bg-emerald-100/90 border border-emerald-300/80 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          Auto-Fill Benchmark for {selectedCategoryName}
+                        </button>
+                      </div>
                       <textarea
                         {...register("existingResources")}
                         rows={4}
-                        placeholder="e.g., Owned land, basic shed, water connection..."
+                        placeholder="e.g., Owned land, basic shed, water connection... (Leave empty for automatic AI resource suggestions)"
                         className="w-full rounded-xl border border-gray-200 p-4 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium resize-none"
                       ></textarea>
                       {errors.existingResources && <p className="text-red-500 font-sans text-[12px] mt-2 font-medium">{errors.existingResources.message}</p>}
                     </div>
 
+                    {/* Dynamic AI Suggested Checklist Preview */}
+                    {(() => {
+                      const dynamicRes = getDynamicBusinessResources({
+                        category: selectedCategoryName,
+                        businessName: formValues.name,
+                        location: { district: formValues.district, state: formValues.state },
+                        availableMargin: formValues.availableMargin,
+                        expectedRevenue: formValues.expectedRevenue,
+                        existingResources: formValues.existingResources,
+                      });
+
+                      return (
+                        <div className="bg-gradient-to-br from-emerald-50/70 via-white to-slate-50 rounded-2xl p-4 sm:p-5 border border-emerald-200/80 flex flex-col gap-3 shadow-2xs">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-[#1E6702]" />
+                              <span className="font-heading text-[13.5px] font-bold text-emerald-950">
+                                AI Suggested Requirements for {selectedCategoryName}
+                              </span>
+                            </div>
+                            <span className="text-[11px] font-bold text-[#1E6702] bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
+                              Auto-Suggested if Left Empty
+                            </span>
+                          </div>
+
+                          <p className="font-sans text-[12.5px] text-slate-600 leading-relaxed font-medium">
+                            If you don't own these assets yet, you can leave the box empty. Our AI Advisor and Feasibility Models will automatically budget and suggest the following resources:
+                          </p>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <div className="p-2.5 bg-white rounded-xl border border-emerald-100 flex flex-col gap-0.5">
+                              <span className="font-bold text-slate-700">🏗️ Facility / Land:</span>
+                              <span className="text-slate-600 font-medium">{dynamicRes.land.requiredArea}</span>
+                            </div>
+                            <div className="p-2.5 bg-white rounded-xl border border-emerald-100 flex flex-col gap-0.5">
+                              <span className="font-bold text-slate-700">⚡ Power & Utilities:</span>
+                              <span className="text-slate-600 font-medium">{dynamicRes.growthResources.powerAndUtilities.split("+")[0]}</span>
+                            </div>
+                          </div>
+
+                          <div className="p-3 bg-white rounded-xl border border-emerald-100">
+                            <span className="font-bold text-slate-700 text-xs block mb-1.5">⚙️ Essential Machinery & Equipment:</span>
+                            <div className="space-y-1.5">
+                              {dynamicRes.equipments.slice(0, 3).map((eq, idx) => (
+                                <div key={idx} className="flex justify-between items-center text-[12px]">
+                                  <span className="text-slate-700 truncate">• {eq.name}</span>
+                                  <span className="font-bold text-[#1E6702] shrink-0 ml-2">₹{eq.estimatedCost.toLocaleString('en-IN')}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     <div className="bg-emerald-50/70 rounded-xl p-4 flex gap-3 items-start border border-emerald-200/60">
                       <Info className="w-5 h-5 text-[#1E6702] shrink-0 mt-0.5" />
                       <p className="font-sans text-[14px] text-emerald-950 font-medium leading-relaxed">
-                        List all physical assets you currently own. This drastically changes the feasibility analysis for new businesses.
+                        List all physical assets you currently own. If you don't own equipment or land yet, leave it empty or click Auto-Fill above to let our AI model suggest it.
                       </p>
                     </div>
                   </div>
@@ -848,7 +1097,14 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                         </div>
                         <div className="md:col-span-2 pt-4 border-t border-gray-200">
                           <dt className="font-sans text-[12px] text-gray-500 font-medium mb-2">{t("business.wizard.resources")}</dt>
-                          <dd className="font-sans text-[14px] font-semibold text-gray-800 bg-white p-3 rounded-lg border border-gray-200">{formValues.existingResources || t("business.wizard.none")}</dd>
+                          {formValues.existingResources && formValues.existingResources.trim() ? (
+                            <dd className="font-sans text-[14px] font-semibold text-gray-800 bg-white p-3 rounded-lg border border-gray-200 whitespace-pre-wrap">{formValues.existingResources}</dd>
+                          ) : (
+                            <dd className="font-sans text-[13px] font-semibold text-emerald-900 bg-emerald-50/80 p-3.5 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <span>Auto-Suggested by AI: Industry benchmark equipment & facility requirements tailored to {selectedCategoryName}</span>
+                              <span className="text-[11px] font-bold text-[#1E6702] bg-white px-2.5 py-1 rounded-md border border-emerald-200 shrink-0 shadow-2xs">Auto-Planned</span>
+                            </dd>
+                          )}
                         </div>
                       </dl>
                     </div>
@@ -879,35 +1135,64 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                   </button>
                 </div>
                 
-                {currentStep < 6 ? (
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#1E6702] hover:bg-[#155201] text-white shadow-md shadow-[#1E6702]/20 transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    Next Step <ArrowRight className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#1E6702] hover:bg-[#155201] text-white shadow-md shadow-[#1E6702]/20 transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none min-w-[200px] cursor-pointer"
-                  >
-                    {isSubmitting ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        {isEditMode ? "Save & Update Business" : "Analyze & Submit"} <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                )}
+                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
+                  {isEditMode && (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-[#1E6702] hover:bg-[#155201] text-white shadow-md shadow-[#1E6702]/25 transition-all font-sans text-[14px] font-bold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isSubmitting ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                      <span>Save Changes</span>
+                    </button>
+                  )}
+
+                  {currentStep < 6 ? (
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      className={`w-full sm:w-auto px-7 py-3.5 rounded-xl ${
+                        isEditMode
+                          ? "bg-slate-900 hover:bg-slate-800 text-white"
+                          : "bg-[#1E6702] hover:bg-[#155201] text-white shadow-md shadow-[#1E6702]/20"
+                      } transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2 cursor-pointer`}
+                    >
+                      <span>{isEditMode ? "Next Section" : "Next Step"}</span> <ArrowRight className="w-4 h-4" />
+                    </button>
+                  ) : !isEditMode ? (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#1E6702] hover:bg-[#155201] text-white shadow-md shadow-[#1E6702]/20 transition-all font-sans text-[14px] font-semibold flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none min-w-[200px] cursor-pointer"
+                    >
+                      {isSubmitting ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          Analyze & Submit <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  ) : null}
+                </div>
               </div>
             </form>
 
           </div>
         </div>
       </div>
+
+      <InvalidLocationModal
+        isOpen={invalidLocationModal.isOpen}
+        onClose={() => setInvalidLocationModal({ isOpen: false })}
+        title="Valid Indian Location Required"
+        message={invalidLocationModal.message}
+        details={invalidLocationModal.details}
+      />
     </div>
   );
 };

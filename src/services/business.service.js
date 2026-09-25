@@ -293,46 +293,69 @@ export async function updateMyBusiness(
   businessId,
   data
 ) {
-  await validateCategory(
-    data.categoryId
-  );
+  const existingBusiness = await findBusinessByIdAndUserId({
+    businessId,
+    userId: user.id,
+  });
 
-  const location =
-    await resolveLocation(data);
+  if (!existingBusiness) {
+    throw new NotFoundError("Business not found");
+  }
 
-  const business =
-    await updateBusinessByIdAndUserId({
-      businessId,
-      userId: user.id,
+  const targetCategoryId = data.categoryId || existingBusiness.categoryId;
+  if (data.categoryId) {
+    await validateCategory(data.categoryId);
+  }
 
-      data: {
-        categoryId:
-          data.categoryId,
+  let locationId = existingBusiness.locationId;
+  const hasLocationUpdate =
+    data.state !== undefined ||
+    data.district !== undefined ||
+    data.block !== undefined ||
+    data.village !== undefined ||
+    data.lat !== undefined ||
+    data.latitude !== undefined;
 
-        locationId:
-          location.id,
+  if (hasLocationUpdate) {
+    let existingLocMap = {};
+    try {
+      const existingFullLoc = await findLocationWithParents(existingBusiness.locationId);
+      if (existingFullLoc) {
+        existingLocMap = buildLocationResponse(existingFullLoc);
+      }
+    } catch (_) {}
 
-        name:
-          data.name ?? null,
+    const mergedLocationData = {
+      state: data.state || existingLocMap.state || "Gujarat",
+      district: data.district || existingLocMap.district || "Anand",
+      block: data.block !== undefined ? data.block : existingLocMap.block,
+      village: data.village !== undefined ? data.village : existingLocMap.village,
+      lat: data.lat ?? data.latitude ?? existingLocMap.lat,
+      lon: data.lon ?? data.longitude ?? existingLocMap.lon,
+    };
 
-        description:
-          data.description ?? null,
+    const location = await resolveLocation(mergedLocationData);
+    locationId = location.id;
+  }
 
-        availableMargin:
-          data.availableMargin,
+  const updateData = {
+    categoryId: targetCategoryId,
+    locationId,
+    name: data.name !== undefined ? (data.name || null) : existingBusiness.name,
+    description: data.description !== undefined ? (data.description || null) : existingBusiness.description,
+    availableMargin: data.availableMargin !== undefined ? Number(data.availableMargin) : existingBusiness.availableMargin,
+    existingResources: data.existingResources !== undefined ? (data.existingResources || null) : existingBusiness.existingResources,
+    expectedRevenue: data.expectedRevenue !== undefined ? Number(data.expectedRevenue) : existingBusiness.expectedRevenue,
+  };
 
-        existingResources:
-          data.existingResources ?? null,
-
-        expectedRevenue:
-          data.expectedRevenue,
-      },
-    });
+  const business = await updateBusinessByIdAndUserId({
+    businessId,
+    userId: user.id,
+    data: updateData,
+  });
 
   if (!business) {
-    throw new NotFoundError(
-      "Business not found"
-    );
+    throw new NotFoundError("Business not found");
   }
 
   return mapBusinessResponse(business);

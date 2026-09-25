@@ -7,15 +7,17 @@ export function getSupabaseBrowserClient(): SupabaseClient {
 
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    "";
+    process.env.SUPABASE_URL ||
+    "https://enuunerxfbjogupaegdm.supabase.co";
   const supabaseAnonKey =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    "";
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    "sb_publishable_lWjGzbxyvgWQTcUihcd5Pg_aDySsf6b";
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error(
-      "[Supabase Browser] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY in environment variables."
+    throw new Error(
+      "Supabase client cannot be initialized: Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY."
     );
   }
 

@@ -23,11 +23,14 @@ export async function POST(request) {
 
     // 1. Check for ElevenLabs API Key
     const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
-    const targetVoiceId = voiceId || process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // Default Rachel / Multilingual
+    let targetVoiceId = voiceId || process.env.ELEVENLABS_VOICE_ID || "EXAVITQu4vr4xnSDxMaL"; // Sarah (premade voice compatible with free tier)
+    if (targetVoiceId === "21m00Tcm4TlvDq8ikWAM") {
+      targetVoiceId = "EXAVITQu4vr4xnSDxMaL";
+    }
 
     if (elevenLabsKey && elevenLabsKey.trim().length > 5) {
       try {
-        const response = await fetch(
+        let response = await fetch(
           `https://api.elevenlabs.io/v1/text-to-speech/${targetVoiceId}?optimize_streaming_latency=2`,
           {
             method: "POST",
@@ -47,6 +50,31 @@ export async function POST(request) {
             }),
           }
         );
+
+        // If library voice requires paid tier (402), retry with confirmed premade voice (EXAVITQu4vr4xnSDxMaL)
+        if (!response.ok && (response.status === 402 || response.status === 400) && targetVoiceId !== "EXAVITQu4vr4xnSDxMaL") {
+          console.warn("[voice/tts] ElevenLabs library voice restricted, falling back to premade voice EXAVITQu4vr4xnSDxMaL");
+          response = await fetch(
+            `https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL?optimize_streaming_latency=2`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "xi-api-key": elevenLabsKey.trim(),
+              },
+              body: JSON.stringify({
+                text: sanitizedText,
+                model_id: "eleven_multilingual_v2",
+                voice_settings: {
+                  stability: 0.5,
+                  similarity_boost: 0.8,
+                  style: 0.0,
+                  use_speaker_boost: true,
+                },
+              }),
+            }
+          );
+        }
 
         if (response.ok) {
           const audioBuffer = await response.arrayBuffer();

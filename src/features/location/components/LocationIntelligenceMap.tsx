@@ -56,6 +56,7 @@ interface LocationIntelligenceMapProps {
   category?: string;
   markers?: MapMarker[];
   competitors?: any[];
+  onReload?: () => void | Promise<void>;
 }
 
 export const LocationIntelligenceMap: React.FC<LocationIntelligenceMapProps> = ({
@@ -64,8 +65,10 @@ export const LocationIntelligenceMap: React.FC<LocationIntelligenceMapProps> = (
   category = "Agro-Enterprise",
   markers: propMarkers = [],
   competitors = [],
+  onReload,
 }) => {
   const [radius, setRadius] = useState<5 | 10 | 20>(5);
+  const [reloadIteration, setReloadIteration] = useState(0);
   const [activeLayers, setActiveLayers] = useState<string[]>([
     "Competitors",
     "Markets & APMC Mandis",
@@ -96,19 +99,28 @@ export const LocationIntelligenceMap: React.FC<LocationIntelligenceMapProps> = (
 
     if (isDefaultIndia && locationName && locationName !== "Regional Enterprise Zone") {
       const resolved = resolveCoordinatesForLocation(locationName);
-      return [resolved.lat, resolved.lon];
+      if (resolved && !isNaN(resolved.lat) && !isNaN(resolved.lon)) {
+        return [resolved.lat, resolved.lon];
+      }
     }
     return center && !isNaN(center[0]) && !isNaN(center[1]) && center[0] !== 0 ? center : [20.5937, 78.9629];
-  }, [center, locationName]);
+  }, [center, locationName, reloadIteration]);
+
+  const handleMapReload = async () => {
+    setReloadIteration((prev) => prev + 1);
+    if (onReload) {
+      await onReload();
+    }
+  };
 
   // Generate dynamic POI markers matching all 5 active geospatial layers
   const dynamicMarkers: MapMarker[] = React.useMemo(() => {
-    if (!center || isNaN(center[0]) || isNaN(center[1]) || (center[0] === 0 && center[1] === 0)) {
+    const lat = effectiveCenter[0];
+    const lon = effectiveCenter[1];
+    if (isNaN(lat) || isNaN(lon) || (lat === 0 && lon === 0) || (Math.abs(lat - 20.5937) < 0.005 && Math.abs(lon - 78.9629) < 0.005)) {
       return [];
     }
     const list: MapMarker[] = [];
-    const lat = effectiveCenter[0];
-    const lon = effectiveCenter[1];
 
     // 1. COMPETITORS LAYER (Direct & Indirect)
     if (activeLayers.includes("Competitors")) {
@@ -537,6 +549,7 @@ export const LocationIntelligenceMap: React.FC<LocationIntelligenceMapProps> = (
           showCatchmentCircles={true}
           showLabels={true}
           hideTopBadge={true}
+          onReload={handleMapReload}
         />
 
         {/* Live Status Overlay */}

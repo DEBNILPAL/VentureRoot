@@ -4,7 +4,8 @@ import React, { useEffect } from "react";
 import { MapContainer, TileLayer, Circle, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { AlertTriangle, MapPin as MapPinIcon } from "lucide-react";
+import { AlertTriangle, MapPin as MapPinIcon, RotateCw } from "lucide-react";
+import { resolveCoordinatesForLocation } from "@/services/location-search.service";
 
 // Custom SVG DivIcon for User Location Pin with radar wave pulse
 const createUserPinIcon = (label: string = "Your Venture") => {
@@ -158,6 +159,7 @@ interface RadiusMapProps {
   showCatchmentCircles?: boolean;
   showLabels?: boolean;
   hideTopBadge?: boolean;
+  onReload?: () => void | Promise<void>;
 }
 
 export const RadiusMap: React.FC<RadiusMapProps> = ({
@@ -169,8 +171,13 @@ export const RadiusMap: React.FC<RadiusMapProps> = ({
   showCatchmentCircles = true,
   showLabels = true,
   hideTopBadge = false,
+  onReload,
 }) => {
   const [isMounted, setIsMounted] = React.useState(false);
+  const [isReloading, setIsReloading] = React.useState(false);
+  const [reloadKey, setReloadKey] = React.useState(0);
+  const [fallbackResolvedCenter, setFallbackResolvedCenter] = React.useState<[number, number] | null>(null);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -193,11 +200,63 @@ export const RadiusMap: React.FC<RadiusMapProps> = ({
     !locationLabel.toLowerCase().includes("nagpur") &&
     !locationLabel.toLowerCase().includes("wardha");
 
-  const hasValidUserLocation = isCoordinatesGiven && !isGenericDefault;
+  // Attempt auto-resolving coordinates from locationLabel if center is absent or generic
+  useEffect(() => {
+    if (!isCoordinatesGiven || isGenericDefault) {
+      if (
+        locationLabel &&
+        locationLabel.trim().length > 2 &&
+        !locationLabel.toLowerCase().includes("selected location") &&
+        !locationLabel.toLowerCase().includes("catchment zone")
+      ) {
+        const resolved = resolveCoordinatesForLocation(locationLabel);
+        if (resolved && !isNaN(resolved.lat) && !isNaN(resolved.lon)) {
+          setFallbackResolvedCenter([resolved.lat, resolved.lon]);
+          return;
+        }
+      }
+    }
+    setFallbackResolvedCenter(null);
+  }, [center, locationLabel, isCoordinatesGiven, isGenericDefault]);
+
+  const activeCenter = (isCoordinatesGiven && !isGenericDefault)
+    ? center
+    : fallbackResolvedCenter;
+
+  const hasValidUserLocation = Boolean(
+    activeCenter &&
+    !isNaN(activeCenter[0]) &&
+    !isNaN(activeCenter[1]) &&
+    activeCenter[0] !== 0 &&
+    activeCenter[1] !== 0
+  );
 
   const safeCenter: [number, number] = hasValidUserLocation
-    ? [center[0], center[1]]
+    ? [activeCenter![0], activeCenter![1]]
     : [20.5937, 78.9629];
+
+  const handleReload = async () => {
+    setIsReloading(true);
+    try {
+      if (locationLabel && locationLabel.trim().length > 2) {
+        const resolved = resolveCoordinatesForLocation(locationLabel);
+        if (resolved && !isNaN(resolved.lat) && !isNaN(resolved.lon)) {
+          setFallbackResolvedCenter([resolved.lat, resolved.lon]);
+        }
+      }
+      if (onReload) {
+        await onReload();
+      }
+      // Force MapContainer to reinitialize and clear tile canvas cache
+      setReloadKey((prev) => prev + 1);
+    } catch (err) {
+      console.warn("[RadiusMap] Reload error:", err);
+    } finally {
+      setTimeout(() => {
+        setIsReloading(false);
+      }, 500);
+    }
+  };
 
   // Tile layer configuration utilizing user's OpenStreetMap key from .env:
   const osmApiKey = process.env.NEXT_PUBLIC_OPENSTREETMAP_API_KEY || "";
@@ -278,9 +337,20 @@ export const RadiusMap: React.FC<RadiusMapProps> = ({
               Exact business location coordinates required. No default map is shown. Please register or select the exact location for <strong>{businessName}</strong> ({locationLabel}) to project the live radar canvas.
             </p>
           </div>
-          <span className="text-[11px] font-semibold text-amber-800 px-3 py-1 rounded-full bg-amber-100/80 border border-amber-200">
-            Awaiting Location Coordinates
-          </span>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[11px] font-semibold text-amber-800 px-3 py-1 rounded-full bg-amber-100/80 border border-amber-200">
+              Awaiting Location Coordinates
+            </span>
+            <button
+              type="button"
+              onClick={handleReload}
+              disabled={isReloading}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1E6702] hover:bg-[#165002] active:scale-95 text-white text-[11px] font-bold transition-all shadow-xs cursor-pointer disabled:opacity-60"
+            >
+              <RotateCw className={`w-3 h-3 ${isReloading ? "animate-spin" : ""}`} />
+              <span>{isReloading ? "Reloading..." : "Reload Map"}</span>
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -300,20 +370,34 @@ export const RadiusMap: React.FC<RadiusMapProps> = ({
         }
       `}</style>
 
-      {/* Floating Radius & Catchment Info Badge */}
-      {!hideTopBadge && (
-        <div className="hidden sm:flex absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200/90 shadow-sm z-[400] pointer-events-auto items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#1E6702] animate-pulse" />
-          <span className="text-[11px] font-bold text-slate-800">
-            {radiusInKm} km Radar Catchment
-          </span>
-          <span className="text-[10px] font-medium text-slate-500 border-l border-slate-200 pl-2">
-            ~{Math.round(Math.PI * radiusInKm * radiusInKm)} km²
-          </span>
-        </div>
-      )}
+      {/* Floating Reload & Catchment Info Badges */}
+      <div className="absolute top-3 right-3 z-[400] pointer-events-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleReload}
+          disabled={isReloading}
+          title="Reload map canvas and competitor radar nodes"
+          className="flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200/90 shadow-sm text-slate-700 hover:text-emerald-700 hover:border-emerald-300 text-[11px] font-bold transition-all pointer-events-auto active:scale-95 cursor-pointer disabled:opacity-60"
+        >
+          <RotateCw className={`w-3 h-3 text-[#1E6702] ${isReloading ? "animate-spin" : ""}`} />
+          <span className="hidden sm:inline">{isReloading ? "Reloading..." : "Reload Map"}</span>
+        </button>
+
+        {!hideTopBadge && (
+          <div className="hidden sm:flex bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200/90 shadow-sm items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#1E6702] animate-pulse" />
+            <span className="text-[11px] font-bold text-slate-800">
+              {radiusInKm} km Radar Catchment
+            </span>
+            <span className="text-[10px] font-medium text-slate-500 border-l border-slate-200 pl-2">
+              ~{Math.round(Math.PI * radiusInKm * radiusInKm)} km²
+            </span>
+          </div>
+        )}
+      </div>
 
       <MapContainer
+        key={reloadKey}
         center={safeCenter}
         zoom={initialZoom}
         scrollWheelZoom={true}

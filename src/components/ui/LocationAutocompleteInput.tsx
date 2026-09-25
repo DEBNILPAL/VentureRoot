@@ -23,6 +23,7 @@ interface LocationAutocompleteInputProps {
   inputClassName?: string;
   onSelect: (location: SelectedLocation) => void;
   onChangeText?: (text: string) => void;
+  onInvalidSearch?: (query: string) => void;
   required?: boolean;
 }
 
@@ -35,6 +36,7 @@ export const LocationAutocompleteInput: React.FC<LocationAutocompleteInputProps>
   inputClassName = "",
   onSelect,
   onChangeText,
+  onInvalidSearch,
   required = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState(value);
@@ -100,17 +102,26 @@ export const LocationAutocompleteInput: React.FC<LocationAutocompleteInputProps>
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!isOpen || suggestions.length === 0) return;
-
     if (e.key === "ArrowDown") {
+      if (!isOpen || !suggestions?.length) return;
       e.preventDefault();
       setSelectedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
     } else if (e.key === "ArrowUp") {
+      if (!isOpen || !suggestions?.length) return;
       e.preventDefault();
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
-    } else if (e.key === "Enter" && selectedIndex >= 0) {
-      e.preventDefault();
-      handleSelect(suggestions[selectedIndex]);
+    } else if (e.key === "Enter") {
+      if (selectedIndex >= 0 && suggestions && suggestions[selectedIndex]) {
+        e.preventDefault();
+        handleSelect(suggestions[selectedIndex]);
+      } else if (suggestions && suggestions.length > 0 && isOpen) {
+        e.preventDefault();
+        handleSelect(suggestions[0]);
+      } else if (searchTerm.trim().length > 0 && onInvalidSearch && (!suggestions || suggestions.length === 0)) {
+        e.preventDefault();
+        setIsOpen(false);
+        onInvalidSearch(searchTerm.trim());
+      }
     } else if (e.key === "Escape") {
       setIsOpen(false);
     }

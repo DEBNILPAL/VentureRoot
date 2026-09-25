@@ -634,3 +634,143 @@ export function validateLocalityText(
 
   return { valid: true };
 }
+
+export interface BusinessLocationValidationResult {
+  valid: boolean;
+  reason?: string;
+  field?: "state" | "district" | "block" | "village" | "coordinates" | "general";
+}
+
+const FOREIGN_COUNTRIES_AND_CITIES = [
+  "united states", "usa", "u.s.a", "u.s.", "america", "united kingdom", "uk", "u.k.", "england",
+  "london", "france", "paris", "germany", "berlin", "canada", "toronto", "vancouver",
+  "australia", "sydney", "melbourne", "china", "beijing", "shanghai", "pakistan", "lahore",
+  "karachi", "islamabad", "bangladesh", "dhaka", "nepal", "kathmandu", "sri lanka", "colombo",
+  "bhutan", "thimphu", "myanmar", "burma", "dubai", "uae", "u.a.e", "united arab emirates",
+  "singapore", "malaysia", "kuala lumpur", "japan", "tokyo", "russia", "moscow", "new york",
+  "california", "texas", "florida", "chicago", "los angeles", "san francisco", "switzerland",
+  "italy", "rome", "spain", "madrid", "brazil", "mexico", "indonesia", "thailand", "bangkok"
+];
+
+/**
+ * Validates that a business location is authentic and strictly within the Republic of India.
+ * Rejects foreign locations, random/placeholder text (like 'xyz'), and mismatched state-district pairs.
+ */
+export function validateBusinessLocationInIndia(input?: {
+  state?: string | null;
+  district?: string | null;
+  block?: string | null;
+  village?: string | null;
+  lat?: number | null;
+  lon?: number | null;
+  searchTerm?: string | null;
+}): BusinessLocationValidationResult {
+  if (!input) {
+    return {
+      valid: false,
+      reason: "Location details are required. Please enter an authentic location inside India.",
+      field: "general",
+    };
+  }
+
+  const { state, district, block, village, lat, lon, searchTerm } = input;
+
+  // Check any raw text for foreign location mentions
+  const allTexts = [state, district, block, village, searchTerm].filter(Boolean) as string[];
+  for (const text of allTexts) {
+    const lower = text.toLowerCase().trim();
+    for (const foreign of FOREIGN_COUNTRIES_AND_CITIES) {
+      const regex = new RegExp(`(^|\\b|,|\\s)${foreign}(\\b|,|\\s|$)`, "i");
+      if (regex.test(lower)) {
+        return {
+          valid: false,
+          reason: `"${text}" is located outside India. Only locations inside the Republic of India are accepted.`,
+          field: "general",
+        };
+      }
+    }
+
+    // Check for random gibberish or test entries
+    if (/^(abc|xyz|test|asdf|qwerty|qwer|xxx|zzz|none|na|nil|null|undefined|\d+|\W+)$/i.test(cleanLocationStr(lower))) {
+      return {
+        valid: false,
+        reason: `"${text}" is not recognized as a valid place name. Random or placeholder entries like 'xyz' are not allowed.`,
+        field: "general",
+      };
+    }
+  }
+
+  // State is strictly required
+  if (!state || !state.trim()) {
+    return {
+      valid: false,
+      reason: "Please select an official Indian State or Union Territory.",
+      field: "state",
+    };
+  }
+
+  if (!isValidIndianState(state)) {
+    return {
+      valid: false,
+      reason: `"${state}" is not a recognized Indian State or Union Territory. Please choose a valid state from the list.`,
+      field: "state",
+    };
+  }
+
+  // District is strictly required
+  if (!district || !district.trim()) {
+    return {
+      valid: false,
+      reason: "District is required. Please choose an official district from the dropdown.",
+      field: "district",
+    };
+  }
+
+  const distValidation = validateDistrictForState(state, district);
+  if (!distValidation.valid) {
+    return {
+      valid: false,
+      reason: distValidation.errorMessage || `"${district}" is not a valid district for ${state}.`,
+      field: "district",
+    };
+  }
+
+  // Block validation if supplied
+  if (block && block.trim()) {
+    const blockCheck = validateLocalityText(block, "Block / Taluka");
+    if (!blockCheck.valid) {
+      return {
+        valid: false,
+        reason: blockCheck.errorMessage || `"${block}" is an invalid block or taluka name.`,
+        field: "block",
+      };
+    }
+  }
+
+  // Village validation if supplied
+  if (village && village.trim()) {
+    const villageCheck = validateLocalityText(village, "Village / Town");
+    if (!villageCheck.valid) {
+      return {
+        valid: false,
+        reason: villageCheck.errorMessage || `"${village}" is an invalid village or town name.`,
+        field: "village",
+      };
+    }
+  }
+
+  // Coordinates boundary check: India is roughly Lat: 6.0 to 38.0 N, Lon: 68.0 to 98.0 E
+  if (typeof lat === "number" && typeof lon === "number" && !isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
+    const inIndiaBounds = lat >= 6.0 && lat <= 38.0 && lon >= 68.0 && lon <= 98.0;
+    if (!inIndiaBounds) {
+      return {
+        valid: false,
+        reason: `Coordinates (${lat.toFixed(2)}, ${lon.toFixed(2)}) fall outside India's national boundaries. Please specify a location inside India.`,
+        field: "coordinates",
+      };
+    }
+  }
+
+  return { valid: true };
+}
+

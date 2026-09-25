@@ -89,6 +89,8 @@ export async function PUT(
   }
 }
 
+export const PATCH = PUT;
+
 
 export async function DELETE(
   request,

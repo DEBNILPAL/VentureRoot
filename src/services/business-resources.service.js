@@ -130,6 +130,54 @@ export function getDynamicBusinessResources({
       },
     },
 
+    Poultry: {
+      land: {
+        requiredArea: revenueNum > 100000 ? "3,000 – 6,000 sq.ft biosecure shed & perimeter" : "1,500 – 3,000 sq.ft elevated deep-litter shed",
+        valuation: revenueNum > 100000 ? "₹4.0L – ₹8.0L infrastructure (or ₹6,000 – ₹12,000/mo lease)" : "₹2.5L – ₹5.0L infrastructure (or ₹4,000 – ₹8,000/mo lease)",
+        tenureType: userAssetsText.includes("own") || userAssetsText.includes("land") ? "Self-Owned Agricultural Freehold" : "Rural Agricultural Land Lease",
+        zoning: "Gram Panchayat NOC + Animal Husbandry & Pollution Control Board green zone compliance",
+        suitability: "Slightly elevated, well-drained terrain with east-west ventilation, fresh borehole water, and biosecurity boundary fencing.",
+      },
+      equipments: [
+        { name: "Automated Bell Drinkers & Circular Hanging Feeders (20 sets)", estimatedCost: 34000, priority: "Essential", status: "Needs Procurement" },
+        { name: "Gas / Infrared Radiant Brooder Heating System (for chick rearing)", estimatedCost: 28000, priority: "Essential", status: "Needs Procurement" },
+        { name: "Motorized High-Pressure Disinfectant Sprayer & Litter Aerator", estimatedCost: 19000, priority: "Essential", status: "Needs Procurement" },
+        { name: "Commercial Egg Grading Machine & Stacking Crates (for layers)", estimatedCost: 45000, priority: "Growth", status: "Recommended" },
+        { name: "Heavy Digital Platform Scale (150kg) & Bird Crates", estimatedCost: 14000, priority: "Essential", status: "Needs Procurement" },
+        { name: "Environment Control Exhaust Fans & Evaporative Cooling Curtains", estimatedCost: 38000, priority: "Growth", status: "Expansion Phase" },
+      ],
+      growthResources: {
+        humanCapital: "1 full-time flock attendant / feeder + 1 veterinary vaccine technician on call.",
+        powerAndUtilities: "Single/3-phase power (5 kW load) + high-capacity automatic inverter backup for brooder temperature control.",
+        workingCapitalReserve: `₹${Math.round(revenueNum * 0.50).toLocaleString('en-IN')} (Pre-funded commercial feed, day-old chicks, and vaccine stock).`,
+        digitalAndLogistics: "Direct contract farming or wholesale egg/broiler pickup linkage with local traders and mandis.",
+      },
+    },
+
+    Textiles: {
+      land: {
+        requiredArea: "500 – 1,200 sq.ft well-lit workshop or boutique showroom",
+        valuation: "₹3.5L – ₹7.5L commercial valuation (or ₹6,000 – ₹14,000/mo commercial rent)",
+        tenureType: "Commercial Workshop Lease / Owned Premises",
+        zoning: "Gram Panchayat Trade NOC + Udyam MSME Registration",
+        suitability: "Clean, dry space with ample daylight, smooth tiled or cement flooring, and easy accessibility for fabric deliveries.",
+      },
+      equipments: [
+        { name: "Direct-Drive Industrial Single-Needle Lockstitch Sewing Machines (x 3 units)", estimatedCost: 84000, priority: "Essential", status: "Needs Procurement" },
+        { name: "Heavy-Duty 4-Thread Overlock / Interlock Machine", estimatedCost: 36000, priority: "Essential", status: "Needs Procurement" },
+        { name: "Commercial Vacuum Steam Ironing Table & Boiler Generator", estimatedCost: 32000, priority: "Essential", status: "Needs Procurement" },
+        { name: "Large Fabric Pattern Cutting Table (8x4 ft) & Rotary Electric Cloth Cutter", estimatedCost: 22000, priority: "Essential", status: "Needs Procurement" },
+        { name: "Apparel Display Mannequins & Powder-Coated Garment Hanging Racks", estimatedCost: 18000, priority: "Growth", status: "Recommended" },
+        { name: "Computerized Multi-Needle Embroidery & Button-Holing Unit", estimatedCost: 95000, priority: "Growth", status: "Expansion Phase" },
+      ],
+      growthResources: {
+        humanCapital: "2 skilled master tailors / stitchers + 1 finishing and packaging assistant.",
+        powerAndUtilities: "Single-phase / 3-phase commercial electrical sanction (5 kW) with 2 kVA sine-wave inverter backup.",
+        workingCapitalReserve: `₹${Math.round(revenueNum * 0.45).toLocaleString('en-IN')} (Rolls of base fabric, lining, trims, buttons, and zippers).`,
+        digitalAndLogistics: "WhatsApp Business catalog, Instagram boutique profile, and tie-up with local courier & school uniform contracts.",
+      },
+    },
+
     General: {
       land: {
         requiredArea: "800 – 1,800 sq.ft operational workspace",
@@ -169,4 +217,22 @@ export function getDynamicBusinessResources({
     growthResources: selected.growthResources,
     existingAssetsSummary: existingResources ? existingResources : "No specific existing assets declared during registration.",
   };
+}
+
+/**
+ * Formats a clean, user-friendly prefilled text description of suggested resources
+ * for a given business category and scale.
+ */
+export function formatResourceSuggestionsAsText(params) {
+  const res = getDynamicBusinessResources(params);
+  const essentialEquip = res.equipments
+    .filter((e) => e.priority === "Essential")
+    .map((e) => `${e.name} (approx ₹${e.estimatedCost.toLocaleString("en-IN")})`)
+    .slice(0, 3)
+    .join(", ");
+
+  return `Space & Facility: ${res.land.requiredArea} (${res.land.tenureType})
+Key Equipment: ${essentialEquip}
+Power & Utilities: ${res.growthResources.powerAndUtilities}
+Operating Staff: ${res.growthResources.humanCapital}`;
 }

@@ -5,7 +5,8 @@ import Link from "next/link";
 import {
   Map, Activity, ArrowRight, ArrowLeft, TrendingUp, ChevronRight, Check,
   ShieldAlert, FileText, Compass, IndianRupee, Layers, BarChart2,
-  Wrench, Building, Users, Zap, AlertTriangle, ShieldCheck, Briefcase, Edit3, Trash2
+  Wrench, Building, Users, Zap, AlertTriangle, ShieldCheck, Briefcase, Edit3, Trash2,
+  Sparkles
 } from "lucide-react";
 import { EditorialDonutChart, FinancialTrajectoryAreaChart } from "@/components/ui/charts";
 import { useBusinessDetails } from "@/lib/data/businesses";
@@ -334,25 +335,70 @@ export const BusinessDetailsView = () => {
                     </div>
                     <span className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight">Resources & Assets</span>
                   </div>
-                  <span className="font-sans text-[10.5px] font-bold text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200/60 tracking-wider">
-                    Declared Input
+                  <span className={`font-sans text-[10.5px] font-bold px-2.5 py-0.5 rounded-full border tracking-wider ${
+                    business.resources?.existingResources && !business.resources.existingResources.toLowerCase().includes("facilities & equipment")
+                      ? "text-teal-800 bg-teal-50 border-teal-200/60"
+                      : "text-emerald-800 bg-emerald-50 border-emerald-200/60"
+                  }`}>
+                    {business.resources?.existingResources && !business.resources.existingResources.toLowerCase().includes("facilities & equipment")
+                      ? "Declared Input"
+                      : "AI Suggested Benchmark"}
                   </span>
                 </div>
 
                 <div className="flex flex-col gap-4 my-auto">
-                  <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-sans text-[12px] font-medium text-slate-500">Your Declared Assets</span>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E6702] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
-                        <Check className="w-3 h-3" /> Recorded
-                      </span>
+                  {business.resources?.existingResources && !business.resources.existingResources.toLowerCase().includes("facilities & equipment") ? (
+                    <div className="bg-slate-50/80 rounded-xl p-3.5 border border-slate-100 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-sans text-[12px] font-medium text-slate-500">Your Declared Assets</span>
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E6702] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                          <Check className="w-3 h-3" /> Recorded
+                        </span>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-2xs">
+                        <p className="font-sans text-[13.5px] font-semibold text-slate-800 leading-relaxed whitespace-pre-wrap break-words">
+                          {business.resources.existingResources}
+                        </p>
+                      </div>
                     </div>
-                    <div className="bg-white p-3 rounded-lg border border-slate-200/80 shadow-2xs">
-                      <p className="font-sans text-[13.5px] font-semibold text-slate-800 leading-relaxed whitespace-pre-wrap break-words">
-                        {business.resources?.existingResources || (business as any).existingResources || "Owned workspace, primary tools, and basic utility access declared during setup."}
+                  ) : (
+                    <div className="bg-emerald-50/50 rounded-xl p-3.5 border border-emerald-100 flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-sans text-[12px] font-semibold text-emerald-900">
+                          Suggested Resources for {business.category}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-[#1E6702] bg-white px-2 py-0.5 rounded-md border border-emerald-200/60">
+                          <Sparkles className="w-3 h-3" /> Auto-Generated
+                        </span>
+                      </div>
+                      <p className="text-[11.5px] text-slate-600 leading-relaxed">
+                        No specific assets were entered. Based on your business type, the following infrastructure is recommended:
                       </p>
+                      {dynamicResources && (
+                        <div className="flex flex-col gap-2 text-xs">
+                          <div className="bg-white p-2.5 rounded-lg border border-emerald-100">
+                            <span className="font-bold text-slate-700 block mb-0.5">Required Facility & Land:</span>
+                            <span className="text-slate-600 font-medium">{dynamicResources.land.requiredArea}</span>
+                          </div>
+                          <div className="bg-white p-2.5 rounded-lg border border-emerald-100">
+                            <span className="font-bold text-slate-700 block mb-1">Essential Equipment Needed:</span>
+                            <div className="space-y-1">
+                              {dynamicResources.equipments.slice(0, 3).map((eq, i) => (
+                                <div key={i} className="flex justify-between items-center text-[11.5px]">
+                                  <span className="text-slate-700 truncate">• {eq.name}</span>
+                                  <span className="font-bold text-[#1E6702] shrink-0 ml-1">₹{eq.estimatedCost.toLocaleString('en-IN')}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="bg-white p-2 rounded-lg border border-emerald-100 text-[11px] text-slate-600 flex justify-between">
+                            <span>Power: <strong className="text-slate-700">{dynamicResources.growthResources.powerAndUtilities.split("+")[0]}</strong></span>
+                            <span>Buffer: <strong className="text-slate-700">{dynamicResources.growthResources.workingCapitalReserve.split("(")[0]}</strong></span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="p-2.5 bg-slate-50/80 rounded-lg border border-slate-100 flex flex-col gap-0.5">
@@ -370,7 +416,9 @@ export const BusinessDetailsView = () => {
 
                 <div className="pt-3 border-t border-slate-100 mt-2">
                   <p className="font-sans text-[11px] text-slate-500 leading-relaxed font-medium">
-                    Self-reported physical assets and equipment entered during setup.
+                    {business.resources?.existingResources && !business.resources.existingResources.toLowerCase().includes("facilities & equipment")
+                      ? "Self-reported physical assets and equipment entered during setup."
+                      : "Industry-standard physical assets, machinery, and utilities systematically calculated by AI."}
                   </p>
                 </div>
               </div>

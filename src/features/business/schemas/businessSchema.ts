@@ -8,6 +8,8 @@ import {
 export const businessFormSchema = z
   .object({
     categoryId: z.string().min(1, "Business category is required"),
+    name: z.string().optional(),
+    description: z.string().optional(),
     state: z.string().min(1, "State is required"),
     district: z.string().min(1, "District is required"),
     block: z.string().optional(),
