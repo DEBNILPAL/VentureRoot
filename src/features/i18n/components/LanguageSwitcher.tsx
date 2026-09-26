@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useUIStore, SUPPORTED_LANGUAGES, Language } from "@/stores/useUIStore";
+import { SUPPORTED_LANGUAGES, Language } from "@/stores/useUIStore";
+import { useLanguage } from "./LanguageProvider";
 import { Globe, ChevronDown, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,7 +15,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   className = "",
   variant = "default",
 }) => {
-  const { language, setLanguage } = useUIStore();
+  const { language, setLanguage } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 

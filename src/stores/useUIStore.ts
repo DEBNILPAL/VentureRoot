@@ -25,15 +25,7 @@ export const detectBrowserLanguage = (): Language => {
   return "en";
 };
 
-export const getInitialLanguage = (): Language => {
-  if (typeof document !== "undefined") {
-    const match = document.cookie.match(/ventureroot_locale=([a-z]{2})/i);
-    if (match && ["en", "bn", "hi", "pa", "mr", "ta", "te"].includes(match[1])) {
-      return match[1] as Language;
-    }
-  }
-  return "en";
-};
+export const getInitialLanguage = (): Language => "en";
 
 interface UIState {
   isSidebarOpen: boolean;
@@ -48,7 +40,7 @@ export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
       isSidebarOpen: true,
-      language: getInitialLanguage(),
+      language: "en",
 
       toggleSidebar: () =>
         set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
@@ -63,20 +55,9 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: "ventureroot_ui_storage",
-      onRehydrateStorage: () => (state) => {
-        if (typeof document !== "undefined") {
-          const cookieMatch = document.cookie.match(/ventureroot_locale=([a-z]{2})/i);
-          if (cookieMatch && ["en", "bn", "hi", "pa", "mr", "ta", "te"].includes(cookieMatch[1])) {
-            const cookieLang = cookieMatch[1] as Language;
-            if (state && state.language !== cookieLang) {
-              state.language = cookieLang;
-            }
-          }
-          if (state?.language) {
-            document.documentElement.lang = state.language;
-          }
-        }
-      },
+      partialize: (state) => ({
+        isSidebarOpen: state.isSidebarOpen,
+      }),
     }
   )
 );

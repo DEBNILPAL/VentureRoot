@@ -34,7 +34,7 @@ export function CleanNavbar() {
             { name: t("nav.contactUs") || "Contact Us", href: "/#footer" },
           ].map((link, idx) => (
             <Link 
-              key={link.name}
+              key={link.href}
               href={link.href} 
               onMouseEnter={() => setHoveredIndex(idx)}
               className="relative px-4 py-2 text-sm font-semibold text-secondary transition-colors active:scale-[0.97]"

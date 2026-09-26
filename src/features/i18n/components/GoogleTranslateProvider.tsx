@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useUIStore, Language } from "@/stores/useUIStore";
+import { useLanguage } from "./LanguageProvider";
 
 declare global {
   interface Window {
@@ -68,7 +69,7 @@ if (typeof window !== "undefined" && !(window as any).__vr_reload_guarded) {
  * while keeping VentureRoot's custom UI, styles, and LanguageSwitcher.
  */
 export const GoogleTranslateProvider = () => {
-  const language = useUIStore((s) => s.language);
+  const { language } = useLanguage();
   const pathname = usePathname();
   const isInitialized = useRef(false);
   const lastAppliedLang = useRef<string | null>(null);

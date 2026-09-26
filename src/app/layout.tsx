@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Poppins, Lora } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
+import { LanguageProvider } from "@/features/i18n/components/LanguageProvider";
+import { Language } from "@/stores/useUIStore";
 import { GoogleTranslateProvider } from "@/features/i18n/components/GoogleTranslateProvider";
 import PwaRegister from "@/components/pwa/PwaRegister";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
@@ -55,21 +57,26 @@ export const metadata: Metadata = {
   },
 };
 
+const VALID_LANGUAGES: Language[] = ["en", "bn", "hi", "pa", "mr", "ta", "te"];
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const locale = cookieStore.get("ventureroot_locale")?.value || "en";
+  const rawLocale = cookieStore.get("ventureroot_locale")?.value as Language;
+  const locale: Language = VALID_LANGUAGES.includes(rawLocale) ? rawLocale : "en";
 
   return (
     <html lang={locale} className={`${poppins.variable} ${lora.variable} font-sans`} suppressHydrationWarning>
       <body className="antialiased text-[#200813] bg-[#f4fce8]" suppressHydrationWarning>
-        <GoogleTranslateProvider />
-        {children}
-        <PwaRegister />
-        <InstallPrompt />
+        <LanguageProvider initialLanguage={locale}>
+          <GoogleTranslateProvider />
+          {children}
+          <PwaRegister />
+          <InstallPrompt />
+        </LanguageProvider>
       </body>
     </html>
   );

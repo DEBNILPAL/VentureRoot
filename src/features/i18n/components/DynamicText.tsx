@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useUIStore } from "@/stores/useUIStore";
+import { useLanguage } from "./LanguageProvider";
 import { useDynamicTranslation } from "../services/translateService";
 
 interface DynamicTextProps {
@@ -22,7 +22,7 @@ export const DynamicText: React.FC<DynamicTextProps> = ({
   className = "",
   fallback,
 }) => {
-  const language = useUIStore((s) => s.language);
+  const { language } = useLanguage();
   const rawText = typeof text === "string" 
     ? text 
     : (typeof children === "string" ? children : (text != null ? String(text) : ""));

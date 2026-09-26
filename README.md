@@ -73,7 +73,7 @@ It empowers founders with hyper-local geospatial market radar, real-time competi
 
 Create a `.env` file in the root directory and configure the variables below.
 
-> **Note**: For security, `GEMINI_API_KEY`, `ELEVENLABS_API_KEY`, and `OPENAI_API_KEY` are left empty. Please insert your own valid keys when activating those services.
+> **Note**: For security, sensitive keys (`GEMINI_API_KEY`, `GROQ_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `OPENAI_API_KEY`, etc.) are left blank. Public microservice URLs and mock values are provided for reference.
 
 ```env
 # Runtime Environment & App URLs
@@ -112,6 +112,9 @@ RAG_SERVICE_URL=https://ventureroot-rag-model.onrender.com
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.5-flash
 
+# Groq API Key (Ultra-fast LLM translation & advisory)
+GROQ_API_KEY=
+
 # OpenStreetMap / LocationIQ Geocoding & Map Tiles (Optional)
 # Leave blank to use default OpenStreetMap tiles and Nominatim geocoding
 OPENSTREETMAP_API_KEY=
@@ -120,7 +123,7 @@ NEXT_PUBLIC_OPENSTREETMAP_API_KEY=
 # Voice & Speech Engine Configuration (ElevenLabs & OpenAI)
 # Enter your ElevenLabs and OpenAI API keys below:
 ELEVENLABS_API_KEY=
-ELEVENLABS_VOICE_ID=EXAVITQu4vr4xnSDxMaL
+ELEVENLABS_VOICE_ID=
 OPENAI_API_KEY=
 ```
 

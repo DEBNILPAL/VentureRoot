@@ -1,12 +1,12 @@
-import { useUIStore, Language } from "@/stores/useUIStore";
+import { Language } from "@/stores/useUIStore";
+import { useLanguage } from "../components/LanguageProvider";
 import { translations, SupportedLanguage } from "../translations";
 import { formatCurrency as formatCurrencyUtil, formatDate as formatDateUtil, formatNumber as formatNumberUtil } from "../utils/formatters";
 
 export type TranslationKey = string;
 
 export const useTranslation = () => {
-  const language = useUIStore((state) => state.language) as SupportedLanguage;
-  const setLanguage = useUIStore((state) => state.setLanguage);
+  const { language, setLanguage } = useLanguage();
 
   /**
    * Translates a key with graceful fallback to English, then to defaultValue/key.
