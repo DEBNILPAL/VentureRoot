@@ -34,7 +34,7 @@ export const DynamicText: React.FC<DynamicTextProps> = ({
   }
 
   return (
-    <Component className={className}>
+    <Component className={`notranslate ${className}`.trim()} translate="no">
       {translated || rawText}
     </Component>
   );

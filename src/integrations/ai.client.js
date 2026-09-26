@@ -348,45 +348,48 @@ export async function chatWithAi({ message, context, history = [] }) {
   const groqApiKey = process.env.GROQ_API_KEY || process.env.GROK_API_KEY || userProvided.groqApiKey;
   if (groqApiKey && typeof groqApiKey === "string" && groqApiKey.trim()) {
     try {
-      const groqRes = await fetchWithTimeout("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${groqApiKey.trim()}`,
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            { role: "system", content: systemInstruction },
-            ...(userProvided.history || history || []).map((h) => ({
-              role: h.role === "assistant" ? "assistant" : "user",
-              content: String(h.content),
-            })),
-            { role: "user", content: String(message) },
-          ],
-          temperature: 0.65,
-          max_tokens: 2048,
-        }),
-      }, 10000);
+      const models = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.3-70b-versatile", "qwen/qwen3.8-27b"];
+      for (const model of models) {
+        const groqRes = await fetchWithTimeout("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${groqApiKey.trim()}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemInstruction },
+              ...(userProvided.history || history || []).map((h) => ({
+                role: h.role === "assistant" ? "assistant" : "user",
+                content: String(h.content),
+              })),
+              { role: "user", content: String(message) },
+            ],
+            temperature: 0.65,
+            max_tokens: 2048,
+          }),
+        }, 10000);
 
-      if (groqRes.ok) {
-        const groqData = await groqRes.json();
-        const text = groqData.choices?.[0]?.message?.content?.trim();
-        if (text) {
-          return {
-            message: text,
-            confidence: "HIGH",
-            model: "llama-3.3-70b-versatile (Groq)",
-            evidence: {
-              sources: [
-                `Venture: ${biz?.name || "Business"} (${category}, ${district})`,
-                `Promoter Margin: ₹${marginNum.toLocaleString('en-IN')}`,
-                `Powered by Groq High-Performance Engine`,
-              ],
-              type: "FACT",
-              confidence: 98,
-            },
-          };
+        if (groqRes.ok) {
+          const groqData = await groqRes.json();
+          const text = groqData.choices?.[0]?.message?.content?.trim();
+          if (text) {
+            return {
+              message: text,
+              confidence: "HIGH",
+              model: `${model} (Groq)`,
+              evidence: {
+                sources: [
+                  `Venture: ${biz?.name || "Business"} (${category}, ${district})`,
+                  `Promoter Margin: ₹${marginNum.toLocaleString('en-IN')}`,
+                  `Powered by Groq High-Performance Engine`,
+                ],
+                type: "FACT",
+                confidence: 98,
+              },
+            };
+          }
         }
       }
     } catch (err) {

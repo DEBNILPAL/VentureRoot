@@ -1249,10 +1249,17 @@ function mapCompetition(m2, businessCategory, business) {
  */
 function mapSWOT(m1, m2, businessCategory) {
   const cat = m2?.selected_category_analysis;
-  const positiveFactors = m1?.top_positive_factors?.map(f => f?.factor || String(f)) || [];
-  const negativeFactors = m1?.top_negative_factors?.map(f => f?.factor || String(f)) || [];
-  const catPositive = cat?.positive_factors || [];
-  const catRisks = cat?.risk_factors || [];
+  const cleanFactor = (f) => {
+    if (!f) return null;
+    const str = (typeof f === "string" ? f : f?.factor || f?.name || String(f)).trim();
+    if (!str || str.length <= 2 || /^(&|and|\+|-|_|etc\.?)$/i.test(str)) return null;
+    return str.replace(/_/g, " ");
+  };
+
+  const positiveFactors = (m1?.top_positive_factors?.map(cleanFactor).filter(Boolean) || []);
+  const negativeFactors = (m1?.top_negative_factors?.map(cleanFactor).filter(Boolean) || []);
+  const catPositive = (cat?.positive_factors?.map(cleanFactor).filter(Boolean) || []);
+  const catRisks = (cat?.risk_factors?.map(cleanFactor).filter(Boolean) || []);
 
   const strengths = [
     ...catPositive.slice(0, 2),

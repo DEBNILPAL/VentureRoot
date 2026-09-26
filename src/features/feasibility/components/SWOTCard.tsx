@@ -12,7 +12,7 @@ export const SWOTCard = ({ data }: { data?: SWOTAnalysis }) => {
   if (!data) return null;
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-5 h-full">
+    <div className="notranslate bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-5 h-full" translate="no">
 
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -29,17 +29,17 @@ export const SWOTCard = ({ data }: { data?: SWOTAnalysis }) => {
         <div className="grid grid-cols-1 md:grid-cols-12 border-b border-slate-200 bg-slate-50/50">
           <div className="hidden md:block md:col-span-1" />
           <div className="md:col-span-5 p-2.5 text-center border-b md:border-b-0 md:border-r border-slate-200">
-            <span className="font-sans text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Helpful</span>
+            <span className="font-sans text-[11px] font-bold text-emerald-700 uppercase tracking-wider">{t("feasi.helpful") || "Helpful"}</span>
           </div>
           <div className="md:col-span-5 p-2.5 text-center">
-            <span className="font-sans text-[11px] font-bold text-rose-600 uppercase tracking-wider">Harmful</span>
+            <span className="font-sans text-[11px] font-bold text-rose-600 uppercase tracking-wider">{t("feasi.harmful") || "Harmful"}</span>
           </div>
         </div>
 
         {/* Row 1: Internal */}
         <div className="grid grid-cols-1 md:grid-cols-12 border-b border-slate-200">
           <div className="hidden md:flex md:col-span-1 items-center justify-center border-r border-slate-200 bg-slate-50/80">
-            <span className="font-sans text-[11px] font-bold text-slate-500 uppercase tracking-wider -rotate-90">Internal</span>
+            <span className="font-sans text-[11px] font-bold text-slate-500 uppercase tracking-wider -rotate-90">{t("feasi.internal") || "Internal"}</span>
           </div>
 
           {/* Strengths - Soft soothing mint/sage pastel */}
@@ -76,7 +76,7 @@ export const SWOTCard = ({ data }: { data?: SWOTAnalysis }) => {
         {/* Row 2: External */}
         <div className="grid grid-cols-1 md:grid-cols-12">
           <div className="hidden md:flex md:col-span-1 items-center justify-center border-r border-slate-200 bg-slate-50/80">
-            <span className="font-sans text-[11px] font-bold text-slate-500 uppercase tracking-wider -rotate-90">External</span>
+            <span className="font-sans text-[11px] font-bold text-slate-500 uppercase tracking-wider -rotate-90">{t("feasi.external") || "External"}</span>
           </div>
 
           {/* Opportunities - Soft soothing lavender/wisteria pastel */}

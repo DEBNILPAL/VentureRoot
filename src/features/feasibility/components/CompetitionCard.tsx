@@ -647,7 +647,7 @@ export const CompetitionCard = ({
   }, [topRankedCompetitors, topFilter]);
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-6 h-full">
+    <div className="notranslate bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-6 h-full" translate="no">
 
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">

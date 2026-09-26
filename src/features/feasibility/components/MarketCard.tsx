@@ -27,13 +27,13 @@ export const MarketCard = ({
   return (
     <>
       {/* 1. Location Intelligence (Map) - Full Width */}
-      <div className="col-span-1 xl:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-5">
+      <div className="notranslate col-span-1 xl:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-5" translate="no">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-vr-teal/10 flex items-center justify-center border border-vr-teal/20">
             <MapPin className="w-5 h-5 text-vr-teal" />
           </div>
           <h2 className="font-heading text-[28px] md:text-[32px] font-bold text-gray-900">
-            Location Intelligence
+            {t("feasi.locationIntel") || "Location Intelligence"}
           </h2>
         </div>
 
@@ -48,7 +48,7 @@ export const MarketCard = ({
       </div>
 
       {/* 2. Market Demand (Stats) - Half Width */}
-      <div className="col-span-1 bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-6 h-full">
+      <div className="notranslate col-span-1 bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-6 h-full" translate="no">
 
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -56,7 +56,7 @@ export const MarketCard = ({
             <Users className="w-5 h-5 text-slate-600" />
           </div>
           <h3 className="font-sans text-[18px] font-bold text-gray-900">
-            Market Demand
+            {t("feasi.marketDemand") || t("feasi.market") || "Market Demand"}
           </h3>
         </div>
 
@@ -64,7 +64,7 @@ export const MarketCard = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
             <div className="font-sans text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
-              <MapPin className="w-3 h-3" /> 5km Reach
+              <MapPin className="w-3 h-3" /> {t("feasi.pop5km") || "5km Reach"}
             </div>
             <div className="font-sans text-[22px] sm:text-[26px] font-bold text-gray-900">
               {data.reach.radius5km.toLocaleString("en-IN")}
@@ -72,7 +72,7 @@ export const MarketCard = ({
           </div>
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
             <div className="font-sans text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
-              <MapPin className="w-3 h-3" /> 10km Reach
+              <MapPin className="w-3 h-3" /> {t("feasi.pop10km") || "10km Reach"}
             </div>
             <div className="font-sans text-[22px] sm:text-[26px] font-bold text-gray-900">
               {data.reach.radius10km.toLocaleString("en-IN")}
@@ -81,7 +81,7 @@ export const MarketCard = ({
           {data.reach.radius20km ? (
             <div className="col-span-2 sm:col-span-1 bg-slate-50 p-4 rounded-xl border border-slate-100">
               <div className="font-sans text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
-                <MapPin className="w-3 h-3" /> 20km Reach
+                <MapPin className="w-3 h-3" /> {t("feasi.pop20km") || "20km Reach"}
               </div>
               <div className="font-sans text-[22px] sm:text-[26px] font-bold text-gray-900">
                 {data.reach.radius20km.toLocaleString("en-IN")}

@@ -400,5 +400,11 @@
   "biz.growthResources": "विकास संसाधन",
   "biz.trajectory": "वित्तीय प्रक्षेपवक्र",
   "biz.baseScenario": "आधार प्रक्षेपवक्र",
-  "biz.conservativeScenario": "उच्च-घर्षण हानि परिदृश्य"
+  "biz.conservativeScenario": "उच्च-घर्षण हानि परिदृश्य",
+  "feasi.helpful": "सहायक",
+  "feasi.harmful": "हानिकारक",
+  "feasi.internal": "आंतरिक",
+  "feasi.external": "बाहरी",
+  "feasi.locationIntel": "स्थान विश्लेषण",
+  "feasi.marketDemand": "बाजार मांग"
 }

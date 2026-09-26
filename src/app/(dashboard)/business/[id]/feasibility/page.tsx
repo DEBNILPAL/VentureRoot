@@ -29,10 +29,12 @@ import { useFeasibility } from "@/lib/data/feasibility";
 import { useBusinessDetails, getUserScopeKey } from "@/lib/data/businesses";
 import { getAuthoritativeCensusDensity } from "@/utils/feasibility.mapper";
 import { resolveCoordinatesForLocation } from "@/services/location-search.service";
+import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 
 export default function FeasibilityPage() {
   const params = useParams();
   const id = params?.id as string;
+  const { t } = useTranslation();
 
   const { data: fetchedFeasibility, isLoading, error } = useFeasibility(id);
   const { data: businessDetails } = useBusinessDetails(id);
@@ -167,7 +169,7 @@ export default function FeasibilityPage() {
       <main className="flex-1 w-full max-w-full flex flex-col gap-6">
         
         {/* Header Section */}
-        <div className="mb-4 sm:mb-6">
+        <div className="notranslate mb-4 sm:mb-6" translate="no">
           <div className="flex flex-wrap items-center gap-2.5 mb-2 sm:mb-3">
             <Link
               href="/feasibility"
@@ -179,21 +181,21 @@ export default function FeasibilityPage() {
             </Link>
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 flex-wrap">
               <Link href="/feasibility" className="hover:text-[#1E6702] transition-colors hover:underline">
-                Feasibility Hub
+                {t("nav.feasibility") || "Feasibility"}
               </Link>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
               <Link href={`/business/${id}`} className="hover:text-[#1E6702] transition-colors hover:underline truncate max-w-[160px] sm:max-w-none">
                 {businessDetails?.name || "Business"}
               </Link>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
-              <span className="text-slate-800 font-bold">Business Intelligence</span>
+              <span className="text-slate-800 font-bold">{t("feasi.bizIntel") || "Business Intelligence"}</span>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div>
               <h1 className="font-heading text-[24px] sm:text-[32px] font-bold text-[#242424] tracking-tight leading-tight flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                <span>Business Intelligence</span>
+                <span>{t("feasi.bizIntel") || "Business Intelligence"}</span>
                 {businessDetails?.name && (
                   <>
                     <span className="text-slate-400 font-normal">-</span>
@@ -204,16 +206,16 @@ export default function FeasibilityPage() {
                 )}
               </h1>
               <p className="font-sans text-[13px] sm:text-[14px] text-slate-500 font-medium mt-0.5">
-                Hyper-local market demand, competitor positioning, and feasibility intelligence.
+                {t("feasi.bizIntelSub") || "Hyper-local market demand, competitor positioning, and feasibility intelligence."}
               </p>
             </div>
             
             <div className="flex flex-wrap gap-2 mt-1 sm:mt-0 shrink-0">
               <Link href={`/business/${id}/finance`} className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-surface text-primary border border-slate-200 font-sans text-[13px] sm:text-[14px] font-semibold rounded-full shadow-sm hover:bg-slate-50 transition-colors">
-                ₹ Finance
+                ₹ {t("nav.finance") || "Finance"}
               </Link>
               <Link href={`/business/${id}/roadmap`} className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-surface text-vr-red border border-slate-200 font-sans text-[13px] sm:text-[14px] font-semibold rounded-full shadow-sm hover:bg-slate-50 transition-colors">
-                ⊕ Roadmap
+                ⊕ {t("nav.roadmap") || "Roadmap"}
               </Link>
             </div>
           </div>
@@ -222,23 +224,23 @@ export default function FeasibilityPage() {
         <FeasibilityStateBoundary status={feasibilityData.status}>
           {/* Stats Banner */}
           {/* Stats Banner (Mobile Responsive Grid) */}
-          <div className="bg-[#81cc87] rounded-2xl p-3.5 sm:p-5 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3.5 mb-6 shadow-xs">
+          <div className="notranslate bg-[#81cc87] rounded-2xl p-3.5 sm:p-5 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3.5 mb-6 shadow-xs" translate="no">
             <div className="flex flex-col gap-0.5 bg-[#3c8a45] p-3 rounded-xl min-w-0 shadow-xs">
-              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">5KM Population</span>
+              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">{t("feasi.pop5km") || "5KM Population"}</span>
               <div className="font-sans text-xl sm:text-2xl font-bold text-white truncate">
                 {(feasibilityData.market?.reach?.radius5km ?? 12450).toLocaleString("en-IN")}
               </div>
             </div>
 
             <div className="flex flex-col gap-0.5 bg-[#3c8a45] p-3 rounded-xl min-w-0 shadow-xs">
-              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">10KM Population</span>
+              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">{t("feasi.pop10km") || "10KM Population"}</span>
               <div className="font-sans text-xl sm:text-2xl font-bold text-white truncate">
                 {(feasibilityData.market?.reach?.radius10km ?? 48200).toLocaleString("en-IN")}
               </div>
             </div>
 
             <div className="flex flex-col gap-0.5 bg-[#3c8a45] p-3 rounded-xl min-w-0 shadow-xs">
-              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">20KM Population</span>
+              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">{t("feasi.pop20km") || "20KM Population"}</span>
               <div className="font-sans text-xl sm:text-2xl font-bold text-white truncate">
                 {(
                   feasibilityData.market?.reach?.radius20km ||
@@ -248,7 +250,7 @@ export default function FeasibilityPage() {
             </div>
 
             <div className="flex flex-col gap-0.5 bg-[#3c8a45] p-3 rounded-xl min-w-0 shadow-xs">
-              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">Observed Price</span>
+              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">{t("feasi.obsPrice") || "Observed Price"}</span>
               <div className="font-sans text-xl sm:text-2xl font-bold text-white truncate flex items-baseline gap-1">
                 ₹{feasibilityData.pricing?.observedMarketPrice ?? 52}{" "}
                 <span className="font-sans text-[11px] text-white/90 font-medium">
@@ -258,7 +260,7 @@ export default function FeasibilityPage() {
             </div>
 
             <div className="flex flex-col gap-0.5 bg-[#3c8a45] p-3 rounded-xl min-w-0 shadow-xs">
-              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">Expected Price</span>
+              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">{t("feasi.expPrice") || "Expected Price"}</span>
               <div className="font-sans text-xl sm:text-2xl font-bold text-white truncate flex items-center gap-1">
                 <span>₹{feasibilityData.pricing?.expectedLocalPrice ?? 55}</span>
                 <span className="font-sans text-[9px] font-bold uppercase tracking-wider bg-white text-[#3c8a45] rounded-full px-1.5 py-0.5 shrink-0">
@@ -268,7 +270,7 @@ export default function FeasibilityPage() {
             </div>
 
             <div className="flex flex-col gap-0.5 bg-[#3c8a45] p-3 rounded-xl min-w-0 col-span-2 sm:col-span-1 shadow-xs">
-              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">Confidence</span>
+              <span className="font-sans text-[11px] font-bold text-white uppercase tracking-wider truncate">{t("feasi.confScore") || "Confidence"}</span>
               <div className="font-sans text-xl sm:text-2xl font-bold text-white flex items-baseline gap-1">
                 {compositeConfidence} <span className="font-sans text-[11px] text-white/90 font-medium">/100</span>
               </div>

@@ -16,43 +16,66 @@ const REGIONAL_LANGUAGE_NAMES: Record<string, string> = {
 /**
  * Fast translation using Groq (LLaMA 3.3 70B / 3.1 8B)
  */
+const BUSINESS_TRANSLATION_SYSTEM_PROMPT = `You are an expert Indian MSME, finance, and entrepreneurship localization specialist.
+Your mission is to translate business concepts, financial metrics, and feasibility reports accurately and naturally into regional Indian languages without literal word-for-word translation errors.
+
+ESSENTIAL DOMAIN TRANSLATION RULES:
+1. COMMERCIAL ACCURACY:
+   - "Margin" / "Profit Margin" = Commercial profit percentage (Bengali: মুনাফার মার্জিন / লাভ, Hindi: लाभ मार्जिन). Never translate as page margin.
+   - "Working Capital" = Operational liquidity (Bengali: চলতি মূলধন, Hindi: कार्यशील पूंजी).
+   - "Break-even" = Zero-profit point (Bengali: লাভ-ক্ষতি সমতা বিন্দু / ব্রেক-ইভেন, Hindi: सम-विच्छेद बिंदु).
+   - "Footfall" = Customer store traffic (Bengali: ক্রেতার সমাগম / আগমন, Hindi: ग्राहकों की आवाजाही).
+   - "Catchment Area" / "Market Reach" = Customer coverage (Bengali: বাজারের পরিধি / আওতাধীন এলাকা, Hindi: बाजार पहुंच).
+   - "Seed Capital" / "Promoter Contribution" = Initial entrepreneur equity (Bengali: প্রাথমিক পুঁজি / নিজস্ব বিনিয়োগ, Hindi: प्रारंभिक पूंजी).
+   - "Mandi" = Wholesale regional market (preserve as Mandi / মান্ডি / मंडी).
+   - "Subsidies" = Government financial grants (Bengali: সরকারি ভর্তুকি / অনুদান, Hindi: सरकारी सब्सिडी / अनुदान).
+
+2. PRESERVE ACRONYMS & CURRENCY:
+   - Keep schemes, acronyms and metrics intact or phonetically standard: PMEGP, MUDRA, CGTMSE, GST, FSSAI, MSME, EMI, ROI, TAM, SAM, SOM.
+   - Keep currency symbols intact: ₹, INR, Lakh, Cr, Crore.
+
+3. OUTPUT:
+   - Deliver clear, natural phrasing suitable for an Indian entrepreneur.
+   - Return ONLY the translated text without quotes, notes, or markdown fences.`;
+
 async function translateWithGroq(
   text: string,
   targetLang: string,
   apiKey: string
 ): Promise<string> {
   const targetLangName = REGIONAL_LANGUAGE_NAMES[targetLang] || targetLang;
+  const models = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.3-70b-versatile", "qwen/qwen3.8-27b"];
 
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a professional enterprise translator for Indian business and local commerce applications. Translate the given text accurately and naturally into the target language. Keep numerical figures, currency symbols (₹), brand names, and business acronyms intact. Return ONLY the translated string with no quotes, notes, or preamble.",
+  for (const model of models) {
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey.trim()}`,
         },
-        {
-          role: "user",
-          content: `Target Language: ${targetLangName}\nText: ${text}`,
-        },
-      ],
-      temperature: 0.1,
-    }),
-  });
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: "system",
+              content: BUSINESS_TRANSLATION_SYSTEM_PROMPT,
+            },
+            {
+              role: "user",
+              content: `Target Language: ${targetLangName}\nText: ${text}`,
+            },
+          ],
+          temperature: 0.1,
+        }),
+      });
 
-  if (res.ok) {
-    const data = await res.json();
-    const candidate = data.choices?.[0]?.message?.content?.trim();
-    if (candidate) return candidate;
-  } else {
-    const err = await res.text();
-    console.warn("[Translate API] Groq API warning:", res.status, err);
+      if (res.ok) {
+        const data = await res.json();
+        const candidate = data.choices?.[0]?.message?.content?.trim();
+        if (candidate) return candidate.replace(/^["']|["']$/g, "");
+      }
+    } catch (_) {}
   }
 
   return text;
@@ -78,7 +101,7 @@ async function translateWithGemini(
           {
             parts: [
               {
-                text: `Translate this business UI text into ${targetLangName}. Output ONLY the translated text without quotes or explanations:\n\n${text}`,
+                text: `${BUSINESS_TRANSLATION_SYSTEM_PROMPT}\n\nTranslate this business text into ${targetLangName}. Output ONLY the translated text:\n\n${text}`,
               },
             ],
           },

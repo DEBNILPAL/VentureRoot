@@ -159,7 +159,7 @@ export const RiskCard = ({ data }: { data?: RiskItem[] }) => {
   if (!data || data.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-6 h-full">
+    <div className="notranslate bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-6 h-full" translate="no">
 
       {/* Header with Severity Breakdown and Expand All toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">

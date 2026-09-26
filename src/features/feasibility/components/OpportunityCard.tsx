@@ -12,7 +12,7 @@ export const OpportunityCard = ({ data }: { data?: OpportunityAnalysis }) => {
   if (!data) return null;
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-6 h-full">
+    <div className="notranslate bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-6 h-full" translate="no">
 
       {/* Header */}
       <div className="flex items-center gap-3">

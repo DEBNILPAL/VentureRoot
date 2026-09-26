@@ -178,7 +178,7 @@ export const TopNav = () => {
                   />
                 )}
                 <link.icon className={`w-[15px] h-[15px] relative z-10 transition-transform duration-300 ${!isActive && hoveredIndex === idx ? "scale-110" : ""}`} />
-                <span className={`relative z-10 transition-transform duration-300 ${!isActive && hoveredIndex === idx ? "scale-[1.02]" : ""}`}>{t(link.tKey as any)}</span>
+                <span translate="no" className={`notranslate relative z-10 transition-transform duration-300 ${!isActive && hoveredIndex === idx ? "scale-[1.02]" : ""}`}>{t(link.tKey as any)}</span>
               </Link>
             );
           })}
@@ -299,7 +299,7 @@ export const TopNav = () => {
                       }`}
                     >
                       <link.icon className={`w-[18px] h-[18px] ${isActive ? "text-[#1E6702]" : "text-white/70"}`} />
-                      {t(link.tKey as any)}
+                      <span translate="no" className="notranslate">{t(link.tKey as any)}</span>
                     </Link>
                   </motion.div>
                 );
