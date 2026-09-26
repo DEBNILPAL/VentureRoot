@@ -13,5 +13,5 @@ export const DashboardFooter: React.FC = () => {
     return null;
   }
 
-  return <PageFooter className="mt-auto py-5" />;
+  return <PageFooter className="mt-auto py-5 pb-24 md:pb-5" />;
 };

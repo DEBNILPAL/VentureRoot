@@ -35,6 +35,7 @@ export const RiskCard = ({ data }: { data?: RiskItem[] }) => {
       id: "market",
       title: t("feasi.angleMarket") || "Market & Demand",
       description: "Customer purchasing patterns, price sensitivity, demand elasticity & competitor dynamics",
+      shortDescription: "Customer demand, pricing & competitor dynamics",
       icon: TrendingDown,
       iconColor: "text-blue-600 bg-blue-50 border-blue-200",
       matcher: (r: RiskItem) => {
@@ -46,6 +47,7 @@ export const RiskCard = ({ data }: { data?: RiskItem[] }) => {
       id: "supply",
       title: t("feasi.angleSupply") || "Supply Chain",
       description: "Input commodity costs, supplier dependencies, transport bottlenecks & procurement stability",
+      shortDescription: "Commodity costs, suppliers & transport stability",
       icon: Truck,
       iconColor: "text-amber-600 bg-amber-50 border-amber-200",
       matcher: (r: RiskItem) => {
@@ -57,6 +59,7 @@ export const RiskCard = ({ data }: { data?: RiskItem[] }) => {
       id: "operational",
       title: t("feasi.angleOperational") || "Operational",
       description: "Day-to-day processing, equipment downtime, technical workflows & labor retention",
+      shortDescription: "Daily processing, equipment & labor retention",
       icon: Wrench,
       iconColor: "text-indigo-600 bg-indigo-50 border-indigo-200",
       matcher: (r: RiskItem) => {
@@ -68,6 +71,7 @@ export const RiskCard = ({ data }: { data?: RiskItem[] }) => {
       id: "regulatory",
       title: t("feasi.angleRegulatory") || "Regulatory",
       description: "FSSAI & food standards, statutory registrations, tax compliance & environmental laws",
+      shortDescription: "FSSAI standards, licensing & tax compliance",
       icon: FileText,
       iconColor: "text-purple-600 bg-purple-50 border-purple-200",
       matcher: (r: RiskItem) => {
@@ -79,6 +83,7 @@ export const RiskCard = ({ data }: { data?: RiskItem[] }) => {
       id: "financial",
       title: t("feasi.angleFinancial") || "Financial & Cash Flow",
       description: "Working capital liquidity, debtor payment turnaround, margin compression & debt coverage",
+      shortDescription: "Working capital liquidity, margins & debt coverage",
       icon: DollarSign,
       iconColor: "text-emerald-600 bg-emerald-50 border-emerald-200",
       matcher: (r: RiskItem) => {
@@ -90,6 +95,7 @@ export const RiskCard = ({ data }: { data?: RiskItem[] }) => {
       id: "climate",
       title: t("feasi.angleClimate") || "Climate & Seasonal",
       description: "Monsoon impacts, extreme weather anomalies, seasonal perishability & temperature stress",
+      shortDescription: "Monsoon impacts, weather & seasonal perishability",
       icon: CloudRain,
       iconColor: "text-cyan-600 bg-cyan-50 border-cyan-200",
       matcher: (r: RiskItem) => {
@@ -123,6 +129,7 @@ export const RiskCard = ({ data }: { data?: RiskItem[] }) => {
         id: "other",
         title: "Additional Risk Vectors",
         description: "Specialized enterprise and sector-specific risk considerations",
+        shortDescription: "Specialized sector risk considerations",
         icon: AlertTriangle,
         iconColor: "text-rose-600 bg-rose-50 border-rose-200",
         matcher: () => true,
@@ -236,29 +243,29 @@ export const RiskCard = ({ data }: { data?: RiskItem[] }) => {
                 className="w-full px-4 sm:px-5 py-3.5 flex items-center justify-between gap-3 text-left transition-colors hover:bg-slate-50/80 focus:outline-none"
               >
                 {/* Left: Icon & Angle Information */}
-                <div className="flex items-center gap-3.5 min-w-0">
+                <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 ${angle.iconColor}`}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 mt-0.5 sm:mt-0 ${angle.iconColor}`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="font-sans text-[15px] sm:text-[16px] font-bold text-gray-900 leading-tight">
                         {angle.title}
                       </h4>
                       {angle.items.length > 0 ? (
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
                           {angle.items.length} {angle.items.length === 1 ? "Risk" : "Risks"}
                         </span>
                       ) : (
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 shrink-0">
                           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                           0 Risks
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 font-medium truncate mt-0.5 max-w-md">
+                    <p className="text-[11.5px] sm:text-xs text-slate-500 font-medium mt-1 max-w-2xl whitespace-normal break-words leading-snug sm:leading-relaxed">
                       {angle.description}
                     </p>
                   </div>

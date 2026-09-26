@@ -27,26 +27,26 @@ export const PricingCard = ({ data }: { data?: PricingAnalysis }) => {
   const observedPosPct = Math.min(95, Math.max(5, Math.round(((observedPrice - minPrice) / rangeSpan) * 100)));
 
   return (
-    <div className="notranslate bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 flex flex-col gap-6 h-full" translate="no">
+    <div className="notranslate bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-5 md:p-6 flex flex-col gap-5 sm:gap-6 h-full overflow-hidden" translate="no">
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-200 shrink-0 mt-0.5">
             <IndianRupee className="w-5 h-5 text-emerald-600" />
           </div>
-          <div>
-            <h3 className="font-sans text-[18px] font-bold text-gray-900">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-sans text-[17px] sm:text-[18px] font-bold text-gray-900 leading-snug">
               {t("feasi.pricing") || "Pricing & Value Intelligence"}
             </h3>
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-xs text-slate-500 font-medium mt-0.5 leading-relaxed break-words">
               {t("feasi.scrapedRates") || "Web-scraped market rates & deterministic economic prediction"}
             </p>
           </div>
         </div>
 
         {/* Live Scraper Badge */}
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10.5px] font-bold shrink-0">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10.5px] font-bold self-start sm:self-auto shrink-0 shadow-2xs">
           <Globe className="w-3 h-3 text-blue-600 animate-pulse" />
           {t("feasi.liveRates") || "Live Scraped Mandi Rates"}
         </span>
@@ -66,7 +66,7 @@ export const PricingCard = ({ data }: { data?: PricingAnalysis }) => {
           </div>
 
           <div>
-            <div className="font-sans text-[30px] font-black text-gray-900 leading-tight">
+            <div className="font-sans text-[28px] sm:text-[30px] font-black text-gray-900 leading-tight">
               ₹{observedPrice.toLocaleString("en-IN")}
             </div>
             <span className="font-sans text-[13px] text-slate-500 font-semibold">
@@ -74,9 +74,9 @@ export const PricingCard = ({ data }: { data?: PricingAnalysis }) => {
             </span>
           </div>
 
-          <div className="pt-2 border-t border-slate-200/80 text-[11px] text-slate-500 font-medium flex items-center justify-between">
-            <span className="truncate">{data.scrapedMarketName || "District APMC Mandi"}</span>
-            <span className="shrink-0 text-slate-400">{data.priceDate || "Today"}</span>
+          <div className="pt-2 border-t border-slate-200/80 text-[11px] text-slate-500 font-medium flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+            <span className="break-words leading-tight flex-1 min-w-[130px]">{data.scrapedMarketName || "District APMC Mandi"}</span>
+            <span className="shrink-0 text-slate-400 text-[10.5px]">{data.priceDate || "Today"}</span>
           </div>
         </div>
 
@@ -95,17 +95,17 @@ export const PricingCard = ({ data }: { data?: PricingAnalysis }) => {
           </div>
 
           <div>
-            <div className="font-sans text-[30px] font-black text-emerald-900 leading-tight">
+            <div className="font-sans text-[28px] sm:text-[30px] font-black text-emerald-900 leading-tight">
               ₹{expectedPrice.toLocaleString("en-IN")}
             </div>
-            <span className="font-sans text-[13px] text-emerald-700 font-semibold">
+            <span className="font-sans text-[13px] text-emerald-700 font-semibold break-words">
               {data.marketValue || "Premium Value"} per {displayUnit}
             </span>
           </div>
 
-          <div className="pt-2 border-t border-emerald-200 text-[11px] text-emerald-800 font-medium flex items-center justify-between">
-            <span>Model 3 Economic Forecast</span>
-            <span className="font-bold text-emerald-700">90% Conformal Bound</span>
+          <div className="pt-2 border-t border-emerald-200 text-[11px] text-emerald-800 font-medium flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+            <span className="break-words leading-tight flex-1 min-w-[130px]">Model 3 Economic Forecast</span>
+            <span className="font-bold text-emerald-700 shrink-0 text-[10.5px]">90% Conformal Bound</span>
           </div>
         </div>
       </div>
@@ -145,17 +145,17 @@ export const PricingCard = ({ data }: { data?: PricingAnalysis }) => {
           />
         </div>
 
-        <div className="flex justify-between items-center text-xs pt-1">
+        <div className="flex flex-wrap justify-between items-center gap-2 text-xs pt-1">
           <div className="flex flex-col">
             <span className="font-bold text-slate-700">₹{minPrice}</span>
             <span className="text-[10px] text-slate-400 font-medium">Standard Min</span>
           </div>
-          <div className="flex items-center gap-3 text-[11px] font-medium text-slate-500">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] font-medium text-slate-500">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-slate-700 inline-block" /> Scraped: ₹{observedPrice}
+              <span className="w-2 h-2 rounded-full bg-slate-700 inline-block shrink-0" /> Scraped: ₹{observedPrice}
             </span>
             <span className="flex items-center gap-1 text-emerald-700 font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-600 inline-block" /> Forecast: ₹{expectedPrice}
+              <span className="w-2 h-2 rounded-full bg-emerald-600 inline-block shrink-0" /> Forecast: ₹{expectedPrice}
             </span>
           </div>
           <div className="flex flex-col items-end">

@@ -102,7 +102,7 @@ function Avatar({ name, isEditing }: { name: string; isEditing: boolean }) {
 
   return (
     <div className="relative group shrink-0">
-      <div className="w-[84px] h-[84px] rounded-2xl bg-gradient-to-br from-[#1E6702] to-[#124201] flex items-center justify-center shadow-[0_8px_24px_rgba(30,103,2,0.35)] border border-[#1E6702]/20">
+      <div className="w-[84px] h-[84px] rounded-2xl bg-gradient-to-br from-[#992645] to-[#751932] flex items-center justify-center shadow-[0_8px_24px_rgba(153,38,69,0.35)] border border-white/20">
         <span className="font-heading text-[26px] font-bold text-white tracking-tight select-none">{initials}</span>
       </div>
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />

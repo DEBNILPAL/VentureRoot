@@ -16,7 +16,7 @@ export default function DashboardLayout({
       <div className="flex flex-col min-h-screen bg-[#f4fce8] relative">
         <DashboardBackground />
         <TopNav />
-        <main className="flex-1 w-full relative z-10 flex flex-col justify-between pb-20 md:pb-0">
+        <main className="flex-1 w-full relative z-10 flex flex-col justify-between">
           <div className="flex-1 w-full">{children}</div>
           <DashboardFooter />
         </main>

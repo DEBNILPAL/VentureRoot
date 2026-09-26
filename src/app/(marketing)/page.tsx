@@ -133,6 +133,15 @@ function USPCarousel() {
     return () => window.removeEventListener("keydown", handler);
   }, [active]);
 
+  // Auto-advance timer (advances after 20 seconds of inactivity, resets when card changes)
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setDirection(1);
+      setActive((i) => (i + 1) % total);
+    }, 20000);
+    return () => clearInterval(timer);
+  }, [active, total]);
+
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center px-4 lg:px-8">
 
@@ -453,6 +462,18 @@ function HowItWorksSelector() {
     const nextIndex = (currentIndex + 1) % HOW_IT_WORKS_FEATURES.length;
     setActive(HOW_IT_WORKS_FEATURES[nextIndex].id as FeatureId);
   };
+
+  // Auto-advance timer (advances after 20 seconds of inactivity, resets on user interaction)
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setActive((currentId) => {
+        const curIdx = HOW_IT_WORKS_FEATURES.findIndex((f) => f.id === currentId);
+        const nextIdx = (curIdx + 1) % HOW_IT_WORKS_FEATURES.length;
+        return HOW_IT_WORKS_FEATURES[nextIdx].id as FeatureId;
+      });
+    }, 20000);
+    return () => clearInterval(timer);
+  }, [active]);
 
   return (
     <div>
@@ -848,10 +869,6 @@ export default function LandingPage() {
 
               {/* Section Header */}
               <div className="flex flex-col items-center text-center mb-14">
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-4 h-4 text-[#1E6702]" />
-                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#1E6702]">HOW IT WORKS</span>
-                </div>
                 <h2 className="text-3xl md:text-4xl font-sans font-bold text-[#200813] tracking-tight mb-4">
                   How VentureRoot Works
                 </h2>

@@ -97,18 +97,18 @@ export default function FinanceHubPage() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: idx * 0.06, ease: EASE_OUT_EXPO }}
-                className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md p-6 flex flex-col justify-between gap-5 transition-all relative overflow-hidden group"
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md p-4 sm:p-6 flex flex-col justify-between gap-5 transition-all relative overflow-hidden group"
               >
                 <div className="space-y-4">
                   {/* Card Header */}
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 rounded-full bg-emerald-50 text-[#1E6702] text-xs font-extrabold tracking-wide border border-emerald-200">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="whitespace-nowrap px-3 py-1 rounded-full bg-emerald-50 text-[#1E6702] text-xs font-extrabold tracking-wide border border-emerald-200">
                         Venture {idx + 1}
                       </span>
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                     </div>
-                    <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                    <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200 whitespace-nowrap shrink-0">
                       {biz.status || "Active / Verified"}
                     </span>
                   </div>
@@ -131,28 +131,28 @@ export default function FinanceHubPage() {
                   </div>
 
                   {/* Financial Metrics Strip */}
-                  <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-100 text-xs">
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col gap-0.5">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5 pt-2 border-t border-slate-100 text-xs">
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col gap-0.5 min-w-0">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider truncate">
                         Promoter Margin
                       </span>
-                      <span className="font-bold text-slate-900 text-sm">
+                      <span className="font-bold text-slate-900 text-xs sm:text-sm truncate">
                         ₹{marginAmt.toLocaleString("en-IN")}
                       </span>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100 flex flex-col gap-0.5">
-                      <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100 flex flex-col gap-0.5 min-w-0">
+                      <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider truncate">
                         Capex Scale
                       </span>
-                      <span className="font-bold text-[#1E6702] text-sm">
+                      <span className="font-bold text-[#1E6702] text-xs sm:text-sm truncate">
                         ₹{capexEst} Lakhs
                       </span>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-blue-50/60 border border-blue-100 flex flex-col gap-0.5">
-                      <span className="text-[10px] uppercase font-bold text-blue-800 tracking-wider">
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-blue-50/60 border border-blue-100 flex flex-col gap-0.5 col-span-2 sm:col-span-1 min-w-0">
+                      <span className="text-[10px] uppercase font-bold text-blue-800 tracking-wider truncate">
                         Target Revenue
                       </span>
-                      <span className="font-bold text-blue-900 text-sm">
+                      <span className="font-bold text-blue-900 text-xs sm:text-sm truncate">
                         {revenueAmt > 0 ? `₹${revenueAmt.toLocaleString("en-IN")}/mo` : "₹1.2L/mo"}
                       </span>
                     </div>
@@ -160,20 +160,20 @@ export default function FinanceHubPage() {
                 </div>
 
                 {/* Primary Action Button */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 sm:gap-3">
                   <Link
                     href={`/business/${biz.id}`}
-                    className="text-center py-2.5 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
+                    className="text-center py-2.5 px-3 sm:px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors whitespace-nowrap shrink-0"
                   >
                     Overview
                   </Link>
                   <Link
                     href={`/business/${biz.id}/finance`}
-                    className="flex-1 py-2.5 px-4 rounded-xl bg-[#1E6702] hover:bg-[#165201] text-white text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-emerald-950/20 active:scale-98"
+                    className="flex-1 py-2.5 px-3 sm:px-4 rounded-xl bg-[#1E6702] hover:bg-[#165201] text-white text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm hover:shadow-emerald-950/20 active:scale-98 min-w-0 text-center"
                   >
-                    <CircleDollarSign className="w-4 h-4" />
-                    <span>Inspect Financial Plan</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <CircleDollarSign className="w-4 h-4 shrink-0" />
+                    <span className="truncate">Inspect Financial Plan</span>
+                    <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                   </Link>
                 </div>
               </motion.div>

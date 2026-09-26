@@ -226,7 +226,7 @@ export default function FinancePage() {
 
       {/* ── 1. Header ─────────────────────────────────────────────────── */}
       <div className="mb-4 sm:mb-8">
-        <div className="flex flex-wrap items-center gap-2.5 mb-3 sm:mb-4">
+        <div className="flex items-center gap-2 mb-3 sm:mb-4 min-w-0 max-w-full">
           <Link
             href="/finance"
             className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white hover:bg-emerald-50 text-slate-700 hover:text-[#1E6702] border border-slate-200 transition-all active:scale-95 shadow-xs shrink-0"
@@ -235,16 +235,16 @@ export default function FinancePage() {
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 flex-wrap">
-            <Link href="/finance" className="hover:text-[#1E6702] transition-colors hover:underline">
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-slate-500 overflow-x-auto no-scrollbar whitespace-nowrap py-1 min-w-0 flex-1">
+            <Link href="/finance" className="hover:text-[#1E6702] transition-colors hover:underline shrink-0">
               Finance Hub
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
-            <Link href={`/business/${id}`} className="hover:text-[#1E6702] transition-colors hover:underline truncate max-w-[160px] sm:max-w-none">
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60 shrink-0" />
+            <Link href={`/business/${id}`} className="hover:text-[#1E6702] transition-colors hover:underline shrink-0">
               {business?.name || "Business"}
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
-            <span className="text-slate-800 font-bold">Financial Plan</span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60 shrink-0" />
+            <span className="text-slate-800 font-bold shrink-0">Financial Plan</span>
           </div>
         </div>
 

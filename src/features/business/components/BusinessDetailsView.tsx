@@ -147,7 +147,7 @@ export const BusinessDetailsView = () => {
         {/* HEADER */}
         <div className="flex flex-col gap-2 w-full text-[#402a03] mb-4">
           {/* Back Arrow Button & Breadcrumb Path */}
-          <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
+          <div className="flex items-center gap-2 mb-1.5 min-w-0 max-w-full">
             <Link
               href="/business"
               aria-label="Back to all businesses"
@@ -157,15 +157,15 @@ export const BusinessDetailsView = () => {
               <ArrowLeft className="w-4 h-4" />
             </Link>
 
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-slate-500 overflow-x-auto no-scrollbar whitespace-nowrap py-1 min-w-0 flex-1">
               <Link
                 href="/business"
-                className="hover:text-[#1E6702] transition-colors hover:underline"
+                className="hover:text-[#1E6702] transition-colors hover:underline shrink-0"
               >
                 My Registered Businesses
               </Link>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
-              <span className="text-slate-800 font-bold truncate max-w-[220px] sm:max-w-none">{business.name}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60 shrink-0" />
+              <span className="text-slate-800 font-bold shrink-0">{business.name}</span>
             </div>
           </div>
 

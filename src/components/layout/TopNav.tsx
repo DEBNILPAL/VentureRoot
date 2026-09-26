@@ -194,15 +194,15 @@ export const TopNav = () => {
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="h-8 flex items-center gap-1.5 group focus:outline-none bg-[#FFFBE7] border border-black/5 pl-1 pr-2 py-1 rounded-full shadow-[inset_0_-1px_2px_rgba(0,0,0,0.05),0_2px_5px_rgba(0,0,0,0.08)] hover:-translate-y-[1px] hover:scale-[1.02] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all duration-300 active:scale-[0.98] cursor-pointer"
+              className="h-7 sm:h-7.5 flex items-center gap-1 group focus:outline-none bg-white hover:bg-slate-50 border border-white/70 pl-0.5 pr-1.5 py-0.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] hover:-translate-y-[1px] hover:scale-[1.02] hover:shadow-[0_4px_14px_rgba(0,0,0,0.12)] transition-all duration-300 active:scale-[0.98] cursor-pointer"
               aria-expanded={isProfileOpen}
               title={displayName}
             >
-              <div className="w-6 h-6 rounded-full bg-[#1E6702] flex items-center justify-center text-[#FFFBE7] font-bold text-[11px] tracking-tight shadow-inner transition-transform duration-300 group-hover:scale-105">
+              <div className="w-6 h-6 rounded-full bg-[#992645] flex items-center justify-center text-white font-black text-[11px] tracking-tight shadow-xs transition-transform duration-300 group-hover:scale-105 shrink-0 ring-1 ring-black/5">
                 {userInitial}
               </div>
-              <motion.div animate={{ rotate: isProfileOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                <ChevronDown className="w-3 h-3 text-[#200813]/40 group-hover:text-[#1E6702] transition-colors duration-300" />
+              <motion.div animate={{ rotate: isProfileOpen ? 180 : 0 }} transition={{ duration: 0.2 }} className="flex items-center justify-center pr-0.5">
+                <ChevronDown className="w-2.5 h-2.5 text-slate-500 group-hover:text-slate-800 stroke-[2.5] transition-colors duration-300" />
               </motion.div>
             </button>
 
@@ -215,9 +215,14 @@ export const TopNav = () => {
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   className="absolute right-0 mt-3 w-56 bg-white/95 backdrop-blur-xl rounded-[20px] shadow-[0_12px_45px_-10px_rgba(32,8,19,0.15)] border border-white/50 overflow-hidden z-50 p-1.5 origin-top-right"
                 >
-                  <div className="px-4 py-3 border-b border-black/5">
-                    <p className="text-sm font-bold text-[#200813] truncate">{displayName}</p>
-                    <p className="text-xs font-medium text-[#200813]/50 mt-0.5">{activeRoleLabel}</p>
+                  <div className="px-4 py-3 border-b border-black/5 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-[#992645] flex items-center justify-center text-white font-bold text-xs shadow-xs ring-1 ring-black/5 shrink-0">
+                      {userInitial}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-[#200813] truncate">{displayName}</p>
+                      <p className="text-xs font-medium text-[#200813]/50 mt-0.5">{activeRoleLabel}</p>
+                    </div>
                   </div>
                   
                   <div className="py-1">

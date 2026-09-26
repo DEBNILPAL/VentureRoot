@@ -8,7 +8,8 @@ import {
   CheckCircle, Info, FileText, Target, MapPin,
   Shield, Landmark, TrendingUp, HandCoins,
   Briefcase, AlertOctagon, XCircle,
-  BadgeCheck, ShieldAlert, ShieldX, BookOpen, Zap, RefreshCw
+  BadgeCheck, ShieldAlert, ShieldX, BookOpen, Zap, RefreshCw,
+  ChevronDown, ChevronRight, ChevronLeft
 } from "lucide-react";
 
 import { reportApi } from "../api/reportApi";
@@ -70,6 +71,7 @@ const VERDICT_META: Record<Verdict, { label: string; color: string; bg: string; 
 export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [activeSection, setActiveSection] = useState(1);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // ── Section 6 — Regulatory Verification state ──────────────────────────
   const [verifying, setVerifying] = useState(false);
@@ -145,12 +147,12 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
   const primaryRisk = risks[0];
 
   const SECTIONS = [
-    { id: 1, title: "Business Overview", icon: Briefcase },
-    { id: 2, title: "Market & Positioning", icon: MapPin },
-    { id: 3, title: "SWOT & Key Risks", icon: Shield },
-    { id: 4, title: "Financial Outlook", icon: Landmark },
-    { id: 5, title: "Action Plan & Verdict", icon: Target },
-    { id: 6, title: "Regulatory Verification", icon: BadgeCheck },
+    { id: 1, title: "Business Overview", icon: Briefcase, summary: "Opportunity summary, business model & segment snapshot" },
+    { id: 2, title: "Market & Positioning", icon: MapPin, summary: "Catchment demographics, competitor intel & price points" },
+    { id: 3, title: "SWOT & Key Risks", icon: Shield, summary: "Strengths, weaknesses, operational risks & mitigations" },
+    { id: 4, title: "Financial Outlook", icon: Landmark, summary: "CapEx, subsidies, revenue projections & bank loan" },
+    { id: 5, title: "Action Plan & Verdict", icon: Target, summary: "Implementation roadmap, milestone timeline & verdict" },
+    { id: 6, title: "Regulatory Verification", icon: BadgeCheck, summary: "Statutory compliance, legal checks & RAG citations" },
   ];
 
   // ── Trigger RAG verification ────────────────────────────────────────────
@@ -218,7 +220,7 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#81cc87] relative z-20 flex flex-col lg:flex-row print:bg-white print:block">
+    <div className="w-full min-h-[calc(100vh-50px)] bg-white lg:bg-[#81cc87] relative z-20 flex flex-col lg:flex-row print:bg-white print:block">
 
       {/* ── SIDEBAR ──────────────────────────────────────────────── */}
       <aside className="hidden lg:flex w-[300px] shrink-0 sticky top-0 h-screen flex-col py-10 px-6 print:hidden">
@@ -246,7 +248,7 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
       </aside>
 
       {/* ── MAIN CONTENT CANVAS ──────────────────────────────────── */}
-      <main className="flex-1 w-full bg-white lg:rounded-tl-[40px] lg:shadow-[-20px_0_40px_rgba(0,0,0,0.05)] min-h-screen flex flex-col justify-between print:shadow-none print:border-0 print:rounded-none">
+      <main className="flex-1 w-full bg-white lg:rounded-tl-[40px] lg:shadow-[-20px_0_40px_rgba(0,0,0,0.05)] min-h-[calc(100vh-50px)] flex flex-col justify-between print:shadow-none print:border-0 print:rounded-none">
 
         {/* ── ACTION BAR ─────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 lg:p-10 pb-0 print:hidden">
@@ -274,28 +276,110 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
           </div>
         </div>
 
-        {/* ── MOBILE SECTION SELECTOR TABS (< lg) ────────────────────────── */}
-        <div className="lg:hidden px-4 sm:px-6 pt-4 pb-1 border-b border-gray-100 overflow-x-auto scrollbar-none print:hidden">
-          <div className="flex items-center gap-2 min-w-max pb-2">
-            {SECTIONS.map((s) => {
-              const isActive = activeSection === s.id;
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => setActiveSection(s.id)}
-                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${isActive
-                    ? "bg-[#141411] text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
-                    }`}
-                >
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${isActive ? "bg-[#ebcb2f] text-[#141411]" : "bg-gray-300 text-gray-700"
-                    }`}>
-                    {s.id}
+        {/* ── MOBILE SECTION SELECTOR DROPDOWN (< lg) ────────────────────── */}
+        <div className="lg:hidden px-4 sm:px-6 pt-3 pb-3 border-b border-gray-100 bg-white sticky top-0 z-30 shadow-xs print:hidden">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen((prev) => !prev)}
+              aria-expanded={isMobileNavOpen}
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-gray-50/90 border border-gray-200/80 hover:bg-gray-100 active:scale-[0.99] transition-all text-left shadow-xs"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-7 h-7 rounded-xl bg-[#141411] text-[#ebcb2f] font-sans font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                  {activeSection}
+                </span>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block leading-none">
+                    Section {activeSection} of {SECTIONS.length}
                   </span>
-                  <span>{s.title}</span>
-                </button>
-              );
-            })}
+                  <span className="text-[14px] font-bold text-gray-900 truncate block mt-0.5">
+                    {SECTIONS.find((s) => s.id === activeSection)?.title}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0 bg-white px-2.5 py-1.5 rounded-xl border border-gray-200 shadow-2xs">
+                <span className="text-[11px] font-bold text-gray-700">
+                  {isMobileNavOpen ? "Close" : "Sections"}
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
+                    isMobileNavOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </div>
+            </button>
+
+            {/* Dropdown Menu */}
+            {isMobileNavOpen && (
+              <>
+                {/* Backdrop dismiss */}
+                <div
+                  className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]"
+                  onClick={() => setIsMobileNavOpen(false)}
+                />
+
+                <div className="absolute left-0 right-0 top-full mt-2 z-50 p-2.5 bg-white rounded-2xl border border-gray-200 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 flex items-center justify-between">
+                    <span>Select Report Section</span>
+                    <span className="text-emerald-700 font-bold">{SECTIONS.length} Sections</span>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 mt-2 max-h-[60vh] overflow-y-auto pr-1">
+                    {SECTIONS.map((s) => {
+                      const isActive = activeSection === s.id;
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveSection(s.id);
+                            setIsMobileNavOpen(false);
+                            setTimeout(() => {
+                              const el = document.getElementById(`section-${s.id}`);
+                              if (el) {
+                                el.scrollIntoView({ behavior: "smooth", block: "start" });
+                              }
+                            }, 50);
+                          }}
+                          className={`w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all ${
+                            isActive
+                              ? "bg-[#141411] text-white shadow-sm ring-1 ring-black"
+                              : "hover:bg-gray-50 text-gray-800 bg-gray-50/50 border border-gray-100/80"
+                          }`}
+                        >
+                          <div
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 shadow-2xs ${
+                              isActive
+                                ? "bg-[#ebcb2f] text-[#141411]"
+                                : "bg-white text-gray-700 border border-gray-200"
+                            }`}
+                          >
+                            {s.id}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[13px] font-bold ${isActive ? "text-white" : "text-gray-900"}`}>
+                                {s.title}
+                              </span>
+                              {isActive && (
+                                <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-[#ebcb2f] text-[#141411] rounded">
+                                  Current
+                                </span>
+                              )}
+                            </div>
+                            <p className={`text-[11px] mt-0.5 line-clamp-1 ${isActive ? "text-gray-300" : "text-gray-500"}`}>
+                              {s.summary}
+                            </p>
+                          </div>
+                          <ChevronRight className={`w-4 h-4 shrink-0 mt-1.5 ${isActive ? "text-[#ebcb2f]" : "text-gray-400"}`} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -322,7 +406,7 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
         </div>
 
         {/* SECTIONS BODY */}
-        <div className="p-6 sm:p-10 flex flex-col gap-10">
+        <div className="p-4 sm:p-8 lg:p-10 flex flex-col gap-8 sm:gap-10 overflow-hidden">
 
           {/* 1. BUSINESS OVERVIEW */}
           <section id="section-1" className={`scroll-mt-6 ${activeSection === 1 ? "block" : "hidden print:block"}`}>
@@ -339,18 +423,18 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
               </div>
 
               {/* Snapshot Grid */}
-              <div className="w-full xl:w-[400px] bg-[#f9faeb]/50 rounded-2xl border border-[#ebcb2f]/20 p-5 shrink-0 grid grid-cols-2 gap-4">
+              <div className="w-full xl:w-[400px] bg-[#f9faeb]/50 rounded-2xl border border-[#ebcb2f]/20 p-4 sm:p-5 shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 overflow-hidden">
                 <div>
                   <p className="font-sans text-[11px] text-emerald-800 font-bold uppercase tracking-wider mb-1">Market Segment</p>
-                  <p className="font-sans text-[15px] font-bold text-gray-900">{pricing.marketValue || "Standard Commercial"}</p>
+                  <p className="font-sans text-[14px] sm:text-[15px] font-bold text-gray-900 break-words">{pricing.marketValue || "Standard Commercial"}</p>
                 </div>
                 <div>
                   <p className="font-sans text-[11px] text-emerald-800 font-bold uppercase tracking-wider mb-1">Confidence Score</p>
-                  <p className="font-sans text-[15px] font-bold text-gray-900">{market.confidence?.score || 88}%</p>
+                  <p className="font-sans text-[14px] sm:text-[15px] font-bold text-gray-900">{market.confidence?.score || 88}%</p>
                 </div>
-                <div className="col-span-2 pt-2 border-t border-[#ebcb2f]/20">
+                <div className="sm:col-span-2 pt-2 border-t border-[#ebcb2f]/20">
                   <p className="font-sans text-[11px] text-emerald-800 font-bold uppercase tracking-wider mb-1">Core Value Proposition</p>
-                  <p className="font-sans text-[14px] font-medium text-gray-900 italic">"{opp.localBusinessOpportunity || "A clear opportunity to capture local market demand."}"</p>
+                  <p className="font-sans text-[13px] sm:text-[14px] font-medium text-gray-900 italic break-words">"{opp.localBusinessOpportunity || "A clear opportunity to capture local market demand."}"</p>
                 </div>
               </div>
             </div>
@@ -449,35 +533,35 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* SWOT Grid */}
-              <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-                <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-5">
-                  <p className="font-sans text-[13px] font-bold text-emerald-800 uppercase tracking-wider mb-3 flex items-center gap-1.5"><CheckCircle className="w-4 h-4" /> Strengths</p>
-                  <ul className="space-y-2">{(swot.strengths || []).slice(0, 3).map((s: string, i: number) => <li key={i} className="font-sans text-[13px] text-gray-700 leading-snug">• {s}</li>)}</ul>
+              <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+                <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 sm:p-5 overflow-hidden">
+                  <p className="font-sans text-[13px] font-bold text-emerald-800 uppercase tracking-wider mb-3 flex items-center gap-1.5"><CheckCircle className="w-4 h-4 shrink-0" /> Strengths</p>
+                  <ul className="space-y-2">{(swot.strengths || []).slice(0, 3).map((s: string, i: number) => <li key={i} className="font-sans text-[13px] text-gray-700 leading-relaxed break-words">• {s}</li>)}</ul>
                 </div>
-                <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-5">
-                  <p className="font-sans text-[13px] font-bold text-amber-800 uppercase tracking-wider mb-3 flex items-center gap-1.5"><AlertOctagon className="w-4 h-4" /> Challenges</p>
-                  <ul className="space-y-2">{(swot.weaknesses || []).slice(0, 3).map((w: string, i: number) => <li key={i} className="font-sans text-[13px] text-gray-700 leading-snug">• {w}</li>)}</ul>
+                <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-4 sm:p-5 overflow-hidden">
+                  <p className="font-sans text-[13px] font-bold text-amber-800 uppercase tracking-wider mb-3 flex items-center gap-1.5"><AlertOctagon className="w-4 h-4 shrink-0" /> Challenges</p>
+                  <ul className="space-y-2">{(swot.weaknesses || []).slice(0, 3).map((w: string, i: number) => <li key={i} className="font-sans text-[13px] text-gray-700 leading-relaxed break-words">• {w}</li>)}</ul>
                 </div>
-                <div className="bg-cyan-50/50 border border-cyan-100 rounded-2xl p-5">
-                  <p className="font-sans text-[13px] font-bold text-cyan-800 uppercase tracking-wider mb-3 flex items-center gap-1.5"><TrendingUp className="w-4 h-4" /> Opportunities</p>
-                  <ul className="space-y-2">{(swot.opportunities || []).slice(0, 3).map((o: string, i: number) => <li key={i} className="font-sans text-[13px] text-gray-700 leading-snug">• {o}</li>)}</ul>
+                <div className="bg-cyan-50/50 border border-cyan-100 rounded-2xl p-4 sm:p-5 overflow-hidden">
+                  <p className="font-sans text-[13px] font-bold text-cyan-800 uppercase tracking-wider mb-3 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 shrink-0" /> Opportunities</p>
+                  <ul className="space-y-2">{(swot.opportunities || []).slice(0, 3).map((o: string, i: number) => <li key={i} className="font-sans text-[13px] text-gray-700 leading-relaxed break-words">• {o}</li>)}</ul>
                 </div>
-                <div className="bg-rose-50/50 border border-rose-100 rounded-2xl p-5">
-                  <p className="font-sans text-[13px] font-bold text-rose-800 uppercase tracking-wider mb-3 flex items-center gap-1.5"><XCircle className="w-4 h-4" /> Threats</p>
-                  <ul className="space-y-2">{(swot.threats || []).slice(0, 3).map((t: string, i: number) => <li key={i} className="font-sans text-[13px] text-gray-700 leading-snug">• {t}</li>)}</ul>
+                <div className="bg-rose-50/50 border border-rose-100 rounded-2xl p-4 sm:p-5 overflow-hidden">
+                  <p className="font-sans text-[13px] font-bold text-rose-800 uppercase tracking-wider mb-3 flex items-center gap-1.5"><XCircle className="w-4 h-4 shrink-0" /> Threats</p>
+                  <ul className="space-y-2">{(swot.threats || []).slice(0, 3).map((t: string, i: number) => <li key={i} className="font-sans text-[13px] text-gray-700 leading-relaxed break-words">• {t}</li>)}</ul>
                 </div>
               </div>
 
               {/* Primary Risk */}
               {primaryRisk && (
-                <div className="bg-[#ebcb2f] rounded-2xl p-6 text-[#141411] shadow-md relative overflow-hidden flex flex-col justify-center border-none">
+                <div className="bg-[#ebcb2f] rounded-2xl p-4 sm:p-6 text-[#141411] shadow-md relative overflow-hidden flex flex-col justify-center border-none">
                   <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none"><AlertTriangle className="w-32 h-32 text-[#141411]" /></div>
                   <h4 className="font-sans text-[12px] font-bold text-[#141411]/70 uppercase tracking-wider mb-2">Critical Risk</h4>
-                  <p className="font-sans text-[18px] font-bold mb-2 leading-tight">{primaryRisk.title}</p>
-                  <p className="font-sans text-[14px] text-[#141411]/90 mb-4 font-medium leading-relaxed">{primaryRisk.explanation}</p>
+                  <p className="font-sans text-[17px] sm:text-[18px] font-bold mb-2 leading-tight break-words">{primaryRisk.title}</p>
+                  <p className="font-sans text-[13px] sm:text-[14px] text-[#141411]/90 mb-4 font-medium leading-relaxed break-words">{primaryRisk.explanation}</p>
                   <div className="bg-white/30 rounded-xl p-3 mt-auto">
                     <p className="font-sans text-[11px] text-[#141411]/80 uppercase font-bold tracking-wider mb-1">Operational Mitigation</p>
-                    <p className="font-sans text-[13px] font-bold leading-snug text-[#141411]">{primaryRisk.mitigationAdvisory}</p>
+                    <p className="font-sans text-[13px] font-bold leading-snug text-[#141411] break-words">{primaryRisk.mitigationAdvisory}</p>
                   </div>
                 </div>
               )}
@@ -494,20 +578,20 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
 
               {/* Capital & Revenue Summary */}
               <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 overflow-hidden">
                   <p className="font-sans text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-3">Capital Structuring (DPR)</p>
-                  <div className="flex justify-between items-center mb-2"><span className="font-sans text-[14px] text-gray-600">Total Project Cost</span><span className="font-sans text-[16px] font-bold text-gray-900">₹{(capital.expectedInvestment / 100000).toFixed(1)} Lakh</span></div>
-                  <div className="flex justify-between items-center mb-2"><span className="font-sans text-[14px] text-gray-600">Promoter Margin (10-15%)</span><span className="font-sans text-[16px] font-bold text-gray-900">₹{(capital.availableMargin / 100000).toFixed(1)} Lakh</span></div>
-                  <div className="flex justify-between items-center mb-2"><span className="font-sans text-[14px] text-gray-600">Bank Term Loan (90%)</span><span className="font-sans text-[16px] font-bold text-gray-900">₹{((capital.expectedInvestment - capital.availableMargin) / 100000).toFixed(1)} Lakh</span></div>
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-200"><span className="font-sans text-[14px] font-bold text-emerald-800">Govt Subsidy (PMEGP)</span><span className="font-sans text-[16px] font-bold text-emerald-700">₹{(capital.subsidyAmount ? capital.subsidyAmount / 100000 : (capital.expectedInvestment * 0.25) / 100000).toFixed(1)} Lakh ({capital.subsidyPercent || 25}%)</span></div>
+                  <div className="flex justify-between items-baseline gap-2 mb-2"><span className="font-sans text-[13px] sm:text-[14px] text-gray-600 break-words">Total Project Cost</span><span className="font-sans text-[15px] sm:text-[16px] font-bold text-gray-900 shrink-0">₹{(capital.expectedInvestment / 100000).toFixed(1)} Lakh</span></div>
+                  <div className="flex justify-between items-baseline gap-2 mb-2"><span className="font-sans text-[13px] sm:text-[14px] text-gray-600 break-words">Promoter Margin (10-15%)</span><span className="font-sans text-[15px] sm:text-[16px] font-bold text-gray-900 shrink-0">₹{(capital.availableMargin / 100000).toFixed(1)} Lakh</span></div>
+                  <div className="flex justify-between items-baseline gap-2 mb-2"><span className="font-sans text-[13px] sm:text-[14px] text-gray-600 break-words">Bank Term Loan (90%)</span><span className="font-sans text-[15px] sm:text-[16px] font-bold text-gray-900 shrink-0">₹{((capital.expectedInvestment - capital.availableMargin) / 100000).toFixed(1)} Lakh</span></div>
+                  <div className="flex justify-between items-baseline gap-2 pt-2 border-t border-gray-200"><span className="font-sans text-[13px] sm:text-[14px] font-bold text-emerald-800 break-words">Govt Subsidy (PMEGP)</span><span className="font-sans text-[14px] sm:text-[16px] font-bold text-emerald-700 shrink-0">₹{(capital.subsidyAmount ? capital.subsidyAmount / 100000 : (capital.expectedInvestment * 0.25) / 100000).toFixed(1)} Lakh ({capital.subsidyPercent || 25}%)</span></div>
                 </div>
 
-                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 overflow-hidden">
                   <p className="font-sans text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-3">Operating Viability</p>
-                  <div className="flex justify-between items-center mb-2"><span className="font-sans text-[14px] text-gray-600">Monthly Turnover</span><span className="font-sans text-[16px] font-bold text-gray-900">₹{(operations.expectedRevenue / 1000).toFixed(0)}K / mo</span></div>
-                  <div className="flex justify-between items-center mb-2"><span className="font-sans text-[14px] text-gray-600">Est. Net Profit</span><span className="font-sans text-[16px] font-bold text-gray-900">₹{(operations.monthlyProfit ? operations.monthlyProfit / 1000 : (operations.expectedRevenue * 0.22) / 1000).toFixed(0)}K / mo</span></div>
-                  <div className="flex justify-between items-center mb-2"><span className="font-sans text-[14px] text-gray-600">Break-Even Horizon</span><span className="font-sans text-[16px] font-bold text-gray-900">{operations.breakEvenMonths || 6} Months</span></div>
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-200"><span className="font-sans text-[14px] font-bold text-gray-900">DSCR Coverage</span><span className="font-sans text-[16px] font-bold text-emerald-800">{operations.dscr || "1.85"}x (Bankable)</span></div>
+                  <div className="flex justify-between items-baseline gap-2 mb-2"><span className="font-sans text-[13px] sm:text-[14px] text-gray-600 break-words">Monthly Turnover</span><span className="font-sans text-[15px] sm:text-[16px] font-bold text-gray-900 shrink-0">₹{(operations.expectedRevenue / 1000).toFixed(0)}K / mo</span></div>
+                  <div className="flex justify-between items-baseline gap-2 mb-2"><span className="font-sans text-[13px] sm:text-[14px] text-gray-600 break-words">Est. Net Profit</span><span className="font-sans text-[15px] sm:text-[16px] font-bold text-gray-900 shrink-0">₹{(operations.monthlyProfit ? operations.monthlyProfit / 1000 : (operations.expectedRevenue * 0.22) / 1000).toFixed(0)}K / mo</span></div>
+                  <div className="flex justify-between items-baseline gap-2 mb-2"><span className="font-sans text-[13px] sm:text-[14px] text-gray-600 break-words">Break-Even Horizon</span><span className="font-sans text-[15px] sm:text-[16px] font-bold text-gray-900 shrink-0">{operations.breakEvenMonths || 6} Months</span></div>
+                  <div className="flex justify-between items-baseline gap-2 pt-2 border-t border-gray-200"><span className="font-sans text-[13px] sm:text-[14px] font-bold text-gray-900 break-words">DSCR Coverage</span><span className="font-sans text-[15px] sm:text-[16px] font-bold text-emerald-800 shrink-0">{operations.dscr || "1.85"}x (Bankable)</span></div>
                 </div>
               </div>
 
@@ -744,10 +828,61 @@ export const ReportDetailView = ({ report }: ReportDetailViewProps) => {
 
           </section>
 
+          {/* ── MOBILE SEQUENTIAL NAVIGATION (< lg) ────────────────── */}
+          <div className="lg:hidden mt-6 pt-6 border-t border-gray-100 flex flex-col gap-3 w-full print:hidden">
+            {activeSection < SECTIONS.length && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection(activeSection + 1);
+                  setIsMobileNavOpen(false);
+                  window.scrollTo({ top: 120, behavior: "smooth" });
+                }}
+                className="w-full flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#141411] text-white hover:bg-black active:scale-[0.99] transition-all shadow-md text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-bold text-[#ebcb2f] uppercase tracking-wider block leading-none">
+                    Next Section ({activeSection + 1}/{SECTIONS.length})
+                  </span>
+                  <span className="text-[13px] sm:text-[14px] font-bold text-white leading-snug break-words block mt-1">
+                    {SECTIONS[activeSection]?.title}
+                  </span>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                  <ChevronRight className="w-4 h-4 text-[#ebcb2f]" />
+                </div>
+              </button>
+            )}
+
+            {activeSection > 1 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection(activeSection - 1);
+                  setIsMobileNavOpen(false);
+                  window.scrollTo({ top: 120, behavior: "smooth" });
+                }}
+                className="w-full flex items-center justify-between gap-3 p-3 rounded-2xl border border-gray-200 bg-gray-50/90 text-gray-700 hover:bg-gray-100 active:scale-[0.99] transition-all text-left"
+              >
+                <div className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0">
+                  <ChevronLeft className="w-4 h-4 text-gray-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block leading-none">
+                    Previous Section ({activeSection - 1}/{SECTIONS.length})
+                  </span>
+                  <span className="text-[13px] font-bold text-gray-800 leading-snug break-words block mt-1">
+                    {SECTIONS[activeSection - 2]?.title}
+                  </span>
+                </div>
+              </button>
+            )}
+          </div>
+
         </div>
 
         {/* ── REPORT CANVAS FOOTER ─────────────────────────────────── */}
-        <footer className="mt-16 pt-8 pb-10 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-400 font-sans text-[11px] px-6 lg:px-10 print:hidden">
+        <footer className="mt-16 pt-8 pb-24 lg:pb-10 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-400 font-sans text-[11px] px-6 lg:px-10 print:hidden">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-600">VentureRoot</span>
             <span>•</span>

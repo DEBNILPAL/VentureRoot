@@ -133,12 +133,14 @@ const CompetitorCard = ({ comp, index }: { comp: Competitor; index: number }) =>
         </div>
 
         {/* Pricing row */}
-        <div className="flex items-center justify-between mt-2 p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-          <div className="flex items-center gap-1.5 text-xs text-slate-600">
-            <Tag className="w-3 h-3 text-slate-400 shrink-0" />
-            <span className="font-semibold">Observed Pricing:</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mt-2.5 p-2.5 bg-slate-50/90 rounded-xl border border-slate-100">
+          <div className="flex items-center gap-1.5 text-xs text-slate-600 shrink-0">
+            <Tag className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="font-semibold whitespace-nowrap">Observed Pricing:</span>
           </div>
-          <span className="text-xs font-bold text-emerald-800">{comp.pricing || "Market Rate"}</span>
+          <span className="text-xs font-bold text-emerald-800 break-words leading-relaxed sm:text-right">
+            {comp.pricing || "Market Rate"}
+          </span>
         </div>
       </div>
 
@@ -378,40 +380,40 @@ const TopRankedCompetitorCard = ({ comp }: { comp: Competitor }) => {
         </div>
 
         {/* Competitor Name & Meta */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h4 className="font-bold text-base text-gray-900 leading-snug">{comp.name}</h4>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-slate-600">
-              <span className="flex items-center gap-1 font-semibold text-emerald-700">
+            <h4 className="font-bold text-base text-gray-900 leading-snug break-words">{comp.name}</h4>
+            <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 flex-wrap text-xs text-slate-600">
+              <span className="flex items-center gap-1 font-semibold text-emerald-700 whitespace-nowrap">
                 <Navigation className="w-3 h-3 text-emerald-600 shrink-0" />
                 {Number(comp.distanceKm).toFixed(1)} km away
               </span>
               <span className="text-slate-300">•</span>
-              <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-slate-50 text-slate-700 border border-slate-200">
+              <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-slate-50 text-slate-700 border border-slate-200 whitespace-nowrap">
                 {isGovt ? "🏛️ Govt" : "🏢 Private"}
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-slate-50 text-slate-700 border border-slate-200">
+              <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-slate-50 text-slate-700 border border-slate-200 whitespace-nowrap">
                 {isDirect ? "Direct Rival" : "Indirect Feeder"}
               </span>
               {comp.facilityType && (
-                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[10px]">
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[10px] whitespace-nowrap">
                   {comp.facilityType}
                 </span>
               )}
               {comp.source?.includes("OpenStreetMap") && (
-                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold text-[10px] border border-slate-200 flex items-center gap-1">
-                  <Globe className="w-2.5 h-2.5 text-slate-500" /> Live OSM
+                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold text-[10px] border border-slate-200 flex items-center gap-1 whitespace-nowrap">
+                  <Globe className="w-2.5 h-2.5 text-slate-500 shrink-0" /> Live OSM
                 </span>
               )}
             </div>
           </div>
 
           {/* Pricing Box */}
-          <div className="shrink-0 text-right p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-            <div className="text-[10px] uppercase font-bold text-slate-500 flex items-center justify-end gap-1">
-              <Tag className="w-2.5 h-2.5" /> Pricing
+          <div className="self-start sm:self-auto sm:shrink-0 text-left sm:text-right p-2.5 bg-slate-50 border border-slate-200 rounded-xl min-w-0 w-full sm:w-auto">
+            <div className="text-[10px] uppercase font-bold text-slate-500 flex items-center sm:justify-end gap-1">
+              <Tag className="w-2.5 h-2.5 shrink-0" /> Pricing
             </div>
-            <div className="text-xs font-bold text-slate-900 mt-0.5 max-w-[140px] truncate">
+            <div className="text-xs font-bold text-slate-900 mt-0.5 break-words sm:max-w-[160px]">
               {comp.pricing || "Market Parity"}
             </div>
           </div>
@@ -594,6 +596,7 @@ export const CompetitionCard = ({
   const { t } = useTranslation();
   const [filterType, setFilterType] = useState<"all" | "direct" | "indirect" | "govt" | "private">("all");
   const [topFilter, setTopFilter] = useState<"all" | "direct" | "govt" | "private">("all");
+  const [isTopCompetitorsOpen, setIsTopCompetitorsOpen] = useState(false);
 
   const isHealthcare =
     category.toLowerCase().includes("health") ||
@@ -706,100 +709,137 @@ export const CompetitionCard = ({
       )}
 
       {/* ── Population reach summary ── */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="p-4 rounded-2xl border-2 border-emerald-200 bg-emerald-50 flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="p-3.5 sm:p-4 rounded-2xl border-2 border-emerald-200 bg-emerald-50 flex flex-col gap-1.5 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center shrink-0">
               <Target className="w-4 h-4 text-emerald-700" />
             </div>
             <span className="text-xs font-black text-emerald-800 uppercase tracking-wider">10 km Catchment</span>
           </div>
-          <div className="mt-1">
-            <span className="text-2xl font-black text-emerald-900">
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 mt-0.5">
+            <span className="text-2xl font-black text-emerald-900 leading-none">
               {rawCompetitors10km.length}
             </span>
-            <span className="text-sm font-bold text-emerald-700 ml-1">competitors</span>
+            <span className="text-sm font-bold text-emerald-700">competitors</span>
           </div>
-          <div className="flex items-center gap-1 text-[11px] text-emerald-800 font-medium">
-            <Users className="w-3 h-3" />
-            ~{populationReach.km10.toLocaleString("en-IN")} pop. reach • 314 km²
+          <div className="flex items-start gap-1.5 text-[11px] sm:text-xs text-emerald-800 font-medium mt-0.5">
+            <Users className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+            <span className="break-words leading-relaxed">
+              ~{populationReach.km10.toLocaleString("en-IN")} pop. reach <span className="opacity-60">•</span> 314 km²
+            </span>
           </div>
         </div>
-        <div className="p-4 rounded-2xl border-2 border-indigo-200 bg-indigo-50 flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 border border-indigo-300 flex items-center justify-center">
+        <div className="p-3.5 sm:p-4 rounded-2xl border-2 border-indigo-200 bg-indigo-50 flex flex-col gap-1.5 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-indigo-100 border border-indigo-300 flex items-center justify-center shrink-0">
               <Layers className="w-4 h-4 text-indigo-700" />
             </div>
             <span className="text-xs font-black text-indigo-800 uppercase tracking-wider">10–20 km District</span>
           </div>
-          <div className="mt-1">
-            <span className="text-2xl font-black text-indigo-900">
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 mt-0.5">
+            <span className="text-2xl font-black text-indigo-900 leading-none">
               {rawCompetitors20km.length}
             </span>
-            <span className="text-sm font-bold text-indigo-700 ml-1">competitors</span>
+            <span className="text-sm font-bold text-indigo-700">competitors</span>
           </div>
-          <div className="flex items-center gap-1 text-[11px] text-indigo-800 font-medium">
-            <Users className="w-3 h-3" />
-            ~{populationReach.km20.toLocaleString("en-IN")} pop. reach • 1,257 km²
+          <div className="flex items-start gap-1.5 text-[11px] sm:text-xs text-indigo-800 font-medium mt-0.5">
+            <Users className="w-3.5 h-3.5 text-indigo-600 shrink-0 mt-0.5" />
+            <span className="break-words leading-relaxed">
+              ~{populationReach.km20.toLocaleString("en-IN")} pop. reach <span className="opacity-60">•</span> 1,257 km²
+            </span>
           </div>
         </div>
       </div>
 
       {/* ── Top 5–6 High-Strength Competitors Radar & Deep Analysis ── */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-5 md:p-6 shadow-sm flex flex-col gap-5">
-        {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center shadow-xs shrink-0">
-              <Award className="w-5 h-5 text-slate-700" />
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden transition-all">
+        {/* Clickable Section Header / Accordion Trigger */}
+        <button
+          type="button"
+          onClick={() => setIsTopCompetitorsOpen(!isTopCompetitorsOpen)}
+          className={`w-full flex items-center justify-between p-4 sm:p-5 md:p-6 text-left transition-colors hover:bg-slate-50/60 ${
+            isTopCompetitorsOpen ? "border-b border-slate-100" : ""
+          }`}
+        >
+          <div className="flex items-start gap-3 min-w-0 pr-2">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center shadow-xs shrink-0 mt-0.5">
+              <Award className="w-5 h-5 text-amber-700" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="font-sans text-[17px] font-bold text-gray-900">
+                <h4 className="font-sans text-[16px] sm:text-[17px] font-bold text-gray-900 leading-snug">
                   Top 5–6 Dominant Competitors & Threat Rankings
                 </h4>
-                <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-amber-100/70 text-amber-900 border border-amber-200">
                   Threat Radar
                 </span>
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                  {topRankedCompetitors.length} key rivals
+                </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed line-clamp-2 sm:line-clamp-none">
                 Algorithmic multi-factor evaluation based on web-scraped facility capacity, statutory price floor, proximity friction, and verified commercial reach.
               </p>
             </div>
           </div>
 
-          {/* Sub-filter for top competitors */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {[
-              { id: "all", label: `Top ${topRankedCompetitors.length}` },
-              { id: "direct", label: "Direct Only" },
-              { id: "govt", label: "Govt Anchors" },
-              { id: "private", label: "Private Scale" },
-            ].map(({ id, label }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTopFilter(id as typeof topFilter)}
-                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                  topFilter === id
-                    ? "bg-slate-900 text-white shadow-xs"
-                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 shrink-0 ml-2">
+            <span className="hidden sm:inline-block text-xs font-semibold text-slate-500">
+              {isTopCompetitorsOpen ? "Collapse" : "Expand"}
+            </span>
+            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 transition-transform">
+              {isTopCompetitorsOpen ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </div>
           </div>
-        </div>
+        </button>
 
-        {/* Top Competitor Grid */}
-        {filteredTopCompetitors.length === 0 ? (
-          <p className="text-center text-xs text-slate-400 font-medium py-4">No top-ranked competitors match this sub-filter.</p>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {filteredTopCompetitors.map((comp) => (
-              <TopRankedCompetitorCard key={comp.id || comp.rank} comp={comp} />
-            ))}
+        {/* Accordion Body */}
+        {isTopCompetitorsOpen && (
+          <div className="p-4 sm:p-5 md:p-6 flex flex-col gap-5 pt-4">
+            {/* Sub-filter for top competitors */}
+            <div className="flex items-center justify-between gap-3 flex-wrap border-b border-slate-100 pb-3">
+              <span className="text-xs font-bold text-slate-500">Filter Threat Radar:</span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[
+                  { id: "all", label: `Top ${topRankedCompetitors.length}` },
+                  { id: "direct", label: "Direct Only" },
+                  { id: "govt", label: "Govt Anchors" },
+                  { id: "private", label: "Private Scale" },
+                ].map(({ id, label }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTopFilter(id as typeof topFilter);
+                    }}
+                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                      topFilter === id
+                        ? "bg-slate-900 text-white shadow-xs"
+                        : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Top Competitor Grid */}
+            {filteredTopCompetitors.length === 0 ? (
+              <p className="text-center text-xs text-slate-400 font-medium py-4">No top-ranked competitors match this sub-filter.</p>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {filteredTopCompetitors.map((comp) => (
+                  <TopRankedCompetitorCard key={comp.id || comp.rank} comp={comp} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -839,7 +879,7 @@ export const CompetitionCard = ({
         competitors={rawCompetitors10km}
         filterType={filterType}
         isHealthcare={isHealthcare}
-        defaultOpen={true}
+        defaultOpen={false}
       />
 
       {/* ── Radius Band: 10–20 km ── */}

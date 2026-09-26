@@ -89,21 +89,30 @@ export default function MyBusinessPage() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: idx * 0.08, ease: EASE_OUT_EXPO }}
-                  className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md p-6 flex flex-col justify-between gap-5 transition-all relative overflow-hidden group"
+                  className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md p-4 sm:p-6 flex flex-col justify-between gap-5 transition-all relative overflow-hidden group"
                 >
                   <div className="space-y-4">
                     {/* Card Header */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-[#1E6702] text-xs font-extrabold tracking-wide border border-emerald-200">
-                          Venture {idx + 1}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      {/* Left: Venture Tag & Pulse + Mobile Status Badge */}
+                      <div className="flex items-center justify-between sm:justify-start gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="whitespace-nowrap px-3 py-1 rounded-full bg-emerald-50 text-[#1E6702] text-xs font-extrabold tracking-wide border border-emerald-200">
+                            Venture {idx + 1}
+                          </span>
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                        </div>
+                        {/* Mobile Status Badge */}
+                        <span className="sm:hidden text-[11px] font-semibold tracking-wide uppercase text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200 whitespace-nowrap shrink-0">
+                          {biz.status || "Active / Verified"}
                         </span>
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       </div>
-                      <div className="flex items-center gap-1.5 sm:gap-2">
+
+                      {/* Right: Actions (Edit & Delete) + Desktop Status Badge */}
+                      <div className="flex items-center justify-end gap-2 flex-wrap sm:flex-nowrap">
                         <Link
                           href={`/business/${biz.id}/edit`}
-                          className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold text-slate-700 hover:text-[#1E6702] bg-slate-100 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 transition-all active:scale-95 shadow-2xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold text-slate-700 hover:text-[#1E6702] bg-slate-100 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 transition-all active:scale-95 shadow-2xs whitespace-nowrap"
                           title={`Edit ${biz.name || "Business"} details`}
                         >
                           <Edit3 className="w-3.5 h-3.5 text-slate-500 hover:text-[#1E6702]" />
@@ -116,13 +125,14 @@ export default function MyBusinessPage() {
                             e.stopPropagation();
                             setDeletingBusiness({ id: biz.id, name: biz.name || `Business ${idx + 1}` });
                           }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap"
                           title={`Delete ${biz.name || "Business"}`}
                         >
                           <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                           <span>Delete</span>
                         </button>
-                        <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                        {/* Desktop Status Badge */}
+                        <span className="hidden sm:inline-block text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200 whitespace-nowrap shrink-0">
                           {biz.status || "Active / Verified"}
                         </span>
                       </div>

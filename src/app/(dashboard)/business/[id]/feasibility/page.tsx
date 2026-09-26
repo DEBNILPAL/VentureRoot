@@ -170,7 +170,7 @@ export default function FeasibilityPage() {
         
         {/* Header Section */}
         <div className="notranslate mb-4 sm:mb-6" translate="no">
-          <div className="flex flex-wrap items-center gap-2.5 mb-2 sm:mb-3">
+          <div className="flex items-center gap-2 mb-2 sm:mb-3 min-w-0 max-w-full">
             <Link
               href="/feasibility"
               className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white hover:bg-emerald-50 text-slate-700 hover:text-[#1E6702] border border-slate-200 transition-all active:scale-95 shadow-xs shrink-0"
@@ -179,16 +179,16 @@ export default function FeasibilityPage() {
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 flex-wrap">
-              <Link href="/feasibility" className="hover:text-[#1E6702] transition-colors hover:underline">
+            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-slate-500 overflow-x-auto no-scrollbar whitespace-nowrap py-1 min-w-0 flex-1">
+              <Link href="/feasibility" className="hover:text-[#1E6702] transition-colors hover:underline shrink-0">
                 {t("nav.feasibility") || "Feasibility"}
               </Link>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
-              <Link href={`/business/${id}`} className="hover:text-[#1E6702] transition-colors hover:underline truncate max-w-[160px] sm:max-w-none">
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60 shrink-0" />
+              <Link href={`/business/${id}`} className="hover:text-[#1E6702] transition-colors hover:underline shrink-0">
                 {businessDetails?.name || "Business"}
               </Link>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60" />
-              <span className="text-slate-800 font-bold">{t("feasi.bizIntel") || "Business Intelligence"}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 opacity-60 shrink-0" />
+              <span className="text-slate-800 font-bold shrink-0">{t("feasi.bizIntel") || "Business Intelligence"}</span>
             </div>
           </div>
 

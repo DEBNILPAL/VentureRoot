@@ -185,7 +185,7 @@ export function YourOpportunityCard({
           </div>
 
           {/* Symmetrical Catchment Zone Cards */}
-          <div className="grid grid-cols-2 gap-2.5 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
             {/* 10 km Primary Catchment */}
             <div
               className={`p-3 bg-white rounded-xl border ${
@@ -206,11 +206,11 @@ export function YourOpportunityCard({
                   10 km Catchment
                 </span>
               </div>
-              <div className="flex items-baseline gap-1 mt-0.5">
+              <div className="flex flex-wrap items-baseline gap-1 mt-0.5">
                 <span
                   className={`text-2xl font-black ${
                     isLowOpportunity ? "text-slate-900" : "text-emerald-950"
-                  } tabular-nums`}
+                  } tabular-nums leading-none`}
                 >
                   {raw10km.length}
                 </span>
@@ -233,8 +233,8 @@ export function YourOpportunityCard({
                   10–20 km District
                 </span>
               </div>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-2xl font-black text-indigo-950 tabular-nums">
+              <div className="flex flex-wrap items-baseline gap-1 mt-0.5">
+                <span className="text-2xl font-black text-indigo-950 tabular-nums leading-none">
                   {raw20km.length}
                 </span>
                 <span className="text-[11.5px] font-semibold text-indigo-700">competitors</span>
