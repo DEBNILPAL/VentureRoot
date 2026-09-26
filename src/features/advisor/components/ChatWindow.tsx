@@ -14,12 +14,28 @@ interface ChatWindowProps {
 }
 
 const REGIONAL_CODE_MAP: Record<string, string> = {
+  as: "as-IN",
   bn: "bn-IN",
+  brx: "brx-IN",
+  doi: "doi-IN",
+  gu: "gu-IN",
   hi: "hi-IN",
+  kn: "kn-IN",
+  ks: "ks-IN",
+  kok: "kok-IN",
+  mai: "mai-IN",
+  ml: "ml-IN",
+  mni: "mni-IN",
   ta: "ta-IN",
   te: "te-IN",
   mr: "mr-IN",
+  ne: "ne-IN",
+  or: "or-IN",
   pa: "pa-IN",
+  sa: "sa-IN",
+  sat: "sat-IN",
+  sd: "sd-IN",
+  ur: "ur-IN",
   en: "en-IN",
 };
 
@@ -27,16 +43,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
   const { data: businesses } = useBusinessesComparison();
   const appLanguage = useUIStore((s) => s.language);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>("");
-  const [selectedLanguage, setSelectedLanguage] = useState<string>(
-    appLanguage ? (REGIONAL_CODE_MAP[appLanguage] || appLanguage) : "auto"
-  );
-
-  // Keep selected language in sync with global switcher
-  useEffect(() => {
-    if (appLanguage) {
-      setSelectedLanguage(REGIONAL_CODE_MAP[appLanguage] || appLanguage);
-    }
-  }, [appLanguage]);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("auto");
 
 
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -325,7 +332,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
                 onChange={(e) => setSelectedLanguage(e.target.value)}
                 className="text-[11px] font-semibold text-[#200813] bg-transparent appearance-none cursor-pointer focus:outline-none pr-4 truncate"
               >
-                <option value="auto">🌐 Auto / Multi</option>
+                <option value="auto">🌐 Auto (match message)</option>
                 {REGIONAL_LANGUAGES.map((l) => (
                   <option key={l.code} value={l.code}>
                     {l.native} ({l.name.split(" ")[0]})
@@ -543,7 +550,7 @@ export const ChatWindow = ({ initialQuery }: ChatWindowProps) => {
             defaultLanguage={
               selectedLanguage !== "auto"
                 ? selectedLanguage
-                : (REGIONAL_CODE_MAP[appLanguage] || "bn-IN")
+                : (REGIONAL_CODE_MAP[appLanguage] || "en-IN")
             }
             onTranscriptConfirm={(transcript, lang) => {
               setShowVoiceRecorder(false);
