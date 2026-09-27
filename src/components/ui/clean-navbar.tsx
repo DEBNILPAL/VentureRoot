@@ -18,7 +18,11 @@ export function CleanNavbar() {
     if (typeof window !== "undefined") {
       const hasSeen = localStorage.getItem("ventureroot_home_guide_seen");
       if (!hasSeen) {
-        setGuideStep(1);
+        // Let the user view the landing page for 4 seconds before gently showing the guide
+        const timer = setTimeout(() => {
+          setGuideStep(1);
+        }, 4000);
+        return () => clearTimeout(timer);
       }
     }
   }, []);
@@ -126,9 +130,9 @@ export function CleanNavbar() {
 
             {/* Step 1: Language Switcher guide tooltip */}
             {guideStep === 1 && (
-              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 z-50 pointer-events-auto">
+              <div className="absolute right-0 top-full mt-2.5 z-50 pointer-events-auto animate-in fade-in slide-in-from-top-1 duration-200">
                 {/* Arrow pointing UP to LanguageSwitcher */}
-                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-t border-l border-slate-300 rotate-45 z-10" />
+                <div className="absolute -top-1.5 right-6 w-3 h-3 bg-white border-t border-l border-slate-300 rotate-45 z-10" />
 
                 <div className="relative w-64 bg-white/95 backdrop-blur-xs rounded-xl p-3 shadow-[0_8px_25px_rgba(0,0,0,0.14)] border border-slate-200 text-slate-800">
                   <div className="flex items-center justify-between gap-1 mb-1">
@@ -185,7 +189,7 @@ export function CleanNavbar() {
 
             {/* Step 2: Create an account guide tooltip */}
             {guideStep === 2 && (
-              <div className="absolute right-0 top-full mt-2.5 z-50 pointer-events-auto">
+              <div className="absolute right-0 top-full mt-2.5 z-50 pointer-events-auto animate-in fade-in slide-in-from-top-1 duration-200">
                 {/* Arrow pointing UP to Create Account */}
                 <div className="absolute -top-1.5 right-8 w-3 h-3 bg-white border-t border-l border-slate-300 rotate-45 z-10" />
 
