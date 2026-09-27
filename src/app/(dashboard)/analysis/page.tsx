@@ -41,6 +41,7 @@ import { StateAutocompleteInput } from "@/components/ui/StateAutocompleteInput";
 import { MapMarker } from "@/components/maps/RadiusMap";
 import { getAuthoritativeCensusDensity } from "@/utils/feasibility.mapper";
 import { resolveCoordinatesForLocation } from "@/services/location-search.service";
+import { DEMO_PRESETS, DemoBusinessPreset } from "@/lib/demoPresets";
 
 const DynamicRadiusMap = dynamic(() => import("@/components/maps/RadiusMap"), {
   ssr: false,
@@ -1056,6 +1057,39 @@ export default function AnalysisPage() {
           <p className="text-slate-600 text-xs sm:text-sm font-medium mt-1 leading-relaxed break-words whitespace-normal">
             Input your project specifications below to calculate real-world ML market potential, competitor density maps, conformal Mandi pricing, and government subsidy modeling.
           </p>
+        </div>
+
+        {/* Quick Demo Pre-fill */}
+        <div className="shrink-0 flex items-center">
+          <button
+            type="button"
+            onClick={() => {
+              const preset = DEMO_PRESETS[0];
+              const d = preset.analysis;
+              setBusinessName(d.businessName);
+              setCategory(d.category);
+              setBusinessModel(d.businessModel);
+              setState(d.state);
+              setDistrict(d.district);
+              setSubdistrict(d.subdistrict);
+              setVillage(d.village);
+              setLocationLabel(d.locationLabel);
+              setCenterCoords(d.centerCoords);
+              setAvailableMargin(d.availableMargin);
+              setProjectCost(d.projectCost);
+              setLandType(d.landType);
+              setTargetScale(d.targetScale);
+              setWorkingCapital(d.workingCapital);
+              setSalesChannel(d.salesChannel);
+              if (d.facilityType) setFacilityType(d.facilityType);
+              if (d.bedCapacity) setBedCapacity(d.bedCapacity);
+              if (d.medicalSpecialties) setMedicalSpecialties(d.medicalSpecialties);
+            }}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#be185d] to-[#1d4ed8] hover:from-[#9d174d] hover:to-[#1e40af] text-white text-xs font-bold tracking-wide shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95 border border-pink-400/30"
+            title="Auto-fill form with suitable sample business input"
+          >
+            Try Demo Input
+          </button>
         </div>
       </div>
 

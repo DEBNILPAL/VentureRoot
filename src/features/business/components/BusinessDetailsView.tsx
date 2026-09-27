@@ -285,14 +285,14 @@ export const BusinessDetailsView = () => {
               {/* Operations Card (Balanced Spacing & Clean Typography) */}
               <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.06),0_2px_4px_rgba(0,0,0,0.02)] p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.09)]">
                 <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-300/60 to-transparent pointer-events-none" />
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#1E6702] border border-emerald-200/60 flex items-center justify-center shrink-0">
                       <Activity className="w-4 h-4" />
                     </div>
-                    <span className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight">Operations</span>
+                    <span className="font-heading text-lg sm:text-xl font-bold text-[#173809] tracking-tight truncate">Operations</span>
                   </div>
-                  <span className="font-sans text-[10.5px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60 tracking-wider">
+                  <span className="font-sans text-[10.5px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60 tracking-wider shrink-0 whitespace-nowrap">
                     +12% baseline
                   </span>
                 </div>

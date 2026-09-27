@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { User, ChevronDown, LogOut, Settings, Globe, Menu, X, Home, Briefcase, PlusCircle, BarChart2, FileText, MessageSquare, TrendingUp, ShieldAlert, RotateCcw, UserX } from "lucide-react";
+import { User, ChevronDown, LogOut, Settings, Globe, Menu, X, Home, Briefcase, PlusCircle, BarChart2, FileText, MessageSquare, TrendingUp, ShieldAlert, RotateCcw, UserX, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 import { LanguageSwitcher } from "@/features/i18n/components/LanguageSwitcher";
@@ -11,8 +11,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { DeleteAccountModal } from "@/components/auth/DeleteAccountModal";
+import { useTour } from "@/components/tour/TourProvider";
 
 export const TopNav = () => {
+  const { startTour } = useTour();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const { data: profileData } = useProfile();
@@ -153,6 +155,7 @@ export const TopNav = () => {
             return (
               <Link 
                 key={link.id}
+                id={link.id}
                 href={link.href} 
                 onMouseEnter={() => setHoveredIndex(idx)}
                 className={`group relative px-4 py-2 text-[13px] font-semibold transition-all duration-300 active:scale-[0.97] flex items-center gap-2 rounded-full ${isActive ? "text-[#FFFBE7]" : "text-white/80 hover:text-white"}`}
@@ -186,7 +189,7 @@ export const TopNav = () => {
 
         {/* Right: Actions (Desktop & Mobile trigger) */}
         <div className="flex items-center gap-2 sm:gap-2.5 relative z-10">
-          <div className="transition-all duration-300">
+          <div id="nav-language" className="transition-all duration-300">
             <LanguageSwitcher variant="compact" />
           </div>
           
@@ -226,6 +229,15 @@ export const TopNav = () => {
                   </div>
                   
                   <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        startTour();
+                      }}
+                      className="flex items-center gap-2.5 w-full text-left px-3 py-2.5 text-[13px] font-semibold text-[#1E6702] hover:bg-[#FFFBE7] rounded-xl transition-all duration-200 cursor-pointer"
+                    >
+                      <Sparkles className="w-[15px] h-[15px] text-[#1E6702]" /> Start Guided Tour
+                    </button>
                     <Link href="/profile" onClick={() => setIsProfileOpen(false)} className="flex items-center gap-2.5 w-full text-left px-3 py-2.5 text-[13px] font-semibold text-[#200813]/70 hover:bg-[#FFFBE7] hover:text-[#1E6702] rounded-xl transition-all duration-200">
                       <User className="w-[15px] h-[15px]" /> {t("nav.profile" as any) || "My Profile"}
                     </Link>

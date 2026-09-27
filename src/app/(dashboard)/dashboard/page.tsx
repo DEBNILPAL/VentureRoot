@@ -330,10 +330,10 @@ export default function DashboardPage() {
                 Welcome, {firstName}!
               </h2>
               <p className="text-slate-600 text-xs sm:text-sm leading-relaxed max-w-md mx-auto">
-                Your executive dashboard is currently hazy because no business is connected to your account. Creating your enterprise unlocks live Census demographic catchment, scheme subsidies (PMEGP/MUDRA), and bankable DPR analysis.
+                You have not added any business yet. Add your business to see your local customer demand, check government loan subsidies, and get a clear profit plan.
               </p>
               <p className="text-emerald-800 font-semibold text-xs bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-200/60">
-                Please create your first rural enterprise to activate your workspace.
+                Click below to add your business details and get started.
               </p>
             </div>
 

@@ -5,6 +5,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/features/i18n/components/LanguageProvider";
 import { Language } from "@/stores/useUIStore";
 import { GoogleTranslateProvider } from "@/features/i18n/components/GoogleTranslateProvider";
+import { TourProvider } from "@/components/tour/TourProvider";
 import PwaRegister from "@/components/pwa/PwaRegister";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 
@@ -73,7 +74,9 @@ export default async function RootLayout({
       <body className="antialiased text-[#200813] bg-[#f4fce8]" suppressHydrationWarning>
         <LanguageProvider initialLanguage={locale}>
           <GoogleTranslateProvider />
-          {children}
+          <TourProvider>
+            {children}
+          </TourProvider>
           <PwaRegister />
           <InstallPrompt />
         </LanguageProvider>

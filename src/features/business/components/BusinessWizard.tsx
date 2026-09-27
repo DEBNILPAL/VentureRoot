@@ -18,6 +18,7 @@ import { PrismFluxLoader } from "@/components/ui/prism-flux-loader";
 import { getDynamicBusinessResources, formatResourceSuggestionsAsText } from "@/services/business-resources.service";
 import { InvalidLocationModal } from "@/components/ui/InvalidLocationModal";
 import { validateBusinessLocationInIndia } from "@/lib/data/indiaLocations";
+import { DEMO_PRESETS } from "@/lib/demoPresets";
 
 const DynamicRadiusMap = dynamic(() => import("@/components/maps/RadiusMap"), {
   ssr: false,
@@ -730,6 +731,43 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                 </p>
               </div>
 
+              {/* Try Demo Input Button on White Space with Deep Pink & Blue Contrast */}
+              {!isEditMode && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const preset = DEMO_PRESETS[0];
+                    const w = preset.wizard;
+                    const matchedCat = categories.find((c) =>
+                      c.name.toLowerCase().includes(w.categoryQuery.toLowerCase()) ||
+                      c.slug.toLowerCase().includes(w.categoryQuery.toLowerCase())
+                    ) || categories[0];
+
+                    if (matchedCat) {
+                      setValue("categoryId", matchedCat.id, { shouldValidate: true });
+                    }
+                    setValue("name", w.name, { shouldValidate: true });
+                    setValue("description", w.description, { shouldValidate: true });
+                    setValue("state", w.state, { shouldValidate: true });
+                    setValue("district", w.district, { shouldValidate: true });
+                    setValue("block", w.block, { shouldValidate: true });
+                    setValue("village", w.village, { shouldValidate: true });
+                    setValue("availableMargin", w.availableMargin, { shouldValidate: true });
+                    setValue("expectedRevenue", w.expectedRevenue, { shouldValidate: true });
+                    setValue("existingResources", w.existingResources, { shouldValidate: true });
+
+                    setMapCenter([w.lat, w.lon]);
+                    setLocationLabel(`${w.village}, ${w.block}, ${w.district}, ${w.state}`);
+                    // Keep on Step 1 so user can see and click next next naturally
+                    setCurrentStep(1);
+                  }}
+                  className="self-start sm:self-auto px-4 py-2 rounded-xl bg-gradient-to-r from-[#be185d] to-[#1d4ed8] hover:from-[#9d174d] hover:to-[#1e40af] text-white text-xs font-bold tracking-wide shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95 border border-pink-400/30"
+                  title="Fill form with sample business inputs"
+                >
+                  Try Demo Input
+                </button>
+              )}
+
               {isEditMode && (
                 <button
                   type="button"
@@ -951,97 +989,18 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                 {currentStep === 4 && (
                   <div className="flex flex-col gap-6 animate-in fade-in duration-300">
                     <div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center justify-between gap-2 mb-2">
                         <label className="block font-sans text-[14px] font-bold text-gray-800">
                           {t("business.wizard.resources")}
                         </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const suggested = formatResourceSuggestionsAsText({
-                              category: selectedCategoryName,
-                              businessName: formValues.name,
-                              location: { district: formValues.district, state: formValues.state },
-                              availableMargin: formValues.availableMargin,
-                              expectedRevenue: formValues.expectedRevenue,
-                            });
-                            setValue("existingResources", suggested, { shouldValidate: true });
-                          }}
-                          className="inline-flex items-center gap-1.5 text-[12px] font-bold text-[#1E6702] bg-emerald-50 hover:bg-emerald-100/90 border border-emerald-300/80 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
-                        >
-                          <Sparkles className="w-3.5 h-3.5" />
-                          Auto-Fill Benchmark for {selectedCategoryName}
-                        </button>
                       </div>
                       <textarea
                         {...register("existingResources")}
                         rows={4}
-                        placeholder="e.g., Owned land, basic shed, water connection... (Leave empty for automatic AI resource suggestions)"
+                        placeholder="e.g., Small 400 sq ft workspace shed, power meter, weighing scale..."
                         className="w-full rounded-xl border border-gray-200 p-4 bg-white focus:bg-white focus:border-[#1E6702] focus:ring-1 focus:ring-[#1E6702] transition-all outline-none font-sans text-[14px] font-medium resize-none"
                       ></textarea>
                       {errors.existingResources && <p className="text-red-500 font-sans text-[12px] mt-2 font-medium">{errors.existingResources.message}</p>}
-                    </div>
-
-                    {/* Dynamic AI Suggested Checklist Preview */}
-                    {(() => {
-                      const dynamicRes = getDynamicBusinessResources({
-                        category: selectedCategoryName,
-                        businessName: formValues.name,
-                        location: { district: formValues.district, state: formValues.state },
-                        availableMargin: formValues.availableMargin,
-                        expectedRevenue: formValues.expectedRevenue,
-                        existingResources: formValues.existingResources,
-                      });
-
-                      return (
-                        <div className="bg-gradient-to-br from-emerald-50/70 via-white to-slate-50 rounded-2xl p-4 sm:p-5 border border-emerald-200/80 flex flex-col gap-3 shadow-2xs">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <Sparkles className="w-4 h-4 text-[#1E6702]" />
-                              <span className="font-heading text-[13.5px] font-bold text-emerald-950">
-                                AI Suggested Requirements for {selectedCategoryName}
-                              </span>
-                            </div>
-                            <span className="text-[11px] font-bold text-[#1E6702] bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
-                              Auto-Suggested if Left Empty
-                            </span>
-                          </div>
-
-                          <p className="font-sans text-[12.5px] text-slate-600 leading-relaxed font-medium">
-                            If you don't own these assets yet, you can leave the box empty. Our AI Advisor and Feasibility Models will automatically budget and suggest the following resources:
-                          </p>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                            <div className="p-2.5 bg-white rounded-xl border border-emerald-100 flex flex-col gap-0.5">
-                              <span className="font-bold text-slate-700">🏗️ Facility / Land:</span>
-                              <span className="text-slate-600 font-medium">{dynamicRes.land.requiredArea}</span>
-                            </div>
-                            <div className="p-2.5 bg-white rounded-xl border border-emerald-100 flex flex-col gap-0.5">
-                              <span className="font-bold text-slate-700">⚡ Power & Utilities:</span>
-                              <span className="text-slate-600 font-medium">{dynamicRes.growthResources.powerAndUtilities.split("+")[0]}</span>
-                            </div>
-                          </div>
-
-                          <div className="p-3 bg-white rounded-xl border border-emerald-100">
-                            <span className="font-bold text-slate-700 text-xs block mb-1.5">⚙️ Essential Machinery & Equipment:</span>
-                            <div className="space-y-1.5">
-                              {dynamicRes.equipments.slice(0, 3).map((eq, idx) => (
-                                <div key={idx} className="flex justify-between items-center text-[12px]">
-                                  <span className="text-slate-700 truncate">• {eq.name}</span>
-                                  <span className="font-bold text-[#1E6702] shrink-0 ml-2">₹{eq.estimatedCost.toLocaleString('en-IN')}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    <div className="bg-emerald-50/70 rounded-xl p-4 flex gap-3 items-start border border-emerald-200/60">
-                      <Info className="w-5 h-5 text-[#1E6702] shrink-0 mt-0.5" />
-                      <p className="font-sans text-[14px] text-emerald-950 font-medium leading-relaxed">
-                        List all physical assets you currently own. If you don't own equipment or land yet, leave it empty or click Auto-Fill above to let our AI model suggest it.
-                      </p>
                     </div>
                   </div>
                 )}

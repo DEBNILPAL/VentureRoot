@@ -14,8 +14,8 @@ export const registerSchema = z
     email: z.string().min(1, "Email is required").email("Invalid email format"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
-    termsAccepted: z.literal(true, {
-      message: "You must accept the terms and conditions"
+    termsAccepted: z.boolean().refine((val) => val === true, {
+      message: "Please agree to the Terms of Service & Privacy Policy to continue",
     }),
     location: z.any().optional(),
   })

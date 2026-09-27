@@ -51,7 +51,7 @@ export default function MyBusinessPage() {
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
             {hasBusinesses
               ? "Authoritative venture dossiers, census demographic reach, and financing structures for your rural enterprises."
-              : "Register and connect your rural enterprise to calculate live feasibility, scheme subsidies, and bankable DPRs."}
+              : "Add your business to check local customer demand, loan subsidies, and profit feasibility."}
           </p>
         </div>
 

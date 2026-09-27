@@ -25,6 +25,8 @@ import {
   Check,
   Globe,
   Briefcase,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { useTranslation } from "@/features/i18n/hooks/useTranslation";
 import { CleanNavbar } from "@/components/ui/clean-navbar";
@@ -1085,8 +1087,8 @@ export default function LandingPage() {
             {/* Main Footer Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 pb-14 border-b border-white/10 text-left">
 
-              {/* 1. LEFT BRAND AREA (Span 4) */}
-              <div className="lg:col-span-4 flex flex-col items-start pr-0 lg:pr-6">
+              {/* 1. LEFT BRAND AREA (Span 3) */}
+              <div className="lg:col-span-3 flex flex-col items-start pr-0 lg:pr-4">
                 <Link href="/" className="inline-block mb-5">
                   <div className="bg-[#FFFBE7] px-4 py-2 rounded-xl inline-flex items-center shadow-sm border border-[#FFFBE7]/20 hover:bg-white transition-colors">
                     <img
@@ -1107,7 +1109,9 @@ export default function LandingPage() {
                 {/* Social Icons */}
                 <div className="flex items-center gap-3">
                   <a
-                    href="#"
+                    href="https://x.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#1E6702]/40 border border-white/10 hover:border-[#C8F89B]/30 flex items-center justify-center text-[#9bb3cc] hover:text-[#FFFBE7] transition-all duration-300"
                     aria-label="Twitter / X"
                   >
@@ -1116,7 +1120,9 @@ export default function LandingPage() {
                     </svg>
                   </a>
                   <a
-                    href="#"
+                    href="https://linkedin.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#1E6702]/40 border border-white/10 hover:border-[#C8F89B]/30 flex items-center justify-center text-[#9bb3cc] hover:text-[#FFFBE7] transition-all duration-300"
                     aria-label="LinkedIn"
                   >
@@ -1125,7 +1131,9 @@ export default function LandingPage() {
                     </svg>
                   </a>
                   <a
-                    href="#"
+                    href="https://github.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#1E6702]/40 border border-white/10 hover:border-[#C8F89B]/30 flex items-center justify-center text-[#9bb3cc] hover:text-[#FFFBE7] transition-all duration-300"
                     aria-label="GitHub"
                   >
@@ -1134,7 +1142,9 @@ export default function LandingPage() {
                     </svg>
                   </a>
                   <a
-                    href="#"
+                    href="https://venture-root-kappa.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-8 h-8 rounded-full bg-white/5 hover:bg-[#1E6702]/40 border border-white/10 hover:border-[#C8F89B]/30 flex items-center justify-center text-[#9bb3cc] hover:text-[#FFFBE7] transition-all duration-300"
                     aria-label="Website"
                   >
@@ -1155,18 +1165,13 @@ export default function LandingPage() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="#how-it-works" className="hover:text-[#FFFBE7] transition-colors">
+                    <Link href="/#how-it-works" className="hover:text-[#FFFBE7] transition-colors">
                       How It Works
                     </Link>
                   </li>
                   <li>
-                    <Link href="#insights" className="hover:text-[#FFFBE7] transition-colors">
-                      Insights
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="#about" className="hover:text-[#FFFBE7] transition-colors">
-                      About
+                    <Link href="/#contact" className="hover:text-[#FFFBE7] transition-colors">
+                      Contact Us
                     </Link>
                   </li>
                 </ul>
@@ -1184,50 +1189,75 @@ export default function LandingPage() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/dashboard" className="hover:text-[#FFFBE7] transition-colors">
+                    <Link href={isAuthenticated ? "/dashboard" : "/login?redirect=%2Fdashboard"} className="hover:text-[#FFFBE7] transition-colors">
                       View Dashboard
                     </Link>
                   </li>
                   <li>
-                    <Link href="/dashboard/subsidies" className="hover:text-[#FFFBE7] transition-colors">
-                      Government Schemes
+                    <Link href={isAuthenticated ? "/business" : "/login?redirect=%2Fbusiness"} className="hover:text-[#FFFBE7] transition-colors">
+                      My Businesses
                     </Link>
                   </li>
                   <li>
-                    <Link href="/dashboard/advisor" className="hover:text-[#FFFBE7] transition-colors">
+                    <Link href={isAuthenticated ? "/finance" : "/login?redirect=%2Ffinance"} className="hover:text-[#FFFBE7] transition-colors">
+                      Financial Planning
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href={isAuthenticated ? "/advisor" : "/login?redirect=%2Fadvisor"} className="hover:text-[#FFFBE7] transition-colors">
                       AI Business Advisor
                     </Link>
                   </li>
                 </ul>
               </div>
 
-              {/* 4. EXPLORE / SERVICES (Span 2) */}
-              <div className="lg:col-span-2 flex flex-col items-start">
+              {/* 4. CONTACT US (Span 3) */}
+              <div id="contact" className="lg:col-span-3 flex flex-col items-start scroll-mt-28">
                 <h4 className="text-xs font-bold uppercase tracking-[0.18em] text-[#C8F89B] mb-4">
-                  Explore
+                  Contact Us
                 </h4>
-                <ul className="space-y-2.5 text-xs text-[#9bb3cc]">
-                  <li>
-                    <Link href="/dashboard" className="hover:text-[#FFFBE7] transition-colors">
-                      Business Analysis
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/dashboard/financials" className="hover:text-[#FFFBE7] transition-colors">
-                      Financial Planning
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/dashboard/market" className="hover:text-[#FFFBE7] transition-colors">
-                      Market Insights
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/dashboard/subsidies" className="hover:text-[#FFFBE7] transition-colors">
-                      Scheme Discovery
-                    </Link>
-                  </li>
-                </ul>
+                <div className="space-y-3.5 text-xs text-[#9bb3cc] w-full">
+                  <div className="flex items-start gap-2.5">
+                    <Mail className="w-4 h-4 text-[#C8F89B] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="block text-[10px] text-[#7e9bb9] uppercase font-semibold">Email</span>
+                      <a 
+                        href="mailto:info.ventureroot@gmail.com" 
+                        className="hover:text-[#FFFBE7] transition-colors font-medium text-white/95 break-all"
+                      >
+                        info.ventureroot@gmail.com
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5">
+                    <Phone className="w-4 h-4 text-[#C8F89B] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="block text-[10px] text-[#7e9bb9] uppercase font-semibold">Helpline</span>
+                      <a 
+                        href="tel:+919876543210" 
+                        className="hover:text-[#FFFBE7] transition-colors font-medium text-white/95"
+                      >
+                        +91 98765 43210
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5">
+                    <Globe className="w-4 h-4 text-[#C8F89B] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="block text-[10px] text-[#7e9bb9] uppercase font-semibold">Website</span>
+                      <a 
+                        href="https://venture-root-kappa.vercel.app" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="hover:text-[#FFFBE7] transition-colors font-medium text-white/95 break-all"
+                      >
+                        venture-root-kappa.vercel.app
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* 5. ACTION AREA (Span 2) */}
@@ -1242,7 +1272,7 @@ export default function LandingPage() {
                 </div>
 
                 <Link
-                  href="/register"
+                  href={isAuthenticated ? "/analysis" : "/login?redirect=%2Fanalysis"}
                   className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-[#FFFBE7] hover:bg-white text-[#07294A] font-bold text-xs tracking-wide shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
                 >
                   <span>Start Your Analysis</span>
