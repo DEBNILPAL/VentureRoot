@@ -376,13 +376,15 @@ function generateCompetitors(lat: number, lon: number, category: string, subdist
 }
 
 const CATEGORIES = [
-  "Healthcare & Hospital / Clinic",
   "Dairy",
+  "Dairy & Animal Husbandry",
   "Food Processing",
-  "Retail",
-  "Poultry",
-  "Textiles",
   "Agriculture",
+  "Poultry",
+  "Cold Storage & Warehousing",
+  "Bio-Fertilizers & Agro Inputs",
+  "Retail",
+  "Textiles",
   "Fisheries",
   "Handicrafts",
   "Manufacturing",
@@ -391,9 +393,8 @@ const CATEGORIES = [
   "Transport",
   "Hospitality",
   "Personal Services",
-  "Cold Storage & Warehousing",
   "Renewable Energy & Solar",
-  "Bio-Fertilizers & Agro Inputs",
+  "Healthcare & Hospital / Clinic",
   "Other Enterprise"
 ];
 
@@ -1067,7 +1068,11 @@ export default function AnalysisPage() {
               const preset = DEMO_PRESETS[0];
               const d = preset.analysis;
               setBusinessName(d.businessName);
-              setCategory(d.category);
+              const matchedCat =
+                CATEGORIES.find((c) => c.toLowerCase() === d.category.toLowerCase()) ||
+                CATEGORIES.find((c) => d.category.toLowerCase().includes(c.toLowerCase()) || c.toLowerCase().includes(d.category.toLowerCase())) ||
+                "Dairy";
+              setCategory(matchedCat);
               setBusinessModel(d.businessModel);
               setState(d.state);
               setDistrict(d.district);
@@ -1081,9 +1086,9 @@ export default function AnalysisPage() {
               setTargetScale(d.targetScale);
               setWorkingCapital(d.workingCapital);
               setSalesChannel(d.salesChannel);
-              if (d.facilityType) setFacilityType(d.facilityType);
-              if (d.bedCapacity) setBedCapacity(d.bedCapacity);
-              if (d.medicalSpecialties) setMedicalSpecialties(d.medicalSpecialties);
+              setFacilityType("");
+              setBedCapacity("");
+              setMedicalSpecialties("");
             }}
             className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#be185d] to-[#1d4ed8] hover:from-[#9d174d] hover:to-[#1e40af] text-white text-xs font-bold tracking-wide shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95 border border-pink-400/30"
             title="Auto-fill form with suitable sample business input"

@@ -34,9 +34,6 @@ export interface DemoBusinessPreset {
     targetScale: string;
     workingCapital: number;
     salesChannel: string;
-    facilityType?: string;
-    bedCapacity?: string;
-    medicalSpecialties?: string;
   };
 }
 
@@ -45,38 +42,61 @@ export const DEMO_PRESETS: DemoBusinessPreset[] = [
     id: "rural-venture",
     label: "🌾 Rural Business Scenario",
     tagline: "Practical rural enterprise presets",
-    // 1. INPUT SET FOR CREATE BUSINESS: Mustard & Spice Mill in Niphad, Nashik
+
+    // 1. INPUT SET FOR CREATE BUSINESS:
+    // Small Mustard Oil & Spice Processing Unit in Niphad, Nashik
     wizard: {
-      categoryQuery: "Agro",
+      categoryQuery: "Food",
       name: "Gramin Mustard Oil & Spice Mill",
-      description: "Small cold-press mustard oil expeller and local spice packaging unit for village markets.",
+      description:
+        "Small-scale mustard oil extraction and spice grinding unit serving nearby village households and local shops.",
       state: "Maharashtra",
       district: "Nashik",
       block: "Niphad",
       village: "Pimpalgaon Baswant",
-      availableMargin: 80000,
-      expectedRevenue: 350000,
-      existingResources: "Small 400 sq ft workspace shed, single phase power meter, 1 manual weighing scale.",
+
+      // Modest personal savings available for starting the business
+      availableMargin: 30000,
+
+      // Realistic initial monthly revenue target for a very small unit
+      expectedRevenue: 75000,
+
+      existingResources:
+        "Small family-owned workspace with electricity connection, basic weighing scale, storage shelves and simple packaging tools.",
+
       lat: 20.1764,
       lon: 74.0504,
     },
-    // 2. INPUT SET FOR ANALYSE PAGE (DIFFERENT VENTURE & LOCATION): Dairy Chilling & Value Addition in Anand, Gujarat
+
+    // 2. INPUT SET FOR ANALYSE PAGE:
+    // Small Dairy Collection & Value Addition Business in Anand, Gujarat
     analysis: {
-      businessName: "Surabhi Rural Dairy & Chilling Unit",
-      category: "Dairy & Animal Husbandry",
-      businessModel: "Co-operative & Farmer Producer Model (FPO)",
+      businessName: "Surabhi Rural Dairy Collection Unit",
+      category: "Dairy",
+      businessModel: "Small Local Dairy Collection Business",
+
       state: "Gujarat",
       district: "Anand",
       subdistrict: "Petlad",
       village: "Boriavi",
       locationLabel: "Boriavi, Petlad, Anand, Gujarat",
       centerCoords: [22.5645, 72.9289],
-      availableMargin: 120000,
-      projectCost: 650000,
-      landType: "Owned Land / Premises",
-      targetScale: "500 Liters / day Bulk Milk Chilling & Paneer Unit",
-      workingCapital: 90000,
-      salesChannel: "Regional Wholesalers & Distributors",
+
+      // Modest personal contribution
+      availableMargin: 40000,
+
+      // Small starting project requiring external financing
+      projectCost: 90000,
+
+      landType: "Family-owned Small Premises",
+
+      // Small village-level starting scale
+      targetScale: "50–80 Liters per day milk collection",
+
+      // Initial operating buffer
+      workingCapital: 20000,
+
+      salesChannel: "Nearby Village Households and Local Dairy Shops",
     },
   },
 ];

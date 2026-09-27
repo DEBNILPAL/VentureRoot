@@ -738,13 +738,20 @@ export const BusinessWizard = ({ businessId }: BusinessWizardProps = {}) => {
                   onClick={() => {
                     const preset = DEMO_PRESETS[0];
                     const w = preset.wizard;
-                    const matchedCat = categories.find((c) =>
-                      c.name.toLowerCase().includes(w.categoryQuery.toLowerCase()) ||
-                      c.slug.toLowerCase().includes(w.categoryQuery.toLowerCase())
-                    ) || categories[0];
+                    const matchedCat =
+                      categories.find((c) =>
+                        c.name.toLowerCase().includes("food") ||
+                        c.slug.toLowerCase().includes("food")
+                      ) ||
+                      categories.find((c) =>
+                        c.name.toLowerCase().includes(w.categoryQuery.toLowerCase()) ||
+                        c.slug.toLowerCase().includes(w.categoryQuery.toLowerCase())
+                      );
 
                     if (matchedCat) {
                       setValue("categoryId", matchedCat.id, { shouldValidate: true });
+                    } else {
+                      setValue("categoryId", "food-processing", { shouldValidate: true });
                     }
                     setValue("name", w.name, { shouldValidate: true });
                     setValue("description", w.description, { shouldValidate: true });
